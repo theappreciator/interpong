@@ -1,6 +1,9 @@
 import React from "react";
 
+
 export interface IGameContextProps {
+  isConnected: boolean;
+  setIsConnected: (connected: boolean) => void;
   isInRoom: boolean;
   setInRoom: (inRoom: boolean) => void;
   playerSymbol: "x" | "o";
@@ -12,6 +15,8 @@ export interface IGameContextProps {
 }
 
 const defaultState: IGameContextProps = {
+  isConnected: false,
+  setIsConnected: () => {},
   isInRoom: false,
   setInRoom: () => {},
   playerSymbol: "x",

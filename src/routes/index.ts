@@ -8,13 +8,13 @@ const router = express.Router();
 //   res.send("Hello Boy!!");
 // });
 
-router.get("/static/*", async (req, res) => {
-  res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'build', req.url))
-})
+// router.get("/static/*", async (req, res) => {
+//   res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'build', req.url))
+// })
 
-router.get("/*", async (req, res) => {
-  res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'build', req.url))
-});
+// router.get("/*", async (req, res) => {
+//   res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'build', req.url))
+// });
 
 router.get("/", async (req, res) => {
   res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'build', 'index.html'))

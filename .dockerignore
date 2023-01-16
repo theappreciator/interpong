@@ -1,5 +1,7 @@
 fly.toml
-Dockerfile
-.dockerignore
-node_modules
-.git
+**/Dockerfile
+**.dockerignore
+**/.gitignore
+**/node_modules
+**/.git
+.vscode

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import "./App.css";
-import { io } from "socket.io-client";
-import socketService from "./services/socketService";
+import { io, Socket } from "socket.io-client";
+import { DefaultEventsMap } from '@socket.io/component-emitter';
+import { SocketService } from "./services";
 import { JoinRoom } from "./components/joinRoom";
 import GameContext, { IGameContextProps } from "./gameContext";
 import { Game } from "./components/game";
+import { DebugInfo } from "./components/debuginfo";
 
 const AppContainer = styled.div`
   width: 100%;
@@ -30,49 +32,96 @@ const MainContainer = styled.div`
 `;
 
 function App() {
-  const [isInRoom, setInRoom] = useState(false);
-  const [playerSymbol, setPlayerSymbol] = useState<"x" | "o">("x");
-  const [isPlayerTurn, setPlayerTurn] = useState(false);
-  const [isGameStarted, setGameStarted] = useState(false);
+    const [isInRoom, setInRoom] = useState(false);
+    const [playerSymbol, setPlayerSymbol] = useState<"x" | "o">("x");
+    const [isPlayerTurn, setPlayerTurn] = useState(false);
+    const [isGameStarted, setGameStarted] = useState(false);
 
-  const connectSocket = async () => {
-    const socket = await socketService
-      .connect("http://localhost:9000")
-      .then((v) => {
-        console.log("Connected!");
-        return v;
-      })
-      .catch((err) => {
-        console.log("Error: ", err);
-      });
-  };
+    const [socket, setSocket] = useState<void | Socket<DefaultEventsMap, DefaultEventsMap>>();
 
-  useEffect(() => {
-    connectSocket();
-  }, []);
 
-  const gameContextValue: IGameContextProps = {
-    isInRoom,
-    setInRoom,
-    playerSymbol,
-    setPlayerSymbol,
-    isPlayerTurn,
-    setPlayerTurn,
-    isGameStarted,
-    setGameStarted,
-  };
+    const connectSocket = async () => {
+        const url = process.env.REACT_APP_SOCKET_SERVER_URL;
+        if (!url) {
+            console.log("No url provided!");
+            return;
+        }
 
-  return (
-    <GameContext.Provider value={gameContextValue}>
-      <AppContainer>
-        <WelcomeText>Welcome to Tic-Tac-Toe</WelcomeText>
-        <MainContainer>
-          {!isInRoom && <JoinRoom />}
-          {isInRoom && <Game />}
-        </MainContainer>
-      </AppContainer>
-    </GameContext.Provider>
-  );
+        const isConnected = () => setIsConnected(true);
+        const isDisconnected = () => setIsConnected(false);
+
+        const newSocket = await SocketService.Instance
+            .connect(url, isConnected, isDisconnected)
+            .then((v) => {
+                console.log("Completed connecting to " + url);
+                return v;
+            })
+            .catch((err) => {
+                console.log("Error connecting:", err);
+            });
+
+        setSocket(newSocket);
+    };
+
+    useEffect(() => {
+        connectSocket();
+    }, []);
+
+
+    const [isConnected, setIsConnected] = useState(socket?.connected || false);
+    const [lastPong, setLastPong] = useState<string>();
+
+    // useEffect(() => {
+    //   socket.on('connect', () => {
+    //     setIsConnected(true);
+    //   });
+
+    //   socket.on('disconnect', () => {
+    //     setIsConnected(false);
+    //   });
+
+    //   socket.on('pong', () => {
+    //     console.log("pong");
+    //     setLastPong(new Date().toISOString());
+    //   });
+
+    //   return () => {
+    //     socket.off('connect');
+    //     socket.off('disconnect');
+    //     socket.off('pong');
+    //   };
+    // }, []);
+
+
+
+
+    const gameContextValue: IGameContextProps = {
+        isConnected,
+        setIsConnected,
+        isInRoom,
+        setInRoom,
+        playerSymbol,
+        setPlayerSymbol,
+        isPlayerTurn,
+        setPlayerTurn,
+        isGameStarted,
+        setGameStarted,
+    };
+
+    console.log("About to re-render APP");
+
+    return (
+        <GameContext.Provider value={gameContextValue}>
+            <AppContainer>
+                <WelcomeText>Welcome to Tic-Tac-Toe</WelcomeText>
+                <DebugInfo/>
+                <MainContainer>
+                    {!isInRoom && <JoinRoom />}
+                    {isInRoom && <Game />}
+                </MainContainer>
+            </AppContainer>
+        </GameContext.Provider>
+    );
 }
 
 export default App;

@@ -1,13 +1,11 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import gameContext from "../../gameContext";
-import gameService from "../../services/gameService";
-import socketService from "../../services/socketService";
+import { GameService } from "../../services";
 
 const GameContainer = styled.div`
   display: flex;
   flex-direction: column;
-  font-family: "Zen Tokyo Zoo", cursive;
   position: relative;
 `;
 
@@ -42,9 +40,10 @@ const Cell = styled.div<ICellProps>`
   }
 `;
 
-const PlayStopper = styled.div`
+const GameControlOverlay = styled.div`
   width: 100%;
   height: 100%;
+  background-color: rgba(50, 50, 50, 0.5);
   position: absolute;
   bottom: 0;
   left: 0;
@@ -75,6 +74,7 @@ export interface IStartGame {
 }
 
 export function Game() {
+  console.log("About to re-render Game");
   const [matrix, setMatrix] = useState<IPlayMatrix>([
     [null, null, null],
     [null, null, null],
@@ -91,6 +91,7 @@ export function Game() {
   } = useContext(gameContext);
 
   const checkGameState = (matrix: IPlayMatrix) => {
+    console.log("running checkGameState()");
     for (let i = 0; i < matrix.length; i++) {
       let row = [];
       for (let j = 0; j < matrix[i].length; j++) {
@@ -138,6 +139,7 @@ export function Game() {
   };
 
   const updateGameMatrix = (column: number, row: number, symbol: "x" | "o") => {
+    console.log("running updateGameMatrix()");
     const newMatrix = [...matrix];
 
     if (newMatrix[row][column] === null || newMatrix[row][column] === "null") {
@@ -145,47 +147,52 @@ export function Game() {
       setMatrix(newMatrix);
     }
 
-    if (socketService.socket) {
-      gameService.updateGame(socketService.socket, newMatrix);
-      const [currentPlayerWon, otherPlayerWon] = checkGameState(newMatrix);
-      if (currentPlayerWon && otherPlayerWon) {
-        gameService.gameWin(socketService.socket, "The Game is a TIE!");
-        alert("The Game is a TIE!");
-      } else if (currentPlayerWon && !otherPlayerWon) {
-        gameService.gameWin(socketService.socket, "You Lost!");
-        alert("You Won!");
-      }
+    const gameService = GameService.Instance;
 
-      setPlayerTurn(false);
+    gameService.updateGame(newMatrix);
+    const [currentPlayerWon, otherPlayerWon] = checkGameState(newMatrix);
+    if (currentPlayerWon && otherPlayerWon) {
+      gameService.gameWin("The Game is a TIE!");
+      alert("The Game is a TIE!");
+    } else if (currentPlayerWon && !otherPlayerWon) {
+      gameService.gameWin("You Lost!");
+      setTimeout(() => alert("You Won!"), 1);
     }
+
+    setPlayerTurn(false);
   };
 
   const handleGameUpdate = () => {
-    if (socketService.socket)
-      gameService.onGameUpdate(socketService.socket, (newMatrix) => {
-        setMatrix(newMatrix);
-        checkGameState(newMatrix);
-        setPlayerTurn(true);
-      });
+    console.log("running handleGameUpdate()");
+    const gameService = GameService.Instance;
+    gameService.onGameUpdate((newMatrix) => {
+      setMatrix(newMatrix);
+      checkGameState(newMatrix);
+      setPlayerTurn(true);
+    });
   };
 
   const handleGameStart = () => {
-    if (socketService.socket)
-      gameService.onStartGame(socketService.socket, (options) => {
-        setGameStarted(true);
-        setPlayerSymbol(options.symbol);
-        if (options.start) setPlayerTurn(true);
-        else setPlayerTurn(false);
-      });
+    console.log("running handleGameStart()");
+    const gameService = GameService.Instance;
+    gameService.onStartGame((options) => {
+      console.log("About to start game with options: ", options);
+      setGameStarted(true);
+      setPlayerSymbol(options.symbol);
+      // if (options.start) setPlayerTurn(true);
+      // else setPlayerTurn(false);
+
+      setPlayerTurn(options.start);
+    });
   };
 
   const handleGameWin = () => {
-    if (socketService.socket)
-      gameService.onGameWin(socketService.socket, (message) => {
-        console.log("Here", message);
-        setPlayerTurn(false);
-        alert(message);
-      });
+    console.log("running handleGameWin()");
+    const gameService = GameService.Instance;
+    gameService.onGameWin((message) => {
+      setPlayerTurn(false);
+      setTimeout(() => alert(message), 1);
+    });
   };
 
   useEffect(() => {
@@ -199,12 +206,16 @@ export function Game() {
       {!isGameStarted && (
         <h2>Waiting for Other Player to Join to Start the Game!</h2>
       )}
-      {(!isGameStarted || !isPlayerTurn) && <PlayStopper />}
+      <p>isGameStarted: {isGameStarted.toString()}</p>
+      <p>isPlayerTurn: {isPlayerTurn.toString()}</p>
+      <p>playerSymbol: {playerSymbol.toString()}</p>
+      {(!isGameStarted || !isPlayerTurn) && <GameControlOverlay />}
       {matrix.map((row, rowIdx) => {
         return (
-          <RowContainer>
+          <RowContainer key={rowIdx}>
             {row.map((column, columnIdx) => (
               <Cell
+                key={columnIdx}
                 borderRight={columnIdx < 2}
                 borderLeft={columnIdx > 0}
                 borderBottom={rowIdx < 2}

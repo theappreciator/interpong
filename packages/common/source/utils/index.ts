@@ -1,0 +1,1 @@
+export const SanityCheck = () => console.log("SANITY");

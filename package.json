@@ -1,26 +1,36 @@
 {
   "name": "interpong",
-  "version": "0.0.1",
-  "description": "",
+  "description": "Balls bouncing around a multi-verse",
   "scripts": {
-    "start": "nodemon",
-    "deploy": "flyctl deploy",
-    "build": "cd frontend && npm run build"
+    "build": "npm run build -w packages/common && npm run build -w packages/client && npm run build -w packages/server",
+    "build:client": "npm run build -w packages/client",
+    "build:client:check": "npm run build:check -w packages/client",
+    "build:common": "npm run build -w packages/common",
+    "build:common:check": "npm run build:check -w packages/common",
+    "build:common:watch": "npm run build:watch -w packages/common",
+    "build:server": "npm run build -w packages/server",
+    "build:server:check": "npm run build:check -w packages/server",
+    "clean": "npm run clean -ws",
+    "clean:client": "npm run clean -w packages/client",
+    "clean:client:modules": "npm run clean:modules -w packages/client",
+    "clean:common": "npm run clean -w packages/common",
+    "clean:modules": "rm -rf node_modules && npm run clean:modules -ws -if-present",
+    "clean:server": "npm run clean -w packages/server",
+    "clean:server:modules": "npm run clean:modules -w packages/server",
+    "clean:package-lock": "rm -f package-lock.json && npm run clean:package-lock -ws",
+    "deploy-assets": "npm run build -w packages/client && rm -rf packages/server/public && cp -a packages/client/distribution packages/server/public",
+    "format:check": "prettier --list-different './packages/{client,common,server}/**/*.{js,ts,tsx}' './**/*.json'",
+    "format:fix": "prettier --write './packages/{client,common,server}/**/*.{js,ts,tsx}' './**/*.json'",
+    "install:client": "cd packages/client && npm install",
+    "install:server": "cd packages/server && npm install",
+    "start:dev": "concurrently --kill-others \"npm run build:common:watch\" \"npm run start:dev:server\" \"npm run start:dev:client\"",
+    "start:dev:client": "npm run start:dev -w packages/client",
+    "start:dev:server": "npm run start:dev -w packages/server",
+    "start:server": "npm run start -w packages/server"
   },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "cookie-parser": "~1.4.4",
-    "cors": "^2.8.5",
-    "debug": "~2.6.9",
-    "dotenv": "^16.0.3",
-    "express": "^4.17.1",
-    "glob": "^7.1.7",
-    "http-errors": "~1.6.3",
-    "jade": "~1.11.0",
-    "morgan": "~1.9.1",
-    "reflect-metadata": "^0.1.13",
-    "socket-controllers": "^0.0.5",
-    "socket.io": "^4.5.4"
-  }
+  "workspaces": [
+    "./packages/*"
+  ],
+  "author": "Jess Tucker",
+  "license": "ISC"
 }

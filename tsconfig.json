@@ -1,13 +1,9 @@
 {
-  "compilerOptions": {
-    "noImplicitAny": false,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "sourceMap": true,
-    "outDir": "dist",
-    "esModuleInterop": true
-  },
-  "include": [
-    "src"
-  ]
-}
+    "compilerOptions": {
+      "experimentalDecorators": true,
+      "paths": {
+        "@interpong/common": ["./packages/common/source"]
+      }
+    },
+    "extends": "./tsconfig.base.json"
+  }

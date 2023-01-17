@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@interpong/common": ["../common/source"]
+    }
+  },
+  "extends": "./tsconfig.server.json",
+}

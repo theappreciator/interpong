@@ -1,7 +1,0 @@
-{
-  "watch": ["src"],
-  "coulors": true,
-  "ext": "ts,json",
-  "ignore": ["src/**/*.spec.ts"],
-  "exec": "ts-node ./src/server"
-}

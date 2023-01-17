@@ -1,0 +1,7 @@
+{
+  "watch": ["source", "../common/source"],
+  "coulors": true,
+  "ext": "ts,json",
+  "ignore": ["source/**/*.spec.ts"],
+  "exec": "ts-node ./source/server"
+}

@@ -1,0 +1,14 @@
+{
+    "author": "Jess Tucker",
+    "license": "ISC",
+    "main": "distribution/index.js",
+    "name": "@interpong/common",
+    "scripts": {
+        "build": "npm run clean && tsc -p ./tsconfig.common.json",
+        "build:check": "tsc -p ./tsconfig.common.json --noEmit",
+        "build:watch": "tsc -p ./tsconfig.common.json --watch",
+        "clean": "rm -rf distribution",
+        "clean:package-lock": "rm -f package-lock.json"
+    },
+    "types": "distribution/index.d.ts"
+}

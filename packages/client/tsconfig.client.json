@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "build2",
+
+    "isolatedModules": true,
+    "jsx": "react-jsx"
+  },
+  
+  "include": [
+    "src/**/*"
+  ]
+}

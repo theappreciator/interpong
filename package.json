@@ -1,36 +1,45 @@
 {
   "name": "interpong",
   "description": "Balls bouncing around a multi-verse",
+  "main": "index.js",
   "scripts": {
-    "build": "npm run build -w packages/common && npm run build -w packages/client && npm run build -w packages/server",
-    "build:client": "npm run build -w packages/client",
-    "build:client:check": "npm run build:check -w packages/client",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "preinstall": "npm run clean:common",
+    "postinstall": "npm run build:common",
+    "build": "npm run build:common && npm run build:client && npm run build:server",
     "build:common": "npm run build -w packages/common",
-    "build:common:check": "npm run build:check -w packages/common",
-    "build:common:watch": "npm run build:watch -w packages/common",
+    "build:client": "npm run build -w packages/client",
     "build:server": "npm run build -w packages/server",
-    "build:server:check": "npm run build:check -w packages/server",
     "clean": "npm run clean -ws",
+    "clean:common": "npm run clean -w packages/common",
+    "clean:common:modules": "npm run clean:modules -w packages/common",
     "clean:client": "npm run clean -w packages/client",
     "clean:client:modules": "npm run clean:modules -w packages/client",
-    "clean:common": "npm run clean -w packages/common",
     "clean:modules": "rm -rf node_modules && npm run clean:modules -ws -if-present",
     "clean:server": "npm run clean -w packages/server",
     "clean:server:modules": "npm run clean:modules -w packages/server",
     "clean:package-lock": "rm -f package-lock.json && npm run clean:package-lock -ws",
-    "deploy-assets": "npm run build -w packages/client && rm -rf packages/server/public && cp -a packages/client/distribution packages/server/public",
-    "format:check": "prettier --list-different './packages/{client,common,server}/**/*.{js,ts,tsx}' './**/*.json'",
-    "format:fix": "prettier --write './packages/{client,common,server}/**/*.{js,ts,tsx}' './**/*.json'",
-    "install:client": "cd packages/client && npm install",
-    "install:server": "cd packages/server && npm install",
     "start:dev": "concurrently --kill-others \"npm run build:common:watch\" \"npm run start:dev:server\" \"npm run start:dev:client\"",
     "start:dev:client": "npm run start:dev -w packages/client",
     "start:dev:server": "npm run start:dev -w packages/server",
-    "start:server": "npm run start -w packages/server"
+    "start:server": "npm run start -w packages/server",
+    "nuke": "npm run clean && npm run clean:modules && npm run clean:package-lock && npm cache clear --force"
   },
+  "author": "Jess Tucker <jessjesstheappreciator@gmail.com>",
+  "license": "MIT",
   "workspaces": [
-    "./packages/*"
+    "./packages/common",
+    "./packages/client",
+    "./packages/server"
   ],
-  "author": "Jess Tucker",
-  "license": "ISC"
+  "devDependencies": {
+    "@types/babel__core": "^7.20.0",
+    "@types/jest": "^29.4.0",
+    "ts-jest": "^29.0.5"
+  },
+  "dependencies": {
+    "reflect-metadata": "^0.1.13",
+    "tsyringe": "^4.7.0"
+  }
 }

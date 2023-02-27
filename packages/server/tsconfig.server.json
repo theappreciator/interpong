@@ -1,9 +1,9 @@
 {
-    "compilerOptions": {
-      "outDir": "./distribution",
-      "experimentalDecorators": true,
-      "emitDecoratorMetadata": true
-    },
-    "extends": "../../tsconfig.base.json",
-    "include": ["source/**/*"]
-  }
+  "extends": "../../tsconfig.base.json",
+
+  "compilerOptions": {
+    "rootDir": "./source",
+    "outDir": "./distribution",
+  },
+  "include": ["source/**/*"]
+}

@@ -1,14 +1,17 @@
 {
-    "author": "Jess Tucker",
-    "license": "ISC",
+    "author": "Jess Tucker <jessjesstheappreciator@gmail.com>",
+    "license": "MIT",
     "main": "distribution/index.js",
     "name": "@interpong/common",
+    "version": "1.0.0",
     "scripts": {
-        "build": "npm run clean && tsc -p ./tsconfig.common.json",
+        "test": "cd ../../ && npm run test common --",
+        "test:coverage": "cd ../../ && npm run test:coverage -- common --collectCoverageFrom=./packages/common/source/**/*.ts",
+        "build": "npm run clean && tsc -p ./tsconfig.json",
         "build:check": "tsc -p ./tsconfig.common.json --noEmit",
-        "build:watch": "tsc -p ./tsconfig.common.json --watch",
         "clean": "rm -rf distribution",
+        "clean:modules": "rm -rf node_modules",
         "clean:package-lock": "rm -f package-lock.json"
-    },
+      },
     "types": "distribution/index.d.ts"
 }

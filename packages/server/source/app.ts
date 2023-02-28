@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from "cors";
-import "reflect-metadata";
+
 
 // var createError = require("http-errors");
 import createError from "http-errors";

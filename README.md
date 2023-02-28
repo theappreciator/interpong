@@ -2,6 +2,9 @@
 
 Balls bouncing around a multi-verse
 
+Adapted from: https://github.com/ipenywis/react-socketio-tic-tac-toe
+
+
 ## Setup
 
 ### Environment

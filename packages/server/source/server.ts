@@ -6,6 +6,7 @@
 
 import * as dotenv from 'dotenv'; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 dotenv.config();
+import "reflect-metadata";
 import app from "./app";
 var debug = require("debug")("socketio-server:server");
 import * as http from "http";
@@ -15,7 +16,7 @@ import socketServer from "./socket";
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || "9000");
+var port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);  
 
 /**

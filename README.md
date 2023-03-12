@@ -27,11 +27,11 @@ REACT_APP_SOCKET_SERVER_URL="http://localhost:3000";
 
 Mermaid test
 ```mermaid
-graph TD;
-    A-->B;
-    A-->C;
-    B-->D;
-    C-->D;
+sequenceDiagram
+    participant Alice
+    participant Bob
+    Alice->>Bob: Hi Bob
+    Bob->>Alice: Hi Alice
 ```
 
 The end

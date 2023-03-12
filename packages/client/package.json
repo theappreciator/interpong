@@ -1,48 +1,26 @@
 {
-  "author": "Jess Tucker <jessjesstheappreciator@gmail.com>",
-  "license": "MIT",
-  "name": "@interpong/client",
+  "name": "circle-monsters",
   "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "@interpong/common": "^1.0.0",
-    "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^18.11.18",
-    "@types/react": "^18.0.26",
-    "@types/react-dom": "^18.0.10",
-    "@types/styled-components": "^5.1.26",
-    "dotenv": "^16.0.3",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
-    "socket.io": "^4.5.4",
-    "socket.io-client": "^4.5.4",
-    "styled-components": "^5.3.6",
-    "typescript": "^4.9.4",
-    "web-vitals": "^2.1.4"
-  },
+  "description": "",
   "scripts": {
-    "start": "node distribution/index.js",
-    "start:dev": "react-scripts start",
-    "build": "npm run clean && react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "clean": "rm -rf build",
-    "clean:modules": "rm -rf node_modules",
-    "clean:package-lock": "rm -f package-lock.json"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "parcel serve src/index.html",
+    "watch": "parcel watch src/index.html"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.36.2",
+    "@typescript-eslint/parser": "^5.36.2",
+    "eslint": "^8.23.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "parcel": "^2.7.0",
+    "prettier": "^2.7.1",
+    "querystring-es3": "^0.2.1",
+    "typescript": "^4.8.2"
   },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not op_mini all"
-  ]
+  "dependencies": {
+    "pixi.js": "^6.5.2"
+  }
 }

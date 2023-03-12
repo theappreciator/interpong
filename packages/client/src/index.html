@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Circle Monsters</title>
+  </head>
+  <body>
+    <div id="main" class="main">
+      <div id="canvas"></div>
+      <div id="display">
+        <div id="score">Score:<span></span></div>
+        <div id="level">Level:<span></span></div>
+        <div id="combo">Multiplier:<span></span></div>
+        <div id="health">Health:<span></span></div>
+        <div id="status"></div>
+        <div id="actions"><button id="play">Play</button></div>
+        <button id="addMonster" style="visibility: hidden;">Add Monster</button>
+        <div id="fps">FPS:<span></span></div>
+      </div>
+    </div>
+    <script type="module" src="./index.ts"></script>
+  </body>
+  <style>
+    :root {
+      --width: 512px;
+      --height: 512px;
+    }
+
+    #main {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      margin: 0 auto;
+      width: var(--width);
+      height: var(--height);
+      font-size: 32px;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    canvas {
+      left: 0;
+      top: 0;
+      z-index: 10;
+      border: 1px solid #888;
+      margin-bottom: 40px;
+    }
+
+    #display {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: var(--width);
+    }
+
+    #score, #level, #combo, #health, #fps {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    #status {
+      text-align: center;
+    }
+
+    #actions {
+      text-align: center;
+      visibility: hidden
+    }
+
+  </style>
+</html>

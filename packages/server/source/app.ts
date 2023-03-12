@@ -1,12 +1,9 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from "cors";
-
-
-// var createError = require("http-errors");
 import createError from "http-errors";
-var path = require("path");
-var cookieParser = require("cookie-parser");
-var logger = require("morgan");
+import path from "path";
+import cookieParser from "cookie-parser";
+import logger from "morgan";
 
 
 var indexRouter = require("./routes/index");

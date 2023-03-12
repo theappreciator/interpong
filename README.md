@@ -23,3 +23,15 @@ PORT=3000;
 ```
 REACT_APP_SOCKET_SERVER_URL="http://localhost:3000";
 ```
+
+
+Mermaid test
+```mermaid
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
+```
+
+The end

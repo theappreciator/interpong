@@ -109,11 +109,15 @@ export class Board {
                 this._playerCollideWithMonster();
                 alreadyCollided = true;
             }
-            m.update(viewWidth, viewHeight);
             if (!alreadyCollided) {
+                m.update(viewWidth, viewHeight);
+
                 if (Collision.checkPlayerAndMonster(this._player, m)) {
                     this._playerCollideWithMonster();
                 }
+            }
+            else {
+                m.remove(this.app);
             }
         });
     }

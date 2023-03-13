@@ -43,6 +43,7 @@ export default class Player extends Circle {
         this._circle.y = app.view.height / 2;
         this._v = {x: 0, y: 0};
         this._speed = DEFAULTS.speed;
+        this._health = DEFAULTS.player.health;
     }
 
     update(viewWidth: number, viewHeight: number) {

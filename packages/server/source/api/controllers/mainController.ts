@@ -25,7 +25,6 @@ export class MainController {
       console.log("Data: ", data);
     });
 
-    console.log("About to listen for PING on socket [" + socket.id + "]");
     socket.on(SOCKET_EVENTS.PING, (data: any) => {
       console.log("ping");
       console.log("Sending pong");

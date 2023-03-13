@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { HealthStrategy } from '~/strategies/HealthStrategy';
+import { HealthStrategy } from '../strategies/HealthStrategy';
 import { DEFAULTS } from "../constants";
 import { MoveStrategy } from '../strategies/MoveStrategy';
 import { SpeedStrategy } from '../strategies/SpeedStrategy';
@@ -98,6 +98,7 @@ export default class Player extends Circle {
     }
 
     takeDamage() {
+        // There is a bug in the invulerable logic.  Multiple timers are getting triggered and causing real damage.
         if (!this._isInvulnerable) {
             this._healthStrategy.takeDamage(this);
 

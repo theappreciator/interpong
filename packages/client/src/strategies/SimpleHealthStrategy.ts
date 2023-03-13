@@ -1,4 +1,4 @@
-import { Player } from "~/sprites";
+import { Player } from "../sprites";
 import { HealthStrategy } from "./HealthStrategy";
 
 export class SimpleHealthStrategy implements HealthStrategy {

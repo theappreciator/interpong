@@ -291,7 +291,7 @@ let isPlaying = false;
 let controls: Controls;
 let board: Board;
 let frames: number = 0;
-let fpsInterval: number;
+let fpsInterval: NodeJS.Timer;
 const playButton: HTMLObjectElement | null = document.querySelector("#addMonster");
 if (playButton)
     playButton.addEventListener("click", () => board.addMonster());

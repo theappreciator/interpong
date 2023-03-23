@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { Circle } from "./";
+import { SoloMovementEvents } from './events';
 
 export default class Coin extends Circle {
     random(width: number, height: number) {
@@ -10,6 +11,8 @@ export default class Coin extends Circle {
     update(viewWidth: number, viewHeight: number) {
         let s = 1 + Math.sin(new Date().getTime() * 0.01) * 0.2;
         this._circle.scale.set(s, s);
+
+        return SoloMovementEvents.NONE;
     }
 
     reset(app: PIXI.Application) {

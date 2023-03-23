@@ -1,7 +1,8 @@
 import * as PIXI from 'pixi.js';
 import Collision from '../Collision';
 import { Vector } from '../types';
-import { Player, Coin, Monster} from '../sprites';
+import { Player, Coin, Monster, Ball } from '../sprites';
+import { SoloMovementEvents } from '../sprites/events';
 
 export interface BoardProps {
     width: number,
@@ -9,7 +10,8 @@ export interface BoardProps {
     backgroundColor: number,
     player: Player,
     coin: Coin,
-    monsters: Monster[];
+    monsters: Monster[],
+    ball: Ball,
     onPlayerCollideWithMonster: (continuePlaying: boolean) => void,
     onPlayerCollideWithCoin: () => void,
 }
@@ -26,9 +28,10 @@ export class Board {
     private _player: Player;
     private _coin: Coin;
     private _monsters: Monster[];
+    private _ball: Ball;
 
-    private _playerCollideWithMonster: () => void;
-    private _playerCollideWithCoin: (coin: Coin) => void;
+    private _playerCollideWithMonster: () => void = () => {};
+    private _playerCollideWithCoin: (coin: Coin) => void = () => {};
 
     private _score: number;
     private _level: number;
@@ -40,6 +43,7 @@ export class Board {
         player,
         coin,
         monsters,
+        ball,
         onPlayerCollideWithMonster,
         onPlayerCollideWithCoin
     }: BoardProps) {
@@ -49,27 +53,29 @@ export class Board {
         this._player = player;
         this._coin = coin;
         this._monsters = monsters;
+        this._ball = ball;
 
-        this._playerCollideWithMonster = () => {
-            console.log("Triggering collision with monster");
-            const isDead = this._player.takeDamage();
-            console.log("isDead?", isDead);
-            onPlayerCollideWithMonster(!isDead);
-        }
-        this._playerCollideWithCoin = (coin: Coin) => { 
-            console.log("Triggering collision with coin");
-            onPlayerCollideWithCoin();
-            coin.random(this._app.view.width, this._app.view.height);
-            this.addMonster();
-            this._player.speedUp();
-        }
+        // this._playerCollideWithMonster = () => {
+        //     console.log("Triggering collision with monster");
+        //     const isDead = this._player.takeDamage();
+        //     console.log("isDead?", isDead);
+        //     onPlayerCollideWithMonster(!isDead);
+        // }
+        // this._playerCollideWithCoin = (coin: Coin) => { 
+        //     console.log("Triggering collision with coin");
+        //     onPlayerCollideWithCoin();
+        //     coin.random(this._app.view.width, this._app.view.height);
+        //     this.addMonster();
+        //     this._player.speedUp();
+        // }
 
         this._app = new PIXI.Application({width, height, antialias:true});
         this._app.ticker.stop();
         this._app.renderer.backgroundColor = backgroundColor;
 
-        this._app.stage.addChild(this._player.getSpriteObj());
-        this._app.stage.addChild(this._coin.getSpriteObj());
+        // this._app.stage.addChild(this._player.getSpriteObj());
+        // this._app.stage.addChild(this._coin.getSpriteObj());
+        this._app.stage.addChild(this._ball.getSpriteObj());
         this._monsters.forEach(m => this._app.stage.addChild(m.getSpriteObj()));
     }
 
@@ -93,33 +99,44 @@ export class Board {
         const viewWidth = this.app.view.width;
         const viewHeight = this.app.view.height;
 
-        this._player.update(this._app.view.width, this._app.view.height);
-        if (Collision.checkPlayerAndCoin(this._player, this._coin)){
-            this._playerCollideWithCoin(this._coin);
+        // this._player.update(this._app.view.width, this._app.view.height);
+        // if (Collision.checkPlayerAndCoin(this._player, this._coin)){
+        //     this._playerCollideWithCoin(this._coin);
+        // }
+
+        // this._coin.update(this._app.view.width, this._app.view.height);
+        // if (Collision.checkPlayerAndCoin(this._player, this._coin)) {
+        //     this._playerCollideWithCoin(this._coin);
+        // }
+
+        // this._monsters.forEach(m => {
+        //     let alreadyCollided = false;
+        //     if (Collision.checkPlayerAndMonster(this._player, m)) {
+        //         this._playerCollideWithMonster();
+        //         alreadyCollided = true;
+        //     }
+        //     if (!alreadyCollided) {
+        //        m.update(viewWidth, viewHeight);
+
+        //         if (Collision.checkPlayerAndMonster(this._player, m)) {
+        //             this._playerCollideWithMonster();
+        //         }
+        //     }
+        //     else {
+        //         m.remove(this.app);
+        //     }
+        //});
+
+        const ballUpdatEvent = this._ball.update(viewWidth, viewHeight);
+        if (ballUpdatEvent != SoloMovementEvents.NONE) {
+            console.log("Movement event: " + ballUpdatEvent);
         }
-
-        this._coin.update(this._app.view.width, this._app.view.height);
-        if (Collision.checkPlayerAndCoin(this._player, this._coin)) {
-            this._playerCollideWithCoin(this._coin);
-        }
-
-        this._monsters.forEach(m => {
-            let alreadyCollided = false;
-            if (Collision.checkPlayerAndMonster(this._player, m)) {
-                this._playerCollideWithMonster();
-                alreadyCollided = true;
-            }
-            if (!alreadyCollided) {
-                m.update(viewWidth, viewHeight);
-
-                if (Collision.checkPlayerAndMonster(this._player, m)) {
-                    this._playerCollideWithMonster();
-                }
-            }
-            else {
-                m.remove(this.app);
-            }
-        });
+        // this._monsters.forEach(m => {
+        //     const monsterUpdateEvent = m.update(viewWidth, viewHeight);
+        //     if (monsterUpdateEvent != SoloMovementEvents.NONE) {
+        //         console.log("Movement event: " + monsterUpdateEvent);
+        //     }
+        // });
     }
 
     reset(): void {
@@ -158,6 +175,21 @@ export class Board {
         return {x, y};
     }
 
+    getRandomSpeedDirectionBall(color: number, radius: number) {
+        const randomCorner = this.getCornerPos();
+
+        const x = Math.min(Math.max(randomCorner.x, radius), this._app.view.width - radius);
+        const y = Math.min(Math.max(randomCorner.y, radius), this._app.view.height - radius);
+
+        const v: Vector = {
+            x: (2 + (Math.random() * 4)) * ((randomCorner.x <= radius) ? 1 : -1),
+            y: (2 + (Math.random() * 4)) * ((randomCorner.y <= radius) ? 1 : -1)
+        }
+
+        const ball = new Ball(color, radius, v, {x, y});
+        return ball;
+    }
+
     addMonster() {
         const radius = Math.random() * 10 + 10;
 
@@ -167,8 +199,8 @@ export class Board {
         const y = Math.min(Math.max(randomCorner.y, radius), this._app.view.height - radius);
 
         const v: Vector = {
-            x: (2 + (Math.random() * 2)) * ((randomCorner.x <= radius) ? 1 : -1),
-            y: (2 + (Math.random() * 2)) * ((randomCorner.y <= radius) ? 1 : -1)
+            x: (2 + (Math.random() * 4)) * ((randomCorner.x <= radius) ? 1 : -1),
+            y: (2 + (Math.random() * 4)) * ((randomCorner.y <= radius) ? 1 : -1)
         }
 
         const monster = new Monster(0x79a3b1, radius, v, {x, y});

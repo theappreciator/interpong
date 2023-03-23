@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { Vector } from '../types';
+import { SoloMovementEvents } from './events';
 import { Sprite } from './Sprite';
 
 export default abstract class Circle implements Sprite {
@@ -34,7 +35,7 @@ export default abstract class Circle implements Sprite {
         return this._circle;
     }
 
-    abstract update(viewwidth: number, viewHeight: number): void;
+    abstract update(viewwidth: number, viewHeight: number): SoloMovementEvents;
 
     reset(app: PIXI.Application) {
         app.stage.removeChild(this._circle);

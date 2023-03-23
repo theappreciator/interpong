@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { DEFAULTS } from './constants';
 import Controls from './Controls';
 import SimpleMoveStrategy from './strategies/SimpleMoveStrategy';
-import { Player, Coin, Monster } from './sprites';
+import { Player, Coin, Monster, Ball } from './sprites';
 import { Board, BoardProps } from './View/Board';
 import SimpleSpeedStrategy from './strategies/SimpleSpeedStrategy';
 import { SimpleHealthStrategy } from './strategies/SimpleHealthStrategy';
@@ -214,6 +214,7 @@ const playerCollideWithMonster = (continuePlaying: boolean) => {
 function initGameObjects() {
     const player = new Player(0xfcf8ec, 10, {x:0, y:0}, { x:0, y:0 }, new SimpleMoveStrategy(), new SimpleSpeedStrategy(), new SimpleHealthStrategy());
     const coin = new Coin(0xfcf8ec, 10, {x:0, y:0}, {x:0, y:0});
+    const ball = new Ball(0xe42e2e, 20, {x:6, y:7}, {x:0, y:0});
     const monsters: Monster[] = [];
     controls = new Controls(
         (e) => onkeydown(e, player),
@@ -227,6 +228,7 @@ function initGameObjects() {
         player,
         coin,
         monsters,
+        ball,
         onPlayerCollideWithMonster: playerCollideWithMonster,
         onPlayerCollideWithCoin: playerCollideWithCoin
     }
@@ -297,6 +299,7 @@ function startGame() {
 
     startFps();
 
+    // board.addMonster();
     board.app.ticker.add(gameLoop);
     board.app.ticker.start();
 }
@@ -388,7 +391,7 @@ const showElement = (selector:string) => {
     element?.classList.remove('hidden');
 }
 
-const transitionState = (nextState: string, preTransition:() => void = () => {}, postTransition:() => void = () => {}) => {
+const transitionState = (nextState: TransitionStates, preTransition:() => void = () => {}, postTransition:() => void = () => {}) => {
     preTransition();
 
     hideElement('state-' + currentState);
@@ -494,6 +497,8 @@ const joinRoom = async (e: MouseEvent) => {
 
 /* SETUP GLOBALS */ 
 
+type TransitionStates = "waiting_connect" | "game_room_selector" | "game_room_waiting" | "game_ready";
+
 let score: number;
 let level: number;
 let combo: number;
@@ -504,13 +509,22 @@ let frames: number = 0;
 let fpsInterval: NodeJS.Timer;
 
 let gameRoomController: SocketGameRoomController;
-let currentState = "waiting_connect";
+let currentState: TransitionStates = "waiting_connect";
 let thisPlayer: number;
 let currentPlayer: number;
 
 /* END GLOBALS */
 
-connectToServer();
+// connectToServer();
+
+// Dummy in the game board
+transitionState(
+    "game_ready",
+    () => { 
+        initGameObjects();
+        startGame();
+    }
+);
 
 // const playButton: HTMLObjectElement | null = document.querySelector("#addMonster");
 // if (playButton)

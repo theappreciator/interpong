@@ -5,6 +5,7 @@ import { MoveStrategy } from '../strategies/MoveStrategy';
 import { SpeedStrategy } from '../strategies/SpeedStrategy';
 import { Vector } from '../types';
 import { Circle } from "./";
+import { SoloMovementEvents } from './events';
 
 export class PlayerDeadError extends Error {
 
@@ -55,6 +56,8 @@ export default class Player extends Circle {
         this._circle.y = Math.min(Math.max(y, this._radius), viewHeight - this._radius);
 
         //console.log(this._circle.x, this._circle.y);
+
+        return SoloMovementEvents.NONE;
     }
 
     moveLeft() {

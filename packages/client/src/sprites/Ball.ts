@@ -1,7 +1,7 @@
 import { Circle } from './';
 import { SoloMovementEvents } from './events';
 
-export default class Monster extends Circle {
+export default class Ball extends Circle {
     update(viewWidth: number, viewHeight: number) {
 
         let returnMovementEvent = SoloMovementEvents.NONE;

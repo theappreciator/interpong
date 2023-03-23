@@ -6,6 +6,13 @@ import { Player, Coin, Monster } from './sprites';
 import { Board, BoardProps } from './View/Board';
 import SimpleSpeedStrategy from './strategies/SimpleSpeedStrategy';
 import { SimpleHealthStrategy } from './strategies/SimpleHealthStrategy';
+import { Socket } from "socket.io-client";
+import { DefaultEventsMap } from '@socket.io/component-emitter';
+import { SocketService } from "./services";
+import { start } from 'repl';
+import { IPlayData, IStartGame } from './types';
+import { SocketGameRoomController } from './controllers/';
+import { GAME_EVENTS } from '@interpong/common';
 
 
 
@@ -231,12 +238,26 @@ function initGameObjects() {
     level = 0;
     combo = 1;
 
-    document.querySelector("div#canvas")?.appendChild(board.app.view);
+    const canvasElement = document.getElementById("canvas");
+    canvasElement?.appendChild(board.app.view);
 
     const playButton: HTMLObjectElement | null = document.querySelector("#play");
     if (playButton)
         playButton.addEventListener("click", () => startGame());
 
+}
+
+function destroyGameObjects() {
+    console.log("Destroying game!");
+
+    gameOver();
+
+    // const canvasElement = document.getElementById("canvas");
+    // canvasElement?.removeChild(board.app.view);
+
+    // const playButton: HTMLObjectElement | null = document.querySelector("#play");
+    // if (playButton)
+    //     playButton.removeEventListener("click", () => startGame());
 }
 
 function gameLoop(delta: number): void {
@@ -254,6 +275,39 @@ function startGame() {
 
     updateLevel(1);
     updateHealth(board.player.health);
+
+    const gamePlayerButton = document.getElementById("game_ready-button");
+    if (gamePlayerButton) {
+        // gamePlayerButton.classList.add(`player${thisPlayer}`);
+        gamePlayerButton.addEventListener('click', () => {
+            if (currentPlayer === thisPlayer) {
+                console.log("Player clicked");
+                const playData: IPlayData = {
+                    position: {
+                        x: 1,
+                        y: 2
+                    },
+                    direction: {
+                        x: 3,
+                        y: 4
+                    }
+                };
+                changePlayer(playData)
+                gameRoomController.doGameFocusLeave(playData)
+            }
+        })
+    }
+
+    const gamePlayerLabel = document.getElementById("game_ready-player");
+    if (gamePlayerLabel)
+        gamePlayerLabel.innerText = `Player ${thisPlayer}`;
+
+    if (thisPlayer === 1) {
+        changePlayer1();
+    }
+    else {
+        changePlayer2();
+    }
 
     isPlaying = true;
     setupControls();
@@ -284,6 +338,209 @@ function endFps() {
 
 
 
+
+/* UI STUFF */
+
+const hideElement = (selector: string) => {
+    const element = document.getElementById(selector);
+    element?.classList.add('hidden');
+}
+
+const showElement = (selector:string) => {
+    const element = document.getElementById(selector);
+    element?.classList.remove('hidden');
+}
+
+const transitionState = (nextState: string, preTransition:() => void = () => {}, postTransition:() => void = () => {}) => {
+    preTransition();
+
+    hideElement('state-' + currentState);
+    showElement('state-' + nextState);
+    currentState = nextState;
+
+    postTransition();
+}
+
+/* END UI STUFF */
+
+// enum UI_STATES {
+//     INITIALIZING,
+//     INITIALIZED,
+//     CONNECTING_TO_SERVER,
+//     CONNECTED_TO_SERVER,
+//     CHOOSING_GAME_ROOM,
+//     CHOSE_GAME_ROOM,
+//     WAITING_FOR_PLAYER,
+//     FOUND_PLAYER,
+//     WAITING_TO_START_GAME,
+//     READY_TO_START_GAME,
+//     PLAYING_GAME,
+//     GAME_OVER
+// }
+
+// const validStateTransition = new Map<UI_STATES, UI_STATES[]>();
+// validStateTransition.set(UI_STATES.INITIALIZING, [UI_STATES.INITIALIZED]);
+// validStateTransition.set(UI_STATES.INITIALIZED, [UI_STATES.INITIALIZING, UI_STATES.CONNECTING_TO_SERVER]);
+// validStateTransition.set(UI_STATES.CONNECTING_TO_SERVER, [UI_STATES.INITIALIZED, UI_STATES.CONNECTED_TO_SERVER]);
+// validStateTransition.set(UI_STATES.CONNECTED_TO_SERVER, [UI_STATES.INITIALIZED, UI_STATES.CONNECTING_TO_SERVER, UI_STATES.CHOOSING_GAME_ROOM]);
+
+/* TRANSITION STUFF */
+
+/* END TRANSITION STUFF */
+
+// const setIsConnected = (isConnected: boolean) => {
+//     console.log("Setting is connected: ", isConnected);
+// }
+
+// const setSocket = (socket: Socket) => {
+//     console.log("Setting socket: ", socket);
+//     thisSocket = socket;
+// }
+
+const connectSocket = async () => {
+    const url = process.env.SOCKET_SERVER_URL;
+    if (!url) {
+        console.log("No url provided!");
+        return;
+    }
+
+    const isConnected = () => {
+        console.log("Firing index isConnected()");
+
+        transitionState("game_room_selector");
+    };
+
+    const isReConnected = () => {
+        console.log("Firing index isReConnected()");
+
+        // transitionState("game_room_selector");
+    };
+    
+    const isDisconnected = (e: any) => {
+        console.log("Firing index isDisconnected", e);
+
+        transitionState(
+            "waiting_connect",
+            destroyGameObjects
+        );
+    }
+
+    const networkService = SocketService.Instance;
+    gameRoomController = new SocketGameRoomController(url, networkService);
+    gameRoomController.onConnected(isConnected);
+    gameRoomController.onReConnected(isReConnected);
+    gameRoomController.onDisconnected(isDisconnected);
+    gameRoomController.connect();
+
+
+
+    // const socketService = SocketService.Instance;
+    // socketService.onConnected = isConnected;
+    // socketService.onDisconnected = isDisconnected;
+    // await socketService.connect(url)
+    // .then((socket) => {
+    //     console.log("Completed connecting to " + url);
+
+    //     transitionState(
+    //         "game_room_selector",
+    //         () => setSocket(socket)
+    //     );
+
+    // })
+    // .catch((err) => {
+    //     console.log("Error connecting:", err);
+    // });
+};
+
+const changePlayer = (playData: IPlayData) => {
+    
+    currentPlayer = (currentPlayer === 1) ? 2 : 1;
+
+
+    if (currentPlayer === 1) {
+        changePlayer1();
+    }
+    else {
+        changePlayer2();
+    }
+}
+
+const changePlayer1 = () => {
+    const playerLabel = document.getElementById("game_ready-current_player");
+    if (playerLabel)
+        playerLabel.innerText = "Turn: Player 1";    
+    
+    const gameButton = document.getElementById("game_ready-button");
+    if (gameButton) {
+        gameButton.classList.remove("player2");
+        gameButton.classList.add("player1");
+    }
+}
+
+const changePlayer2 = () => {
+    const playerLabel = document.getElementById("game_ready-current_player");
+    if (playerLabel)
+        playerLabel.innerText = "Turn: Player 2";    
+    
+    const gameButton = document.getElementById("game_ready-button");
+    if (gameButton) {
+        gameButton.classList.remove("player1");
+        gameButton.classList.add("player2");
+    }
+}
+
+const handleBoardIsAPlay = () => {
+    // GameService.Instance.
+}
+
+const joinRoom = async (e: MouseEvent) => {
+    e.preventDefault();
+
+    const gameRoomNameInput: HTMLInputElement | null = document.getElementById("game_room_selector-room_name") as HTMLInputElement | null;
+    if (gameRoomNameInput) {
+        const gameRoomName = gameRoomNameInput.value
+
+        if (gameRoomName) {
+            gameRoomController.onStartGame((options: IStartGame) => {
+                console.log("Firing onStartGame()");
+                thisPlayer = options.player;
+                currentPlayer = 1 // TODO: this needs to be controller server side
+                console.log("starting as player", thisPlayer);
+                transitionState(
+                    "game_ready",
+                    () => {},
+                    () => {
+                        gameRoomController.onGameFocusEnter((playData) => changePlayer(playData));
+                        initGameObjects();
+                        startGame();
+                    }
+                );
+            });
+
+            gameRoomController.onRoomReadyToStartGame((roomId: string) => {
+                console.log("The room is ready!", roomId);
+            });
+
+            await gameRoomController
+            .joinGameRoom(gameRoomName)
+            .then((joined) => {
+                if (joined) {
+                    transitionState(
+                        "game_room_waiting"
+                    );
+                }
+            })
+            .catch((err) => {
+                alert(err + ", Room Name: " + gameRoomName);
+            });
+        }
+    }
+};
+
+const gameRoomSelectorButton: HTMLElement | null = document.getElementById("game_room_selector-join_room");
+if (gameRoomSelectorButton)
+    gameRoomSelectorButton.addEventListener("click", joinRoom);
+
 let score: number;
 let level: number;
 let combo: number;
@@ -292,8 +549,86 @@ let controls: Controls;
 let board: Board;
 let frames: number = 0;
 let fpsInterval: NodeJS.Timer;
+// let thisSocket: Socket;
+let gameRoomController: SocketGameRoomController;
+connectSocket();
+let currentState = "waiting_connect";
+let thisPlayer: number;
+let currentPlayer: number;
+
 const playButton: HTMLObjectElement | null = document.querySelector("#addMonster");
 if (playButton)
     playButton.addEventListener("click", () => board.addMonster());
-initGameObjects();
-startGame();
+
+
+const gameButton = document.getElementById("game_ready-button");
+if (gameButton)
+    gameButton.addEventListener("click", () => handleBoardIsAPlay());
+
+
+// console.log("TEST");
+// let func1 = () => "1";
+// const func2 = () => func1;
+// const func3 = () => func1();
+// const func4 = (func: Function) => func;
+// const func5 = (func: Function) => func();
+
+// console.log("Output 1");
+// console.log(func1());
+
+// console.log("Output 2");
+// console.log(func2());
+
+// console.log("Output 3");
+// console.log(func3());
+
+// console.log("Output 4.1");
+// console.log(func4(func1));
+
+// console.log("Output 4.2");
+// console.log(func4(func2));
+
+// console.log("Output 4.3");
+// console.log(func4(func3));
+
+// console.log("Output 5.1");
+// console.log(func5(func1));
+
+// console.log("Output 5.2");
+// console.log(func5(func2));
+
+// console.log("Output 5.3");
+// console.log(func5(func3));
+
+// console.log("");
+
+// func1 = () => "2";
+
+// console.log("Output 1");
+// console.log(func1());
+
+// console.log("Output 2");
+// console.log(func2());
+
+// console.log("Output 3");
+// console.log(func3());
+
+// console.log("Output 4.1");
+// console.log(func4(func1));
+
+// console.log("Output 4.2");
+// console.log(func4(func2));
+
+// console.log("Output 4.3");
+// console.log(func4(func3));
+
+// console.log("Output 5.1");
+// console.log(func5(func1));
+
+// console.log("Output 5.2");
+// console.log(func5(func2));
+
+// console.log("Output 5.3");
+// console.log(func5(func3));
+
+// console.log("");

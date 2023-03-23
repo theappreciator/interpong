@@ -2,25 +2,59 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Circle Monsters</title>
+    <title>Interpong</title>
   </head>
   <body>
     <div id="main" class="main">
-      <div id="canvas"></div>
-      <div id="display">
-        <div id="score">Score:<span></span></div>
-        <div id="level">Level:<span></span></div>
-        <div id="combo">Multiplier:<span></span></div>
-        <div id="health">Health:<span></span></div>
-        <div id="status"></div>
-        <div id="actions"><button id="play">Play</button></div>
-        <button id="addMonster" style="visibility: hidden;">Add Monster</button>
-        <div id="fps">FPS:<span></span></div>
+      <div class="state" id="state-waiting_connect">
+        Waiting to connect...
+      </div>
+      <div class="state hidden" id="state-game_room_selector">
+        Choose a game room
+        <input id="game_room_selector-room_name" type="text" value="test_room"/>
+        <button id = "game_room_selector-join_room">Join</button>
+      </div>
+      <div class="state hidden" id="state-game_room_waiting">
+        Waiting for other player to join...
+      </div>
+      <div class="state hidden" id="state-game_ready">
+        <div id="game_ready-player"></div>
+        <div id="game_ready-current_player"></div>
+        <div id="game_ready-button">
+          
+        </div>
+        <div class="hidden">
+          <div id="canvas"></div>
+          <div id="display">
+            <div id="score">Score:<span></span></div>
+            <div id="level">Level:<span></span></div>
+            <div id="combo">Multiplier:<span></span></div>
+            <div id="health">Health:<span></span></div>
+            <div id="status"></div>
+            <div id="actions"><button id="play">Play</button></div>
+            <button id="addMonster" style="visibility: hidden;">Add Monster</button>
+            <div id="fps">FPS:<span></span></div>
+          </div>
+        </div>
       </div>
     </div>
     <script type="module" src="./index.ts"></script>
   </body>
   <style>
+
+    #game_ready-button {
+      width: 200px;
+      height: 200px;
+    }
+
+    .player1 {
+      background-color: #19914b;
+    }
+
+    .player2 {
+      background-color: #193193
+    }
+
     :root {
       --width: 512px;
       --height: 512px;
@@ -45,6 +79,37 @@
       margin-bottom: 40px;
     }
 
+    #state-waiting_connect {
+      margin-bottom: 20px;
+    }
+
+    #state-game_room_selector > input {
+      height: 30px;
+      width: 20em;
+      font-size: 17px;
+      outline: none;
+      border: 1px solid #19914b;
+      border-radius: 3px;
+      padding: 0 10px;
+    }
+
+    #state-game_room_selector > button {
+      outline: none;
+      background-color: #19914b;
+      color: #fff;
+      font-size: 17px;
+      border: 2px solid transparent;
+      border-radius: 5px;
+      padding: 4px 18px;
+      transition: all 230ms ease-in-out;
+      margin-top: 1em;
+      cursor: pointer;
+    }
+
+    #state-game_ready {
+      
+    }
+
     #display {
       display: flex;
       flex-direction: column;
@@ -64,6 +129,11 @@
     #actions {
       text-align: center;
       visibility: hidden
+    }
+
+    .hidden { 
+      visibility:hidden;
+      display:none;
     }
 
   </style>

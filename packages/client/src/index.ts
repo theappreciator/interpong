@@ -213,7 +213,6 @@ const playerCollideWithMonster = (continuePlaying: boolean) => {
 
 function initGameObjects() {
     const player = new Player(0xfcf8ec, 10, {x:0, y:0}, { x:0, y:0 }, new SimpleMoveStrategy(), new SimpleSpeedStrategy(), new SimpleHealthStrategy());
-    //player.speed = 4;
     const coin = new Coin(0xfcf8ec, 10, {x:0, y:0}, {x:0, y:0});
     const monsters: Monster[] = [];
     controls = new Controls(
@@ -276,27 +275,10 @@ function startGame() {
     updateLevel(1);
     updateHealth(board.player.health);
 
+    // Temporary player objects to validate socket connectivity
     const gamePlayerButton = document.getElementById("game_ready-button");
-    if (gamePlayerButton) {
-        // gamePlayerButton.classList.add(`player${thisPlayer}`);
-        gamePlayerButton.addEventListener('click', () => {
-            if (currentPlayer === thisPlayer) {
-                console.log("Player clicked");
-                const playData: IPlayData = {
-                    position: {
-                        x: 1,
-                        y: 2
-                    },
-                    direction: {
-                        x: 3,
-                        y: 4
-                    }
-                };
-                changePlayer(playData)
-                gameRoomController.doGameFocusLeave(playData)
-            }
-        })
-    }
+    if (gamePlayerButton)
+        gamePlayerButton.addEventListener("click", () => handleBoardIsAPlay());
 
     const gamePlayerLabel = document.getElementById("game_ready-player");
     if (gamePlayerLabel)
@@ -308,6 +290,7 @@ function startGame() {
     else {
         changePlayer2();
     }
+    // end temporary player objects
 
     isPlaying = true;
     setupControls();
@@ -336,126 +319,9 @@ function endFps() {
     clearInterval(fpsInterval);
 }
 
-
-
-
-/* UI STUFF */
-
-const hideElement = (selector: string) => {
-    const element = document.getElementById(selector);
-    element?.classList.add('hidden');
-}
-
-const showElement = (selector:string) => {
-    const element = document.getElementById(selector);
-    element?.classList.remove('hidden');
-}
-
-const transitionState = (nextState: string, preTransition:() => void = () => {}, postTransition:() => void = () => {}) => {
-    preTransition();
-
-    hideElement('state-' + currentState);
-    showElement('state-' + nextState);
-    currentState = nextState;
-
-    postTransition();
-}
-
-/* END UI STUFF */
-
-// enum UI_STATES {
-//     INITIALIZING,
-//     INITIALIZED,
-//     CONNECTING_TO_SERVER,
-//     CONNECTED_TO_SERVER,
-//     CHOOSING_GAME_ROOM,
-//     CHOSE_GAME_ROOM,
-//     WAITING_FOR_PLAYER,
-//     FOUND_PLAYER,
-//     WAITING_TO_START_GAME,
-//     READY_TO_START_GAME,
-//     PLAYING_GAME,
-//     GAME_OVER
-// }
-
-// const validStateTransition = new Map<UI_STATES, UI_STATES[]>();
-// validStateTransition.set(UI_STATES.INITIALIZING, [UI_STATES.INITIALIZED]);
-// validStateTransition.set(UI_STATES.INITIALIZED, [UI_STATES.INITIALIZING, UI_STATES.CONNECTING_TO_SERVER]);
-// validStateTransition.set(UI_STATES.CONNECTING_TO_SERVER, [UI_STATES.INITIALIZED, UI_STATES.CONNECTED_TO_SERVER]);
-// validStateTransition.set(UI_STATES.CONNECTED_TO_SERVER, [UI_STATES.INITIALIZED, UI_STATES.CONNECTING_TO_SERVER, UI_STATES.CHOOSING_GAME_ROOM]);
-
-/* TRANSITION STUFF */
-
-/* END TRANSITION STUFF */
-
-// const setIsConnected = (isConnected: boolean) => {
-//     console.log("Setting is connected: ", isConnected);
-// }
-
-// const setSocket = (socket: Socket) => {
-//     console.log("Setting socket: ", socket);
-//     thisSocket = socket;
-// }
-
-const connectSocket = async () => {
-    const url = process.env.SOCKET_SERVER_URL;
-    if (!url) {
-        console.log("No url provided!");
-        return;
-    }
-
-    const isConnected = () => {
-        console.log("Firing index isConnected()");
-
-        transitionState("game_room_selector");
-    };
-
-    const isReConnected = () => {
-        console.log("Firing index isReConnected()");
-
-        // transitionState("game_room_selector");
-    };
-    
-    const isDisconnected = (e: any) => {
-        console.log("Firing index isDisconnected", e);
-
-        transitionState(
-            "waiting_connect",
-            destroyGameObjects
-        );
-    }
-
-    const networkService = SocketService.Instance;
-    gameRoomController = new SocketGameRoomController(url, networkService);
-    gameRoomController.onConnected(isConnected);
-    gameRoomController.onReConnected(isReConnected);
-    gameRoomController.onDisconnected(isDisconnected);
-    gameRoomController.connect();
-
-
-
-    // const socketService = SocketService.Instance;
-    // socketService.onConnected = isConnected;
-    // socketService.onDisconnected = isDisconnected;
-    // await socketService.connect(url)
-    // .then((socket) => {
-    //     console.log("Completed connecting to " + url);
-
-    //     transitionState(
-    //         "game_room_selector",
-    //         () => setSocket(socket)
-    //     );
-
-    // })
-    // .catch((err) => {
-    //     console.log("Error connecting:", err);
-    // });
-};
-
 const changePlayer = (playData: IPlayData) => {
     
     currentPlayer = (currentPlayer === 1) ? 2 : 1;
-
 
     if (currentPlayer === 1) {
         changePlayer1();
@@ -490,8 +356,94 @@ const changePlayer2 = () => {
 }
 
 const handleBoardIsAPlay = () => {
-    // GameService.Instance.
+    if (currentPlayer === thisPlayer) {
+        console.log("Player clicked");
+        const playData: IPlayData = {
+            position: {
+                x: 1,
+                y: 2
+            },
+            direction: {
+                x: 3,
+                y: 4
+            }
+        };
+        changePlayer(playData)
+        gameRoomController.doGameFocusLeave(playData)
+    }
 }
+
+
+
+
+/* UI STUFF */
+
+const hideElement = (selector: string) => {
+    const element = document.getElementById(selector);
+    element?.classList.add('hidden');
+}
+
+const showElement = (selector:string) => {
+    const element = document.getElementById(selector);
+    element?.classList.remove('hidden');
+}
+
+const transitionState = (nextState: string, preTransition:() => void = () => {}, postTransition:() => void = () => {}) => {
+    preTransition();
+
+    hideElement('state-' + currentState);
+    showElement('state-' + nextState);
+    currentState = nextState;
+
+    postTransition();
+}
+
+/* END UI STUFF */
+
+/* GAME ROOM CONNECTIVITY */
+
+const connectToServer = async () => {
+    const url = process.env.SOCKET_SERVER_URL;
+    if (!url) {
+        console.log("No url provided!");
+        return;
+    }
+
+    const isConnected = () => {
+        console.log("Firing index isConnected()");
+
+        transitionState(
+            "game_room_selector",
+            () => {
+                const gameRoomSelectorButton: HTMLElement | null = document.getElementById("game_room_selector-join_room");
+                if (gameRoomSelectorButton)
+                    gameRoomSelectorButton.addEventListener("click", joinRoom);
+            }
+        );
+    };
+
+    const isReConnected = () => {
+        console.log("Firing index isReConnected()");
+
+        // transitionState("game_room_selector");
+    };
+    
+    const isDisconnected = (e: any) => {
+        console.log("Firing index isDisconnected", e);
+
+        transitionState(
+            "waiting_connect",
+            destroyGameObjects
+        );
+    }
+
+    const networkService = SocketService.Instance; // TODO: move this to dependency injection
+    gameRoomController = new SocketGameRoomController(url, networkService);
+    gameRoomController.onConnected(isConnected);
+    gameRoomController.onReConnected(isReConnected);
+    gameRoomController.onDisconnected(isDisconnected);
+    gameRoomController.connect();
+};
 
 const joinRoom = async (e: MouseEvent) => {
     e.preventDefault();
@@ -504,7 +456,7 @@ const joinRoom = async (e: MouseEvent) => {
             gameRoomController.onStartGame((options: IStartGame) => {
                 console.log("Firing onStartGame()");
                 thisPlayer = options.player;
-                currentPlayer = 1 // TODO: this needs to be controller server side
+                currentPlayer = 1 // TODO: this needs to be controlled server side
                 console.log("starting as player", thisPlayer);
                 transitionState(
                     "game_ready",
@@ -537,9 +489,10 @@ const joinRoom = async (e: MouseEvent) => {
     }
 };
 
-const gameRoomSelectorButton: HTMLElement | null = document.getElementById("game_room_selector-join_room");
-if (gameRoomSelectorButton)
-    gameRoomSelectorButton.addEventListener("click", joinRoom);
+/* END GAME ROOM CONNECTIVITY */
+
+
+/* SETUP GLOBALS */ 
 
 let score: number;
 let level: number;
@@ -549,86 +502,16 @@ let controls: Controls;
 let board: Board;
 let frames: number = 0;
 let fpsInterval: NodeJS.Timer;
-// let thisSocket: Socket;
+
 let gameRoomController: SocketGameRoomController;
-connectSocket();
 let currentState = "waiting_connect";
 let thisPlayer: number;
 let currentPlayer: number;
 
-const playButton: HTMLObjectElement | null = document.querySelector("#addMonster");
-if (playButton)
-    playButton.addEventListener("click", () => board.addMonster());
+/* END GLOBALS */
 
+connectToServer();
 
-const gameButton = document.getElementById("game_ready-button");
-if (gameButton)
-    gameButton.addEventListener("click", () => handleBoardIsAPlay());
-
-
-// console.log("TEST");
-// let func1 = () => "1";
-// const func2 = () => func1;
-// const func3 = () => func1();
-// const func4 = (func: Function) => func;
-// const func5 = (func: Function) => func();
-
-// console.log("Output 1");
-// console.log(func1());
-
-// console.log("Output 2");
-// console.log(func2());
-
-// console.log("Output 3");
-// console.log(func3());
-
-// console.log("Output 4.1");
-// console.log(func4(func1));
-
-// console.log("Output 4.2");
-// console.log(func4(func2));
-
-// console.log("Output 4.3");
-// console.log(func4(func3));
-
-// console.log("Output 5.1");
-// console.log(func5(func1));
-
-// console.log("Output 5.2");
-// console.log(func5(func2));
-
-// console.log("Output 5.3");
-// console.log(func5(func3));
-
-// console.log("");
-
-// func1 = () => "2";
-
-// console.log("Output 1");
-// console.log(func1());
-
-// console.log("Output 2");
-// console.log(func2());
-
-// console.log("Output 3");
-// console.log(func3());
-
-// console.log("Output 4.1");
-// console.log(func4(func1));
-
-// console.log("Output 4.2");
-// console.log(func4(func2));
-
-// console.log("Output 4.3");
-// console.log(func4(func3));
-
-// console.log("Output 5.1");
-// console.log(func5(func1));
-
-// console.log("Output 5.2");
-// console.log(func5(func2));
-
-// console.log("Output 5.3");
-// console.log(func5(func3));
-
-// console.log("");
+// const playButton: HTMLObjectElement | null = document.querySelector("#addMonster");
+// if (playButton)
+//     playButton.addEventListener("click", () => board.addMonster());

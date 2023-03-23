@@ -6,7 +6,7 @@ const getRooms = (rooms:Map<string, Set<string>>, requesterId?: string) => {
     const filteredRooms = new Map<string, Set<string>>();
 
     rooms.forEach((v, k) => {
-        if (requesterId && k !== requesterId) {
+        if (!requesterId || k !== requesterId) {
             filteredRooms.set(k, v);
         }
     });

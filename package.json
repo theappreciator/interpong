@@ -47,6 +47,6 @@
   },
   "dependencies": {
     "reflect-metadata": "^0.1.13",
-    "tsyringe": "^4.7.0"
+    "typedi": "^0.10.0"
   }
 }

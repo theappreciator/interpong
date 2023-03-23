@@ -2,6 +2,7 @@
   "name": "@interpong/server",
   "description": "",
   "main": "index.js",
+  "version": "1.0.0",
   "scripts": {
     "test": "cd ../../ && npm run test server",
     "test:coverage": "cd ../../ && npm run test:coverage -- server --collectCoverageFrom=./packages/server/source/**/*.ts",
@@ -25,6 +26,7 @@
     "@types/morgan": "^1.9.4",
     "@types/node": "^18.11.18",
     "@types/object-inspect": "^1.8.1",
+    "chalk": "^4.1.2",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
     "debug": "^4.3.4",
@@ -34,13 +36,14 @@
     "glob": "^8.1.0",
     "http-errors": "^2.0.0",
     "jade": "^1.11.0",
+    "log4js": "^6.7.1",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.21",
     "reflect-metadata": "^0.1.13",
-    "socket-controllers": "^0.0.5",
-    "socket.io": "^4.5.4",
+    "socket-controllers": "^0.1.2",
+    "socket.io": "^4.6.1",
     "ts-node": "^10.9.1",
-    "tsyringe": "^4.7.0",
+    "typedi": "^0.10.0",
     "typescript": "^4.9.4"
   }
 }

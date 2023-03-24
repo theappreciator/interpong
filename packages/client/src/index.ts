@@ -14,6 +14,7 @@ import { IPlayData, IStartGame, Vector } from './types';
 import { SocketGameRoomController } from './controllers/';
 import { GAME_EVENTS } from '@interpong/common';
 import { SoloMovementEvents, SpriteActions } from './sprites/events';
+import { TransferTypes } from './sprites/TransferBall';
 
 
 
@@ -213,20 +214,17 @@ const playerCollideWithMonster = (continuePlaying: boolean) => {
 }
 
 const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector) => {
-    if (movementEvent.includes(SoloMovementEvents.TRANSFERRED_RIGHT_WALL)) {
+    if ((thisPlayer === 1 && movementEvent.includes(SoloMovementEvents.TRANSFERRED_RIGHT_WALL)) ||
+        (thisPlayer === 2 && movementEvent.includes(SoloMovementEvents.TRANSFERRED_LEFT_WALL))) {
 
-        console.log("Transferred at right", position, direction);
+        console.log("Transferred", position, direction);
 
-        setTimeout(() => {
-            const newDirection = direction;
-            const newPosition = {
-                x: -20,
-                y: position.y
-            }
-            console.log("About to enter a new ball", newPosition, newDirection);
-            const ball = new TransferBall(Math.random()*16777215, 20, newDirection, newPosition, ["right"] );
-            board.addNewBall(ball);
-        }, 1);
+        const playData: IPlayData = {position, direction};
+        gameRoomController.doGameFocusLeave(playData);
+
+        // setTimeout(() => {
+        //     makeIncomingBall(position, direction);
+        // }, 1);
 
         return [SpriteActions.DESTROY];
     }
@@ -234,11 +232,27 @@ const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], pos
     return [];
 }
 
+const makeIncomingBall = (position: Vector, direction: Vector) => {
+    const newDirection = {
+        x: direction.x,
+        y: direction.y
+    };
+    const newPosition = {
+        x: thisPlayer === 1 ? 532 : -20,
+        y: position.y
+    }
+    const exitSide: TransferTypes = thisPlayer === 1 ? "right" : "left";
+
+    console.log("About to enter a new ball", newPosition, newDirection);
+    const ball = new TransferBall(0x22dd22, 20, newDirection, newPosition, [exitSide] );
+    board.addNewBall(ball);
+}
+
 function initGameObjects() {
     const player = new Player(0xfcf8ec, 10, {x:0, y:0}, { x:0, y:0 }, new SimpleMoveStrategy(), new SimpleSpeedStrategy(), new SimpleHealthStrategy());
     const coin = new Coin(0xfcf8ec, 10, {x:0, y:0}, {x:0, y:0});
     // const ball = new BouncingBall(0xe42e2e, 20, {x:6, y:7}, {x:0, y:0});
-    const ball = new TransferBall(0x42e2ef, 20, {x:2, y:3}, {x:300, y:200}, ["right"] );
+    const ball = thisPlayer === 1 ? new TransferBall(0x42e2ef, 20, {x:4, y:2}, {x:300, y:200}, ["right"] ) : undefined;
     const monsters: Monster[] = [];
     controls = new Controls(
         (e) => onkeydown(e, player),
@@ -258,7 +272,7 @@ function initGameObjects() {
         onMovementEvent: ballMovementEventDestroyOnExit
     }
     board = new Board(boardProps);
-    board.app.ticker.add((delta) => console.log("tick"));
+    //board.app.ticker.add((delta) => console.log("tick"));
 
     score = 0;
     level = 0;
@@ -322,7 +336,7 @@ function startGame() {
     isPlaying = true;
     setupControls();
 
-    startFps();
+    //startFps();
 
     // board.addMonster();
     board.app.ticker.add(gameLoop);
@@ -490,7 +504,10 @@ const joinRoom = async (e: MouseEvent) => {
                     "game_ready",
                     () => {},
                     () => {
-                        gameRoomController.onGameFocusEnter((playData) => changePlayer(playData));
+                        gameRoomController.onGameFocusEnter((playData) => {
+                            console.log("Received game focus event from server");
+                            makeIncomingBall(playData.position, playData.direction);
+                        });
                         initGameObjects();
                         startGame();
                     }
@@ -540,16 +557,16 @@ let currentPlayer: number;
 
 /* END GLOBALS */
 
-// connectToServer();
+connectToServer();
 
 // Dummy in the game board
-transitionState(
-    "game_ready",
-    () => { 
-        initGameObjects();
-        startGame();
-    }
-);
+// transitionState(
+//     "game_ready",
+//     () => { 
+//         initGameObjects();
+//         startGame();
+//     }
+// );
 
 // const playButton: HTMLObjectElement | null = document.querySelector("#addMonster");
 // if (playButton)

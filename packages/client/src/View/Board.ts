@@ -12,7 +12,7 @@ export interface BoardProps {
     player: Player,
     coin: Coin,
     monsters: Monster[],
-    ball: Ball,
+    ball?: Ball,
     // onPlayerCollideWithMonster: (continuePlaying: boolean) => void,
     // onPlayerCollideWithCoin: () => void,
     onMovementEvent: (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector) => SpriteActions[],
@@ -84,7 +84,8 @@ export class Board {
 
         // this._app.stage.addChild(this._player.getSpriteObj());
         // this._app.stage.addChild(this._coin.getSpriteObj());
-        this._app.stage.addChild(this._ball.getSpriteObj());
+        if (this._ball)
+            this._app.stage.addChild(this._ball.getSpriteObj());
         this._monsters.forEach(m => this._app.stage.addChild(m.getSpriteObj()));
     }
 

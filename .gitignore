@@ -5,3 +5,5 @@
 .cache
 .parcel-cache
 origcli
+client-old
+packages/server/client/

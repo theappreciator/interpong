@@ -35,7 +35,7 @@ export default abstract class Circle implements Sprite {
         return this._circle;
     }
 
-    abstract update(viewwidth: number, viewHeight: number): SoloMovementEvents;
+    abstract update(viewwidth: number, viewHeight: number): SoloMovementEvents[];
 
     reset(app: PIXI.Application) {
         app.stage.removeChild(this._circle);
@@ -57,10 +57,7 @@ export default abstract class Circle implements Sprite {
     }
 
     getCollisionCenter(): Vector {
-        return {
-            x: this._circle.x,
-            y: this._circle.y
-        }
+        return this.center;
     }
 
     get circle(): PIXI.Graphics {
@@ -73,5 +70,12 @@ export default abstract class Circle implements Sprite {
 
     get v(): Vector {
         return this._v;
+    }
+
+    get center(): Vector {
+        return {
+            x: this._circle.x,
+            y: this._circle.y
+        }
     }
 }

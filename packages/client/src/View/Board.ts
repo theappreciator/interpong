@@ -1,8 +1,9 @@
 import * as PIXI from 'pixi.js';
 import Collision from '../Collision';
-import { Vector } from '../types';
+import { IPlayData, Vector } from '../types';
 import { Player, Coin, Monster, Ball } from '../sprites';
-import { SoloMovementEvents } from '../sprites/events';
+import { SoloMovementEvents, SpriteActions } from '../sprites/events';
+import { Sprite } from 'pixi.js';
 
 export interface BoardProps {
     width: number,
@@ -12,8 +13,9 @@ export interface BoardProps {
     coin: Coin,
     monsters: Monster[],
     ball: Ball,
-    onPlayerCollideWithMonster: (continuePlaying: boolean) => void,
-    onPlayerCollideWithCoin: () => void,
+    // onPlayerCollideWithMonster: (continuePlaying: boolean) => void,
+    // onPlayerCollideWithCoin: () => void,
+    onMovementEvent: (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector) => SpriteActions[],
 }
 
 enum Corners {
@@ -28,10 +30,12 @@ export class Board {
     private _player: Player;
     private _coin: Coin;
     private _monsters: Monster[];
-    private _ball: Ball;
+    private _ball?: Ball;
 
     private _playerCollideWithMonster: () => void = () => {};
     private _playerCollideWithCoin: (coin: Coin) => void = () => {};
+
+    private _movementEvent: (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector) => SpriteActions[] = () => [];
 
     private _score: number;
     private _level: number;
@@ -44,8 +48,9 @@ export class Board {
         coin,
         monsters,
         ball,
-        onPlayerCollideWithMonster,
-        onPlayerCollideWithCoin
+        // onPlayerCollideWithMonster,
+        // onPlayerCollideWithCoin,
+        onMovementEvent
     }: BoardProps) {
         this._score = 0;
         this._level = 0;
@@ -68,6 +73,10 @@ export class Board {
         //     this.addMonster();
         //     this._player.speedUp();
         // }
+
+        this._movementEvent = (movementEvent, position, direction) => {
+            return onMovementEvent(movementEvent, position, direction);
+        }
 
         this._app = new PIXI.Application({width, height, antialias:true});
         this._app.ticker.stop();
@@ -127,16 +136,16 @@ export class Board {
         //     }
         //});
 
-        const ballUpdatEvent = this._ball.update(viewWidth, viewHeight);
-        if (ballUpdatEvent != SoloMovementEvents.NONE) {
-            console.log("Movement event: " + ballUpdatEvent);
+        if (this._ball) {
+            const ballMovementEvents = this._ball.update(viewWidth, viewHeight) || [];
+            if (ballMovementEvents.length > 0) {
+                const spriteActions = this._movementEvent(ballMovementEvents, this._ball.center, this._ball.v);
+                if (spriteActions.includes(SpriteActions.DESTROY)) {
+                    this._ball.remove(this.app);
+                    this._ball = undefined;
+                }
+            }
         }
-        // this._monsters.forEach(m => {
-        //     const monsterUpdateEvent = m.update(viewWidth, viewHeight);
-        //     if (monsterUpdateEvent != SoloMovementEvents.NONE) {
-        //         console.log("Movement event: " + monsterUpdateEvent);
-        //     }
-        // });
     }
 
     reset(): void {
@@ -175,19 +184,9 @@ export class Board {
         return {x, y};
     }
 
-    getRandomSpeedDirectionBall(color: number, radius: number) {
-        const randomCorner = this.getCornerPos();
-
-        const x = Math.min(Math.max(randomCorner.x, radius), this._app.view.width - radius);
-        const y = Math.min(Math.max(randomCorner.y, radius), this._app.view.height - radius);
-
-        const v: Vector = {
-            x: (2 + (Math.random() * 4)) * ((randomCorner.x <= radius) ? 1 : -1),
-            y: (2 + (Math.random() * 4)) * ((randomCorner.y <= radius) ? 1 : -1)
-        }
-
-        const ball = new Ball(color, radius, v, {x, y});
-        return ball;
+    addNewBall(ball: Ball) {
+        this._ball = ball;
+        this._app.stage.addChild(this._ball.getSpriteObj());
     }
 
     addMonster() {

@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { DEFAULTS } from './constants';
 import Controls from './Controls';
 import SimpleMoveStrategy from './strategies/SimpleMoveStrategy';
-import { Player, Coin, Monster, Ball } from './sprites';
+import { Player, Coin, Monster, BouncingBall, TransferBall } from './sprites';
 import { Board, BoardProps } from './View/Board';
 import SimpleSpeedStrategy from './strategies/SimpleSpeedStrategy';
 import { SimpleHealthStrategy } from './strategies/SimpleHealthStrategy';
@@ -10,9 +10,10 @@ import { Socket } from "socket.io-client";
 import { DefaultEventsMap } from '@socket.io/component-emitter';
 import { SocketService } from "./services";
 import { start } from 'repl';
-import { IPlayData, IStartGame } from './types';
+import { IPlayData, IStartGame, Vector } from './types';
 import { SocketGameRoomController } from './controllers/';
 import { GAME_EVENTS } from '@interpong/common';
+import { SoloMovementEvents, SpriteActions } from './sprites/events';
 
 
 
@@ -211,10 +212,33 @@ const playerCollideWithMonster = (continuePlaying: boolean) => {
     }
 }
 
+const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector) => {
+    if (movementEvent.includes(SoloMovementEvents.TRANSFERRED_RIGHT_WALL)) {
+
+        console.log("Transferred at right", position, direction);
+
+        setTimeout(() => {
+            const newDirection = direction;
+            const newPosition = {
+                x: -20,
+                y: position.y
+            }
+            console.log("About to enter a new ball", newPosition, newDirection);
+            const ball = new TransferBall(Math.random()*16777215, 20, newDirection, newPosition, ["right"] );
+            board.addNewBall(ball);
+        }, 1);
+
+        return [SpriteActions.DESTROY];
+    }
+
+    return [];
+}
+
 function initGameObjects() {
     const player = new Player(0xfcf8ec, 10, {x:0, y:0}, { x:0, y:0 }, new SimpleMoveStrategy(), new SimpleSpeedStrategy(), new SimpleHealthStrategy());
     const coin = new Coin(0xfcf8ec, 10, {x:0, y:0}, {x:0, y:0});
-    const ball = new Ball(0xe42e2e, 20, {x:6, y:7}, {x:0, y:0});
+    // const ball = new BouncingBall(0xe42e2e, 20, {x:6, y:7}, {x:0, y:0});
+    const ball = new TransferBall(0x42e2ef, 20, {x:2, y:3}, {x:300, y:200}, ["right"] );
     const monsters: Monster[] = [];
     controls = new Controls(
         (e) => onkeydown(e, player),
@@ -229,8 +253,9 @@ function initGameObjects() {
         coin,
         monsters,
         ball,
-        onPlayerCollideWithMonster: playerCollideWithMonster,
-        onPlayerCollideWithCoin: playerCollideWithCoin
+        // onPlayerCollideWithMonster: playerCollideWithMonster,
+        // onPlayerCollideWithCoin: playerCollideWithCoin,
+        onMovementEvent: ballMovementEventDestroyOnExit
     }
     board = new Board(boardProps);
     board.app.ticker.add((delta) => console.log("tick"));

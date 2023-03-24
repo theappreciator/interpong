@@ -57,7 +57,7 @@ export default class Player extends Circle {
 
         //console.log(this._circle.x, this._circle.y);
 
-        return SoloMovementEvents.NONE;
+        return [];
     }
 
     moveLeft() {

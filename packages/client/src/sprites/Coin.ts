@@ -12,7 +12,7 @@ export default class Coin extends Circle {
         let s = 1 + Math.sin(new Date().getTime() * 0.01) * 0.2;
         this._circle.scale.set(s, s);
 
-        return SoloMovementEvents.NONE;
+        return [];
     }
 
     reset(app: PIXI.Application) {

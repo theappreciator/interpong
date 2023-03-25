@@ -9,7 +9,7 @@ RUN mkdir /full-source
 WORKDIR /full-source
 COPY . .
 ENV NODE_ENV production
-RUN npm ci
+RUN npm install
 RUN npm run ci:create-app
 
 #######################################################################
@@ -51,6 +51,7 @@ ARG NODE_VERSION
 ARG NODE_ENV
 
 LABEL fly_launch_runtime="nodejs"
+EXPOSE 3000
 
 # Copy in Volta for global npm access
 COPY --from=bundler /root/.volta /root/.volta
@@ -64,4 +65,4 @@ ENV NODE_ENV ${NODE_ENV}
 WORKDIR /app
 
 # Start our application with the server's package.json's version of "npm run start"
-CMD [ "npm", "run", "start:dev" ]
+CMD [ "npm", "run", "start:server:ci-stop-gap" ]

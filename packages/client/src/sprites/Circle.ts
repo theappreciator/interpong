@@ -1,81 +1,81 @@
 import * as PIXI from 'pixi.js';
-import { Vector } from '../types';
+import { ICircle } from '.';
+import { Vector } from '@interpong/common';
 import { SoloMovementEvents } from './events';
+import Shape from './Shape';
 import { Sprite } from './Sprite';
 
-export default abstract class Circle implements Sprite {
+export default class Circle extends Shape implements ICircle {
     protected _radius: number;
-    protected _v: Vector;
-    protected _circle: PIXI.Graphics;
-    protected _color: number;
 
-    constructor(color: number, radius: number, v: Vector, startPos: Vector | undefined) {
-        this._radius = radius;
-        this._v = v;
-        this._color = color;
+    constructor(color: number, radius: number, v: Vector, startPos: Vector) {
 
         let circle = new PIXI.Graphics();
         circle.x = startPos?.x || 0 + radius;
         circle.y = startPos?.y || 0 + radius;
-        this._circle = circle;
-
-        this.updateCircle(this._color);        
-    }
-
-    updateCircle(color: number) {
-        this._circle.clear();
-        this._circle
+        circle
             .beginFill(color)
-            .drawCircle(0, 0, this._radius)
+            .drawCircle(0, 0, radius)
             .endFill();
 
+        super(circle, color, v, startPos);
+
+        this._radius = radius;
+
+        // this.updateCircle();        
     }
 
-    getSpriteObj(): PIXI.Graphics {
-        return this._circle;
-    }
+    updateShape(position?: Vector, color?: number, radius?: number) {
+        let updatedPosition: Vector;
+        if (position) {
+            updatedPosition = {...position}
+        }
+        else {
+            updatedPosition = {
+                x:this._shape.x,
+                y:this._shape.y
+            }
+        }
 
-    abstract update(viewwidth: number, viewHeight: number): SoloMovementEvents[];
+        if (color) {
+            this._color = color;
+        }
 
-    reset(app: PIXI.Application) {
-        app.stage.removeChild(this._circle);
-    }
+        if (radius) {
+            this._radius = radius;
+        }
 
-    remove(app: PIXI.Application) {
-        app.stage.removeChild(this._circle);
-    }
-
-    isCollided(other: Sprite) {
-        const otherCenter = other.getCollisionCenter();
-        let dx = otherCenter.x - this._circle.x;
-        let dy = otherCenter.y - this._circle.y;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-
-        const centerToCenter = this._radius + other.radius;
-
-        return dist < centerToCenter;
-    }
-
-    getCollisionCenter(): Vector {
-        return this.center;
-    }
-
-    get circle(): PIXI.Graphics {
-        return this._circle;
+        this._shape.clear()
+            .beginFill(this._color)
+            .drawCircle(updatedPosition.x, updatedPosition.y, this._radius)
+            .endFill();
     }
 
     get radius(): number {
         return this._radius;
     }
 
-    get v(): Vector {
-        return this._v;
+    update(viewWidth: number, viewHeight: number) {
+        let returnMovementEvent: SoloMovementEvents[] = [];
+
+        return [];
     }
 
-    get center(): Vector {
-        return {
-            x: this._circle.x,
-            y: this._circle.y
-        }
+    isCollided(other: Sprite) {
+        const otherCenter = other.getCollisionCenter();
+        let dx = otherCenter.x - this._shape.x;
+        let dy = otherCenter.y - this._shape.y;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+
+        //const centerToCenter = this._radius + other.radius;
+
+        //return dist < centerToCenter;
+
+        return false;
     }
+
+    getCollisionCenter(): Vector {
+        return this.center;
+    }
+    
 }

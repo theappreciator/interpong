@@ -1,4 +1,4 @@
-import Player from "../sprites/Player";
+import Player from "../sprites/RectanglePlayer";
 import { SpeedStrategy } from "./SpeedStrategy";
 
 const MIN_SPEED = 1;

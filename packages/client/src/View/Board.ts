@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import Collision from '../Collision';
-import { IPlayData, Vector } from '../types';
-import { Player, Coin, Monster, Ball } from '../sprites';
+import { IPlayData, Vector } from '@interpong/common';
+import { Player, Coin, Monster, BallType } from '../sprites';
 import { SoloMovementEvents, SpriteActions } from '../sprites/events';
 import { Sprite } from 'pixi.js';
 
@@ -12,7 +12,7 @@ export interface BoardProps {
     player: Player,
     coin: Coin,
     monsters: Monster[],
-    ball?: Ball,
+    ball?: BallType,
     // onPlayerCollideWithMonster: (continuePlaying: boolean) => void,
     // onPlayerCollideWithCoin: () => void,
     onMovementEvent: (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector) => SpriteActions[],
@@ -30,7 +30,7 @@ export class Board {
     private _player: Player;
     private _coin: Coin;
     private _monsters: Monster[];
-    private _ball?: Ball;
+    private _ball?: BallType;
 
     private _playerCollideWithMonster: () => void = () => {};
     private _playerCollideWithCoin: (coin: Coin) => void = () => {};
@@ -185,7 +185,7 @@ export class Board {
         return {x, y};
     }
 
-    addNewBall(ball: Ball) {
+    addNewBall(ball: BallType) {
         this._ball = ball;
         this._app.stage.addChild(this._ball.getSpriteObj());
     }

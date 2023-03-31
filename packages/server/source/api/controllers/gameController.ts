@@ -1,4 +1,4 @@
-import { GAME_EVENTS } from "@interpong/common";
+import { GAME_EVENTS, IPlayData, IScoreData } from "@interpong/common";
 import {
     ConnectedSocket,
     MessageBody,
@@ -39,7 +39,7 @@ export class GameController {
     public async updateGame(
         @SocketIO() io: Server,
         @ConnectedSocket() socket: Socket,
-        @MessageBody() message: any
+        @MessageBody() message: IPlayData
     ) {
         const roomId = getRoomForSocket(socket);
 
@@ -49,6 +49,23 @@ export class GameController {
         }
         else {
             console.log("Error updateGame()");
+        }
+    }
+
+    @OnMessage(GAME_EVENTS.UPDATE_SCORE)
+    public async updateScore(
+        @SocketIO() io: Server,
+        @ConnectedSocket() socket: Socket,
+        @MessageBody() message: IScoreData
+    ) {
+        const roomId = getRoomForSocket(socket);
+
+        if (roomId) {
+            logger.info(chalk.cyan(`Sending game score:  ${roomId}: [ player:${message.player} score:${message.score} diff:${message.scoreDiff}]`));
+            socket.to(roomId).emit(GAME_EVENTS.ON_UPDATE_SCORE, message);
+        }
+        else {
+            console.log("Error updateScore()");
         }
     }
 

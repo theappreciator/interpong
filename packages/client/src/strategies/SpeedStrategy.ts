@@ -1,4 +1,4 @@
-import Player from "../sprites/Player";
+import Player from "../sprites/RectanglePlayer";
 
 export interface SpeedStrategy {
     increment: (player: Player) => void;

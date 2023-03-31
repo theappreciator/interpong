@@ -7,6 +7,7 @@
     "test": "cd ../../ && npm run test server",
     "test:coverage": "cd ../../ && npm run test:coverage -- server --collectCoverageFrom=./packages/server/source/**/*.ts",
     "start": "npm run build && node distribution/server.js",
+    "start:prod": "node distribution/server.js",
     "start:dev": "nodemon",
     "start:ci-stop-gap": "ts-node ./source/server",
     "build": "npm run clean && tsc -p ./tsconfig.server.json",

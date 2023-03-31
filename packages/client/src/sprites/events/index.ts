@@ -10,5 +10,5 @@ export enum SoloMovementEvents {
 }
 
 export enum SpriteActions {
-    DESTROY
+    DESTROY = 1
 }

@@ -18,20 +18,15 @@
         Waiting for other player to join...
       </div>
       <div class="state hidden" id="state-game_ready">
-        <div class="hidden">
-          <div id="game_ready-player"></div>
-          <div id="game_ready-current_player"></div>
-          <div id="game_ready-button">
-            
-          </div>
-        </div>
         <div class="">
           <div id="canvas"></div>
           <div id="display">
+            <div id="game_ready-player"></div>
+            <div id="game_ready-current_player"></div>
             <div id="score">Score:<span></span></div>
-            <div id="level">Level:<span></span></div>
-            <div id="combo">Multiplier:<span></span></div>
-            <div id="health">Health:<span></span></div>
+            <div id="level" class="hidden">Level:<span></span></div>
+            <div id="combo" class="hidden">Multiplier:<span></span></div>
+            <div id="health" class="hidden">Health:<span></span></div>
             <div id="status"></div>
             <div id="actions"><button id="play">Play</button></div>
             <button id="addMonster" style="visibility: hidden;">Add Monster</button>

@@ -1,9 +1,12 @@
 **/node_modules
+**/node_modules.nosync
 **/build
 **/distribution
 **/dist
 .cache
+.cache.nosync
 .parcel-cache
+.parcel-cache.nosync
 origcli
 client-old
 packages/server/client/

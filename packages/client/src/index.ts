@@ -3,27 +3,30 @@ import { DEFAULTS } from './constants';
 import Controls from './Controls';
 import SimpleMoveStrategy from './strategies/SimpleMoveStrategy';
 import { Player, Coin, Monster, BouncingBall, TransferBall } from './sprites';
-import { Board, BoardProps } from './View/Board';
+import { BasicBoard, BasicBoardProps } from './View/BasicBoard';
 import SimpleSpeedStrategy from './strategies/SimpleSpeedStrategy';
 import { SimpleHealthStrategy } from './strategies/SimpleHealthStrategy';
 import { Socket } from "socket.io-client";
 import { DefaultEventsMap } from '@socket.io/component-emitter';
 import { SocketService } from "./services";
 import { start } from 'repl';
-import { IPlayData, IStartGame, Vector } from './types';
+import { IPlayData, IScoreData, IStartGame, Vector } from '@interpong/common';
 import { SocketGameRoomController } from './controllers/';
 import { GAME_EVENTS } from '@interpong/common';
 import { SoloMovementEvents, SpriteActions } from './sprites/events';
 import { TransferTypes } from './sprites/TransferBall';
+import RectanglePlayer from './sprites/RectanglePlayer';
+import UpDownMoveStrategy from './strategies/UpDownMoveStrategy';
+import { Sprite } from 'pixi.js';
 
 
 
-function shake(app: PIXI.Application, className: string) {
-    return;
+// function shake(app: PIXI.Application, className: string) {
+//     return;
 
-   app.view.className = className;
-   setTimeout(()=>{app.view.className = ""}, 50);
-}
+//    app.view.className = className;
+//    setTimeout(()=>{app.view.className = ""}, 50);
+// }
 
 function onkeydown(ev: KeyboardEvent, player: Player) {
     switch (ev.key) {
@@ -213,7 +216,7 @@ const playerCollideWithMonster = (continuePlaying: boolean) => {
     }
 }
 
-const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector) => {
+const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector): SpriteActions[] => {
     if ((thisPlayer === 1 && movementEvent.includes(SoloMovementEvents.TRANSFERRED_RIGHT_WALL)) ||
         (thisPlayer === 2 && movementEvent.includes(SoloMovementEvents.TRANSFERRED_LEFT_WALL))) {
 
@@ -226,10 +229,51 @@ const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], pos
         //     makeIncomingBall(position, direction);
         // }, 1);
 
-        return [SpriteActions.DESTROY];
+        const actions: SpriteActions[] = [];
+        actions.push(SpriteActions.DESTROY);
+        return [...actions];
     }
 
     return [];
+}
+
+const ballMovementEventScoreOtherPlayer = (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector): SpriteActions[] => {
+    if ((thisPlayer === 1 && movementEvent.includes(SoloMovementEvents.HIT_LEFT_WALL)) ||
+        (thisPlayer === 2 && movementEvent.includes(SoloMovementEvents.HIT_RIGHT_WALL))) {
+
+        const scoreDiff = DEFAULTS.score.increment;
+        const newScore = score + scoreDiff;
+        const scoreData: IScoreData = {
+            player: thisPlayer,
+            score: newScore,
+            scoreDiff: scoreDiff
+        }
+        gameRoomController.doGameScoreChange(scoreData);
+        updateScore(newScore);
+    }
+
+    return [];
+}
+
+
+
+const ballMovementEvents = (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector): SpriteActions[] => {
+    let actions: SpriteActions[] = [];
+
+
+    if (movementEvent.includes(SoloMovementEvents.TRANSFERRED_RIGHT_WALL) || movementEvent.includes(SoloMovementEvents.TRANSFERRED_LEFT_WALL)) {
+        const newActions = ballMovementEventDestroyOnExit(movementEvent, position, direction)
+        actions = [...newActions];
+    }
+    else if (movementEvent.includes(SoloMovementEvents.HIT_LEFT_WALL) || movementEvent.includes(SoloMovementEvents.HIT_RIGHT_WALL)) {
+        actions = [...(ballMovementEventScoreOtherPlayer(movementEvent, position, direction))];
+    }
+
+    return actions;
+}
+
+const handleScoreChange = (scoreData: IScoreData) => {
+    updateScore(score + scoreData.scoreDiff);
 }
 
 const makeIncomingBall = (position: Vector, direction: Vector) => {
@@ -248,30 +292,52 @@ const makeIncomingBall = (position: Vector, direction: Vector) => {
     board.addNewBall(ball);
 }
 
+const makeTestBall = (position: Vector, direction: Vector) => {
+    const exitSide: TransferTypes = thisPlayer === 1 ? "right" : "left";
+
+    console.log("About to enter a new ball", position, direction);
+    // const ball = new BouncingBall(0xff2222, 20, direction, position);
+    const ball = new TransferBall(0xff2222, 20, direction, position, ["right"]);
+    board.addNewBall(ball);
+}
+
 function initGameObjects() {
-    const player = new Player(0xfcf8ec, 10, {x:0, y:0}, { x:0, y:0 }, new SimpleMoveStrategy(), new SimpleSpeedStrategy(), new SimpleHealthStrategy());
-    const coin = new Coin(0xfcf8ec, 10, {x:0, y:0}, {x:0, y:0});
+    const player = new RectanglePlayer(
+        0xfcf8ec,
+        DEFAULTS.player.width,
+        DEFAULTS.player.height,
+        {x:DEFAULTS.player.direction.x, y:DEFAULTS.player.direction.y},
+        {
+            x: thisPlayer === 1 ?
+                DEFAULTS.player.startPos.x : 
+                DEFAULTS.width - DEFAULTS.player.startPos.x - DEFAULTS.player.width,
+            y: DEFAULTS.player.startPos.y
+        },
+        new UpDownMoveStrategy(),
+        new SimpleSpeedStrategy(),
+        new SimpleHealthStrategy());
+    // const coin = new Coin(0xfcf8ec, 10, {x:0, y:0}, {x:0, y:0});
     // const ball = new BouncingBall(0xe42e2e, 20, {x:6, y:7}, {x:0, y:0});
-    const ball = thisPlayer === 1 ? new TransferBall(0x42e2ef, 20, {x:4, y:2}, {x:300, y:200}, ["right"] ) : undefined;
-    const monsters: Monster[] = [];
+    const ball = thisPlayer === 1 ? new TransferBall(0xff2222, 20, {x: -4, y: 3}, {x: 480, y: 200}, ["right"] ) : undefined;
+    // const monsters: Monster[] = [];
     controls = new Controls(
         (e) => onkeydown(e, player),
         (e) => onkeyup(e, player)
     );
 
-    const boardProps: BoardProps = {
+    const boardProps: BasicBoardProps = {
         width: DEFAULTS.width,
         height: DEFAULTS.height,
         backgroundColor: 0x456268,
         player,
-        coin,
-        monsters,
+        // coin,
+        // monsters,
         ball,
         // onPlayerCollideWithMonster: playerCollideWithMonster,
         // onPlayerCollideWithCoin: playerCollideWithCoin,
-        onMovementEvent: ballMovementEventDestroyOnExit
+        onMovementEvent: ballMovementEvents
     }
-    board = new Board(boardProps);
+    board = new BasicBoard(boardProps);
     //board.app.ticker.add((delta) => console.log("tick"));
 
     score = 0;
@@ -317,9 +383,9 @@ function startGame() {
     updateHealth(board.player.health);
 
     // Temporary player objects to validate socket connectivity
-    const gamePlayerButton = document.getElementById("game_ready-button");
-    if (gamePlayerButton)
-        gamePlayerButton.addEventListener("click", () => handleBoardIsAPlay());
+    // const gamePlayerButton = document.getElementById("game_ready-button");
+    // if (gamePlayerButton)
+    //     gamePlayerButton.addEventListener("click", () => handleBoardIsAPlay());
 
     const gamePlayerLabel = document.getElementById("game_ready-player");
     if (gamePlayerLabel)
@@ -336,7 +402,7 @@ function startGame() {
     isPlaying = true;
     setupControls();
 
-    //startFps();
+    startFps();
 
     // board.addMonster();
     board.app.ticker.add(gameLoop);
@@ -352,7 +418,7 @@ function startFps() {
         if (framesElement) 
             framesElement.innerHTML = fps.toString();
 
-        console.log("fps", board.app.ticker.FPS, board.app.ticker.minFPS, board.app.ticker.maxFPS);
+        // console.log("fps", board.app.ticker.FPS, board.app.ticker.minFPS, board.app.ticker.maxFPS);
 
     }, 1000);
 }
@@ -397,23 +463,23 @@ const changePlayer2 = () => {
     }
 }
 
-const handleBoardIsAPlay = () => {
-    if (currentPlayer === thisPlayer) {
-        console.log("Player clicked");
-        const playData: IPlayData = {
-            position: {
-                x: 1,
-                y: 2
-            },
-            direction: {
-                x: 3,
-                y: 4
-            }
-        };
-        changePlayer(playData)
-        gameRoomController.doGameFocusLeave(playData)
-    }
-}
+// const handleBoardIsAPlay = () => {
+//     if (currentPlayer === thisPlayer) {
+//         console.log("Player clicked");
+//         const playData: IPlayData = {
+//             position: {
+//                 x: 1,
+//                 y: 2
+//             },
+//             direction: {
+//                 x: 3,
+//                 y: 4
+//             }
+//         };
+//         changePlayer(playData)
+//         gameRoomController.doGameFocusLeave(playData)
+//     }
+// }
 
 
 
@@ -508,6 +574,10 @@ const joinRoom = async (e: MouseEvent) => {
                             console.log("Received game focus event from server");
                             makeIncomingBall(playData.position, playData.direction);
                         });
+                        gameRoomController.onGameScoreChange((scoreData) => {
+                            console.log("Received game score event from server");
+                            handleScoreChange(scoreData);
+                        });
                         initGameObjects();
                         startGame();
                     }
@@ -546,7 +616,7 @@ let level: number;
 let combo: number;
 let isPlaying = false;
 let controls: Controls;
-let board: Board;
+let board: BasicBoard;
 let frames: number = 0;
 let fpsInterval: NodeJS.Timer;
 
@@ -563,8 +633,10 @@ connectToServer();
 // transitionState(
 //     "game_ready",
 //     () => { 
+//         thisPlayer = 1;
 //         initGameObjects();
 //         startGame();
+//         makeTestBall({x: 480, y: 200}, {x: -4, y: 3});
 //     }
 // );
 

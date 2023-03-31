@@ -21,7 +21,7 @@ export default (httpServer: any) => {
     {
       io: io,
       container: Container,
-      controllers: [__dirname + "/api/controllers/*.ts"]
+      controllers: [__dirname + "/api/controllers/*"]
     }
   );
 

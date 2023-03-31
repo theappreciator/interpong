@@ -1,5 +1,5 @@
 import { INetworkService, INetworkServiceConsumer, IRoomService, SocketService } from "../../services";
-import { IGameRoomReturn, IPlayData, IStartGame } from "../../types";
+import { IGameRoomReturn, IPlayData, IScoreData, IStartGame } from '@interpong/common';
 import { Socket } from "socket.io-client";
 import { IGameRoomController } from "..";
 import { SocketError } from "../../utils/errors/socketError";
@@ -21,7 +21,8 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
     private _onPing: () => void = () => {};
     private _onPong: () => void = () => {};
     private _onStartGame: (options: IStartGame) => void = (options) => {console.log("Default SocketGameRoomController onStartGame", options)};
-    private _onGameFocusEnter: (playData: IPlayData) => void = (playData) => {console.log("Default SocketGameRoomController OnGameFocusEnter", playData)};
+    private _onGameFocusEnter: (playData: IPlayData) => void = (playData) => {console.log("Default SocketGameRoomController onGameFocusEnter", playData)};
+    private _onGameScoreChange: (scoreData: IScoreData) => void = (scoreData) => {console.log("Default ScoketGameRoomController onGameScoreChange", scoreData)};
 
     private networkService: INetworkService<Socket>
 
@@ -90,7 +91,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
                 rj(error)
             }); 
 
-            console.log("About to emit " + ROOM_EVENTS.JOIN_ROOM);
+            console.log("About to emit", ROOM_EVENTS.JOIN_ROOM);
             this.socket.emit(ROOM_EVENTS.JOIN_ROOM, { roomName });
             
             const timeout = setTimeout(() => {
@@ -150,6 +151,20 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
 
         this.socket.emit(GAME_EVENTS.UPDATE_GAME, playData);
     }
+
+    public doGameScoreChange(scoreData: IScoreData): void {
+        if (!this.socket) {
+            throw new SocketError({
+                name: "SOCKET_NOT_CONNECTED",
+                message: "Socket is not connected",
+                cause: "doPing()"
+            });
+        }
+
+        console.log("About ot emit", GAME_EVENTS.UPDATE_SCORE, scoreData);
+
+        this.socket.emit(GAME_EVENTS.UPDATE_SCORE, scoreData);
+    }
     
     /* END ACTIONS */
 
@@ -193,6 +208,11 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
         this._onGameFocusEnter = listener;
     }
 
+    public onGameScoreChange(listener: (scoreData: IScoreData) => void): void {
+        console.log("Setting SocketGameRoomController onGameScoreChange()");
+        this._onGameScoreChange = listener;
+    }
+
     public onGameCompleted(listener: () => void): void {
         throw new Error("Method not implemented.");
     }
@@ -228,6 +248,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
 
         this.socket.on(GAME_EVENTS.START_GAME, (options) => this._onStartGame(options));
         this.socket.on(GAME_EVENTS.ON_UPDATE_GAME, (playData) => this._onGameFocusEnter(playData));
+        this.socket.on(GAME_EVENTS.ON_UPDATE_SCORE, (scoreData) => this._onGameScoreChange(scoreData));
     }
 
     private removeSyncRoomJoinEvents(timeout?: NodeJS.Timeout) {

@@ -19,7 +19,7 @@ const logger = log4js.getLogger();
 export class MainController {
   
   @OnConnect()
-  public async onConnection(
+  public onConnection(
     @ConnectedSocket() socket: Socket,
     @SocketIO() io: Server
   ) {

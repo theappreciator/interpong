@@ -65,4 +65,4 @@ ENV NODE_ENV ${NODE_ENV}
 WORKDIR /app
 
 # Start our application with the server's package.json's version of "npm run start"
-CMD [ "npm", "run", "start:server:ci-stop-gap" ]
+CMD [ "npm", "run", "start:server" ]

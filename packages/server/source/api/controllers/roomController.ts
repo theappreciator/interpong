@@ -14,6 +14,7 @@ import * as log4js from "log4js";
 import { getSocketPrettyName } from "../../util/shared";
 import { getRoomIdFromName, getSocketsInRoom } from "../../util/roomUtils";
 import { GameController } from "./gameController";
+import GameRoomStateService from "../../services/gameRoomStateService";
 const logger = log4js.getLogger();
 
 
@@ -56,13 +57,15 @@ export class RoomController {
 
                 const updatedSocketsInRoom = await getSocketsInRoom(io, roomId);
 
-                console.log(roomId);
-                socket.emit(ROOM_EVENTS.JOIN_ROOM_SUCCESS, { roomId });
+                const gameRoomStateService = new GameRoomStateService(roomId);
+                const playerState = gameRoomStateService.addPlayer(socket.id);
+
+                socket.emit(ROOM_EVENTS.JOIN_ROOM_SUCCESS, { roomId }); // TODO: add player number response here
 
                 logger.info(chalk.cyan(
                     "Room join success:  ",
                     getSocketPrettyName(socket),
-                    roomId + ": " + (updatedSocketsInRoom.length || 0),
+                    `${roomId} : ${playerState.player}/${updatedSocketsInRoom.length || 0}`,
                     updatedSocketsInRoom.length === ROOM_CONSTANTS.ROOM_MAX_NUMBER_OF_PLAYERS ? "[MAX]" : ""
                 ));
 

@@ -12,6 +12,7 @@ import { getRoomsPrettyName, getSocketPrettyName } from "../../util/shared";
 import chalk from "chalk";
 import * as log4js from "log4js";
 import { GameController } from "./gameController";
+import GameRoomStateService from "../../services/gameRoomStateService";
 const logger = log4js.getLogger();
 
 @SocketController()
@@ -39,6 +40,9 @@ export class MainController {
     @SocketIO() io: Server
   ) {
     logger.info(chalk.red("Socket Disconnected:", getSocketPrettyName(socket)));
+
+    GameRoomStateService.deletePlayerFromAllRooms(socket.id);
+
     logger.info(chalk.blue("Available Rooms:    ", getRoomsPrettyName(io.sockets.adapter.rooms)));
 
   }

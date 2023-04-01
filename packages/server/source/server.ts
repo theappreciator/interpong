@@ -11,6 +11,7 @@ var debug = require("debug")("socketio-server:server");
 import * as http from "http";
 import socketServer from "./socket";
 import * as log4js from "log4js";
+import { PersistService } from "./services";
 log4js.configure({
   appenders: {
     normal: {
@@ -32,7 +33,6 @@ log4js.configure({
   categories: { default: { appenders: ["normal"], level: "debug" } },
 });
 const logger = log4js.getLogger();
-
 
 /**
  * Get port from environment and store in Express.

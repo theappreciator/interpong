@@ -16,7 +16,7 @@
     "clean:common:modules": "npm run clean:modules -w packages/common",
     "clean:client": "npm run clean -w packages/client",
     "clean:client:modules": "npm run clean:modules -w packages/client",
-    "clean:modules": "rm -rf node_modules && npm run clean:modules -ws -if-present",
+    "clean:modules": "rm -rf node_modules && rm -rf node_modules.nosync && mkdir node_modules.nosync && ln -s node_modules.nosync node_modules && npm run clean:modules -ws -if-present",
     "clean:server": "npm run clean -w packages/server",
     "clean:server:modules": "npm run clean:modules -w packages/server",
     "clean:server:client": "rm -rf ./packages/server/client || true",

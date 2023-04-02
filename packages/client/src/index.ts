@@ -10,14 +10,16 @@ import { Socket } from "socket.io-client";
 import { DefaultEventsMap } from '@socket.io/component-emitter';
 import { SocketService } from "./services";
 import { start } from 'repl';
-import { IPlayData, IScoreData, IStartGame, Vector } from '@interpong/common';
-import { SocketGameRoomController } from './controllers/';
+import { GameStateStatus, GAME_CONSTANTS, IGameRoomState, IPlayData, IPlayerState, IScoreData, IStartGame, Vector } from '@interpong/common';
+import { IGameRoomController, SocketGameRoomController } from './controllers/';
 import { GAME_EVENTS } from '@interpong/common';
 import { SoloMovementEvents, SpriteActions } from './sprites/events';
 import { TransferTypes } from './sprites/TransferBall';
 import RectanglePlayer from './sprites/RectanglePlayer';
 import UpDownMoveStrategy from './strategies/UpDownMoveStrategy';
 import { Sprite } from 'pixi.js';
+import { GAME_SCORE_EVENTS } from '@interpong/common';
+import MockGameRoomController from './controllers/__mocks__/MockGameRoomController';
 
 
 
@@ -245,8 +247,8 @@ const ballMovementEventScoreOtherPlayer = (movementEvent: SoloMovementEvents[], 
         const newScore = score + scoreDiff;
         const scoreData: IScoreData = {
             player: thisPlayer,
-            score: newScore,
-            scoreDiff: scoreDiff
+            currentScore: score,
+            event: GAME_SCORE_EVENTS.WALL_HIT
         }
         gameRoomController.doGameScoreChange(scoreData);
         updateScore(newScore);
@@ -272,8 +274,17 @@ const ballMovementEvents = (movementEvent: SoloMovementEvents[], position: Vecto
     return actions;
 }
 
-const handleScoreChange = (scoreData: IScoreData) => {
-    updateScore(score + scoreData.scoreDiff);
+const handleScoreChange = (gameRoomState: IGameRoomState) => {
+    const thisPlayerState = Array.from(gameRoomState.players.values()).find(p => p.player === thisPlayer);
+
+    if (!thisPlayerState) {
+        throw new Error(`Player state for player ${thisPlayer} unexpectedly undefined`);
+    }
+
+    updateScore(thisPlayerState.score);
+
+    updatePlayers(gameRoomState);
+
 }
 
 const makeIncomingBall = (position: Vector, direction: Vector) => {
@@ -296,8 +307,8 @@ const makeTestBall = (position: Vector, direction: Vector) => {
     const exitSide: TransferTypes = thisPlayer === 1 ? "right" : "left";
 
     console.log("About to enter a new ball", position, direction);
-    // const ball = new BouncingBall(0xff2222, 20, direction, position);
-    const ball = new TransferBall(0xff2222, 20, direction, position, ["right"]);
+    const ball = new BouncingBall(0xff2222, 20, direction, position);
+    // const ball = new TransferBall(0xff2222, 20, direction, position, ["right"]);
     board.addNewBall(ball);
 }
 
@@ -373,6 +384,37 @@ function gameLoop(delta: number): void {
     }
 }
 
+function updatePlayers(gameRoomState: IGameRoomState) {
+    const playersElement = document.getElementById("game_ready-players")
+    if (playersElement) {
+        const sortedPlayers = gameRoomState.players.sort((a, b) => a.score - b.score);
+        for (let i = 0; i < sortedPlayers.length; i++) {
+            const player = sortedPlayers[i];
+            const playerElementId = `players-socket-${player.id}`
+            let div = document.getElementById(playerElementId);
+            if (!div) {
+                div = document.createElement("div");
+                div.id = playerElementId;
+                div.classList.add("player");
+                div.innerText = `Player ${player.player} ${thisPlayer === player.player ? '(you)' : ''}`;
+            }
+
+            let span = div.firstElementChild as HTMLElement;
+            if (!span) {
+                span = document.createElement("span");
+                div.append(span);
+            }
+            span.innerText = `${player.score.toLocaleString()}`;
+
+            playersElement.prepend(div);
+
+            if (player.player === thisPlayer) {
+                // TODO: reconcile when local score data is different from server score data
+            }
+        }
+    }
+}
+
 function startGame() {
 
     console.log("START GAME");
@@ -382,21 +424,16 @@ function startGame() {
     updateLevel(1);
     updateHealth(board.player.health);
 
-    // Temporary player objects to validate socket connectivity
-    // const gamePlayerButton = document.getElementById("game_ready-button");
-    // if (gamePlayerButton)
-    //     gamePlayerButton.addEventListener("click", () => handleBoardIsAPlay());
+    // const gamePlayerLabel = document.getElementById("game_ready-player");
+    // if (gamePlayerLabel)
+    //     gamePlayerLabel.innerText = `Player ${thisPlayer}`;
 
-    const gamePlayerLabel = document.getElementById("game_ready-player");
-    if (gamePlayerLabel)
-        gamePlayerLabel.innerText = `Player ${thisPlayer}`;
-
-    if (thisPlayer === 1) {
-        changePlayer1();
-    }
-    else {
-        changePlayer2();
-    }
+    // if (thisPlayer === 1) {
+    //     changePlayer1();
+    // }
+    // else {
+    //     changePlayer2();
+    // }
     // end temporary player objects
 
     isPlaying = true;
@@ -561,25 +598,25 @@ const joinRoom = async (e: MouseEvent) => {
         const gameRoomName = gameRoomNameInput.value
 
         if (gameRoomName) {
-            gameRoomController.onStartGame((options: IStartGame) => {
+            gameRoomController.onStartGame((startGameData: IStartGame) => {
                 console.log("Firing onStartGame()");
-                thisPlayer = options.player;
-                currentPlayer = 1 // TODO: this needs to be controlled server side
+                thisPlayer = startGameData.player;
+                currentPlayer = startGameData.state.game.currentPlayer;
                 console.log("starting as player", thisPlayer);
                 transitionState(
                     "game_ready",
                     () => {},
                     () => {
                         gameRoomController.onGameFocusEnter((playData) => {
-                            console.log("Received game focus event from server");
                             makeIncomingBall(playData.position, playData.direction);
                         });
-                        gameRoomController.onGameScoreChange((scoreData) => {
-                            console.log("Received game score event from server");
-                            handleScoreChange(scoreData);
+                        gameRoomController.onGameScoreChange((gameRoomState) => {
+                            handleScoreChange(gameRoomState);
                         });
                         initGameObjects();
                         startGame();
+
+                        updatePlayers(startGameData.state);
                     }
                 );
             });
@@ -620,26 +657,108 @@ let board: BasicBoard;
 let frames: number = 0;
 let fpsInterval: NodeJS.Timer;
 
-let gameRoomController: SocketGameRoomController;
+let gameRoomController: IGameRoomController<Socket>;
 let currentState: TransitionStates = "waiting_connect";
 let thisPlayer: number;
 let currentPlayer: number;
 
 /* END GLOBALS */
 
-connectToServer();
+const testGame = false;
+
+if (!testGame) connectToServer();
 
 // Dummy in the game board
-// transitionState(
-//     "game_ready",
-//     () => { 
-//         thisPlayer = 1;
-//         initGameObjects();
-//         startGame();
-//         makeTestBall({x: 480, y: 200}, {x: -4, y: 3});
-//     }
-// );
+if (testGame) transitionState(
+    "game_ready",
+    () => { 
+        thisPlayer = 1;
+        gameRoomController = new MockGameRoomController();
+        gameRoomController.connect();
+        gameRoomController.onGameScoreChange((gameRoomState) => {
+            handleScoreChange(gameRoomState);
+        });
+        initGameObjects();
+        startGame();
+        makeTestBall({x: 480, y: 200}, {x: -4, y: 3});
 
-// const playButton: HTMLObjectElement | null = document.querySelector("#addMonster");
-// if (playButton)
-//     playButton.addEventListener("click", () => board.addMonster());
+        const player1: IPlayerState = {
+            id: "ABCD",
+            player: 1,
+            score: 0
+        };
+        const player2: IPlayerState = {
+            id: "ZYXW",
+            player: 2,
+            score: 5000
+        };
+        const players: IPlayerState[] = [];
+        players.push(player1);
+        players.push(player2);
+        const gameRoomState: IGameRoomState = {
+            players: players,
+            game: {
+                currentPlayer: 1,
+                status: GameStateStatus.GAME_STARTED
+            }
+        }
+        updatePlayers(gameRoomState);
+
+    }
+);
+
+// const element = document.getElementById("jesstest");
+// if (element) {
+//     const div1 = document.createElement("div");
+//     div1.id = "div-jesstest1";
+//     div1.innerText = "test1";
+
+//     const span1 = document.createElement("span");
+//     span1.innerText = "---my span1";
+//     div1.appendChild(span1);
+//     element.appendChild(div1);  
+    
+//     const div2 = document.createElement("div");
+//     div2.id = "div-jesstest2";
+//     div2.innerText = "test2";
+
+//     const span2 = document.createElement("span");
+//     span2.innerText = "---my span2";
+//     div2.appendChild(span2);
+//     element.appendChild(div2);
+    
+//     const div3 = document.createElement("div");
+//     div3.id = "div-jesstest3";
+//     div3.innerText = "test3";
+
+//     const span3 = document.createElement("span");
+//     span3.innerText = "---my span3";
+//     div3.appendChild(span3);
+//     element.appendChild(div3);
+
+//     for (let i = 1; i <= 6; i++) {
+//         let div = document.getElementById("div-jesstest" + i);
+//         if (!div) {
+//             div = document.createElement("div");
+//             div.id = "div-jesstest" + i;
+//             div.innerText = "test LOOP " + i;
+//             element.appendChild(div);
+//         }
+
+//         let span = div.firstElementChild as HTMLElement;
+//         if (!span) {
+//             span = document.createElement("span");
+//             div.appendChild(span);
+//         }
+//         span.innerText = "---my span LOOP" + i;
+
+//     }
+
+//     const parent = document.getElementById("jesstest");
+//     if (parent) {
+//         const toMove = (document.getElementById("div-jesstest4") as HTMLElement);
+//         let ref = document.getElementById("div-jesstest2");
+
+//         parent.insertBefore(toMove, ref);
+//     }
+// }

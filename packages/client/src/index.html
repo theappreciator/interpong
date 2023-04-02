@@ -2,13 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
     <title>Interpong</title>
   </head>
   <body>
     <div id="main" class="main">
+      <h1>INTERPONG</h1>
       <div class="state" id="state-waiting_connect">
         Waiting to connect...
       </div>
+      <div id="jesstest"></div>
       <div class="state hidden" id="state-game_room_selector">
         Choose a game room
         <input id="game_room_selector-room_name" type="text" value="test_room"/>
@@ -21,15 +26,15 @@
         <div class="">
           <div id="canvas"></div>
           <div id="display">
-            <div id="game_ready-player"></div>
-            <div id="game_ready-current_player"></div>
-            <div id="score">Score:<span></span></div>
-            <div id="level" class="hidden">Level:<span></span></div>
+            <div id="score">Your score:<span></span></div>
+
+            <div id="game_ready-players"></div>
+            <!-- <div id="level" class="hidden">Level:<span></span></div>
             <div id="combo" class="hidden">Multiplier:<span></span></div>
             <div id="health" class="hidden">Health:<span></span></div>
             <div id="status"></div>
             <div id="actions"><button id="play">Play</button></div>
-            <button id="addMonster" style="visibility: hidden;">Add Monster</button>
+            <button id="addMonster" style="visibility: hidden;">Add Monster</button> -->
             <div id="fps">FPS:<span></span></div>
           </div>
         </div>
@@ -38,6 +43,17 @@
     <script type="module" src="./index.ts"></script>
   </body>
   <style>
+
+    h1 {
+      font-family: 'Roboto', sans-serif;
+      font-size: 80px;
+      text-align: left;
+      margin: 0px;
+      padding: 0px;
+      margin-bottom: 20px;
+      letter-spacing: 10px;
+      border-bottom: 1px #ccc solid;
+    }
 
     #game_ready-button {
       width: 200px;
@@ -73,7 +89,7 @@
       top: 0;
       z-index: 10;
       border: 1px solid #888;
-      margin-bottom: 40px;
+      margin-bottom: 20px;
     }
 
     #state-waiting_connect {
@@ -82,7 +98,7 @@
 
     #state-game_room_selector > input {
       height: 30px;
-      width: 20em;
+      width: 408px;
       font-size: 17px;
       outline: none;
       border: 1px solid #19914b;
@@ -113,8 +129,20 @@
       justify-content: space-between;
       width: var(--width);
     }
+    
+    #game_ready-players > div:first-child {
+      border-top: 1px #ccc solid;
+      margin-top: 8px;
+      padding-top: 8px;
+    }    
 
-    #score, #level, #combo, #health, #fps {
+    #game_ready-players > div:last-child {
+      border-bottom: 1px #ccc solid;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+    }
+
+    #score, #level, #combo, #health, #fps, .player {
       display: flex;
       justify-content: space-between;
     }

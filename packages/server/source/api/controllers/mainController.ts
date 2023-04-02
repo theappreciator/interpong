@@ -41,7 +41,7 @@ export class MainController {
   ) {
     logger.info(chalk.red("Socket Disconnected:", getSocketPrettyName(socket)));
 
-    GameRoomStateService.deletePlayerFromAllRooms(socket.id);
+    GameRoomStateService.deletePlayer(socket.id);
 
     logger.info(chalk.blue("Available Rooms:    ", getRoomsPrettyName(io.sockets.adapter.rooms)));
 

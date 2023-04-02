@@ -14,7 +14,7 @@
     "build:check": "tsc -p ./tsconfig.server.json --noEmit",
     "build:common": "cd common && npm run build",
     "clean": "rm -rf distribution",
-    "clean:modules": "rm -rf node_modules",
+    "clean:modules": "rm -rf node_modules && rm -rf node_modules.nosync && mkdir node_modules.nosync && ln -s node_modules.nosync node_modules",
     "clean:package-lock": "rm -f package-lock.json"
   },
   "author": "Jess Tucker <jessjesstheappreciator@gmail.com>",

@@ -1,46 +1,8 @@
-import { ROOM_CONSTANTS } from "@interpong/common";
+import { GameStateStatus, GAME_SCORE_EVENTS, GAME_SCORE_EVENT_POINTS, IGameRoomState, IGameState, IPlayerState, ROOM_CONSTANTS } from "@interpong/common";
 import socket from "../socket";
 import PersistService from "./persistService";
 
 
-// {
-//     players: [
-//         {
-//             player: 1,
-//             score: 1000
-//         },
-//         {
-//             player: 2,
-//             score: 4000
-//         }
-//     ],
-//     game: {
-//         status: "started",
-//         player: 1
-//     }
-// }
-
-export enum GameStateStatus {
-    WAITING_FOR_PLAYERS = 1,
-    PLAYERS_READY,
-    GAME_STARTED,
-    GAME_OVER
-}
-
-export interface IPlayerState {
-    player: number,
-    score: number
-}
-
-export interface IGameState {
-    status: GameStateStatus,
-    currentPlayer: number
-}
-
-export interface IGameRoomState {
-    players: Map<string, IPlayerState>,
-    game: IGameState
-}
 
 class GameRoomStateService {
 
@@ -54,7 +16,7 @@ class GameRoomStateService {
         const existingData = this._persist.retrieve(this._roomId);
         if (!existingData) {
             const initialGameRoomState: IGameRoomState = {
-                players: new Map(),
+                players: [],
                 game: {
                     status: GameStateStatus.WAITING_FOR_PLAYERS,
                     currentPlayer: 0
@@ -73,24 +35,24 @@ class GameRoomStateService {
         return this.getGameRoomState().game.status;
     }
 
-    public updateGameStateStatus(newStatus: GameStateStatus): void {
+    public updateGameStateStatus(newStatus: GameStateStatus): IGameRoomState {
         const gameRoomState = {...this.getGameRoomState()};
         gameRoomState.game.status = newStatus;
-        this.updateGameRoomState(gameRoomState);
+        return this.updateGameRoomState(gameRoomState);
     }
 
     public getGameState(): IGameState {
         return this.getGameRoomState().game;
     }
     
-    public updateGameState(gameState: IGameState): void {
+    public updateGameState(gameState: IGameState): IGameRoomState {
         const gameRoomState = {...this.getGameRoomState()};
         gameRoomState.game = {...gameState};
-        this.updateGameRoomState(gameRoomState);
+        return this.updateGameRoomState(gameRoomState);
     }    
 
     public getPlayerState(socketId: string): IPlayerState {
-        const playerState = this.getGameRoomState()?.players.get(socketId);
+        const playerState = this.getGameRoomState()?.players.find(p => p.id === socketId);
         if (playerState) {
             return playerState;
         }
@@ -104,9 +66,21 @@ class GameRoomStateService {
     //     gameRoomState.players.set(playerState.player, playerState);
     // }
 
+    public updatePlayerScore(socketId: string, event: GAME_SCORE_EVENTS): IGameRoomState {
+        const pointsForEvent = GAME_SCORE_EVENT_POINTS[event] || 0;
+
+        const gameRoomState = {...this.getGameRoomState()};
+        const playerState = gameRoomState.players.find(p => p.id === socketId);
+        if (!playerState) {
+            throw new Error(`Player state not found for player ${socketId}`);
+        }
+        playerState.score = playerState?.score + pointsForEvent;
+        return this.updateGameRoomState(gameRoomState);
+    }
+
     public addPlayer(socketId: string): IPlayerState {
         const gameRoomState = {...this.getGameRoomState()};
-        const sortedPlayerNumbers = Array.from(gameRoomState.players.values()).map(v => v.player).sort((a, b) => a - b);
+        const sortedPlayerNumbers = gameRoomState.players.map(p => p.player).sort((a, b) => a - b);
         let lastN = 0;
         for (const n of sortedPlayerNumbers) {
             if (n !== lastN + 1) {
@@ -116,11 +90,14 @@ class GameRoomStateService {
         }
         const playerNumber: number = lastN + 1;
         const player: IPlayerState = {
+            id: socketId,
             player: playerNumber,
             score: 0
         }
-        gameRoomState.players.set(socketId, player);
+        gameRoomState.players.push(player);
         this.updateGameRoomState(gameRoomState);
+
+    
         
         return player;
     }
@@ -135,11 +112,12 @@ class GameRoomStateService {
         }
     }
 
-    public updateGameRoomState(gameRoomState: IGameRoomState) {
+    public updateGameRoomState(gameRoomState: IGameRoomState): IGameRoomState {
         this._persist.save(this._roomId, gameRoomState);
+        return this.getGameRoomState();
     }
 
-    public static deletePlayerFromAllRooms(socketId: string) {
+    public static deletePlayer(socketId: string) {
         const persistService: PersistService<IGameRoomState> = PersistService.Instance;
         const keys = persistService.getKeys();
         console.log("deleting", socketId);
@@ -150,10 +128,11 @@ class GameRoomStateService {
                 console.log("Working roomId", roomId);
                 const gameRoomState = persistService.retrieve(roomId);
                 if (gameRoomState) {
-                    const playerKeys = Array.from(gameRoomState.players.keys());
-                    if (playerKeys.includes(socketId)) {
+                    const player = gameRoomState.players.find(p => p.id === socketId);
+                    if (player) {
                         const modifiedGameRoomState = {...gameRoomState};
-                        modifiedGameRoomState.players.delete(socketId);
+                        const modifiedPlayers = gameRoomState.players.filter(p => p.id !== socketId)
+                        modifiedGameRoomState.players = [...modifiedPlayers];
                         persistService.save(roomId, modifiedGameRoomState);
                     }
                 }

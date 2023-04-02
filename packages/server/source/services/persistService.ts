@@ -14,7 +14,6 @@ class PersistService<T> {
 
     public save(key: string, value: T): void {
         this.store.set(key.toLowerCase(), value);
-        console.log(this.store.get(key.toLowerCase()));
     }
 
     public retrieve(key: string): T | undefined {

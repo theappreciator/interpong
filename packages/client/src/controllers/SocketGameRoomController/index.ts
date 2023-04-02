@@ -4,6 +4,7 @@ import { Socket } from "socket.io-client";
 import { IGameRoomController } from "..";
 import { SocketError } from "../../utils/errors/socketError";
 import { GAME_EVENTS, ROOM_CONSTANTS, ROOM_EVENTS } from "@interpong/common";
+import { IGameRoomState } from "@interpong/common";
 
 
 const TIMEOUT_JOIN_GAME_ROOM = 1000;
@@ -20,9 +21,9 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
     private _onRoomReadyToStartGame: (roomId: string) => void = () => {};
     private _onPing: () => void = () => {};
     private _onPong: () => void = () => {};
-    private _onStartGame: (options: IStartGame) => void = (options) => {console.log("Default SocketGameRoomController onStartGame", options)};
+    private _onStartGame: (startGameData: IStartGame) => void = (startGameData) => {console.log("Default SocketGameRoomController onStartGame", startGameData)};
     private _onGameFocusEnter: (playData: IPlayData) => void = (playData) => {console.log("Default SocketGameRoomController onGameFocusEnter", playData)};
-    private _onGameScoreChange: (scoreData: IScoreData) => void = (scoreData) => {console.log("Default ScoketGameRoomController onGameScoreChange", scoreData)};
+    private _onGameScoreChange: (gameRoomState: IGameRoomState) => void = (gameRoomState) => {console.log("Default ScoketGameRoomController onGameScoreChange", gameRoomState)};
 
     private networkService: INetworkService<Socket>
 
@@ -161,7 +162,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
             });
         }
 
-        console.log("About ot emit", GAME_EVENTS.UPDATE_SCORE, scoreData);
+        console.log("About to emit", GAME_EVENTS.UPDATE_SCORE, scoreData);
 
         this.socket.emit(GAME_EVENTS.UPDATE_SCORE, scoreData);
     }
@@ -208,7 +209,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
         this._onGameFocusEnter = listener;
     }
 
-    public onGameScoreChange(listener: (scoreData: IScoreData) => void): void {
+    public onGameScoreChange(listener: (gameRoomState: IGameRoomState) => void): void {
         console.log("Setting SocketGameRoomController onGameScoreChange()");
         this._onGameScoreChange = listener;
     }
@@ -246,9 +247,9 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
             this._onRoomReadyToStartGame(roomId);
         });
 
-        this.socket.on(GAME_EVENTS.START_GAME, (options) => this._onStartGame(options));
+        this.socket.on(GAME_EVENTS.START_GAME, (startGameData) => this._onStartGame(startGameData));
         this.socket.on(GAME_EVENTS.ON_UPDATE_GAME, (playData) => this._onGameFocusEnter(playData));
-        this.socket.on(GAME_EVENTS.ON_UPDATE_SCORE, (scoreData) => this._onGameScoreChange(scoreData));
+        this.socket.on(GAME_EVENTS.ON_UPDATE_SCORE, (gameRoomState) => this._onGameScoreChange(gameRoomState));
     }
 
     private removeSyncRoomJoinEvents(timeout?: NodeJS.Timeout) {

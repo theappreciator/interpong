@@ -16,6 +16,14 @@ export enum GAME_EVENTS {
     ON_WIN_GAME = "on_win_game",
 }
 
+export enum GAME_SCORE_EVENTS {
+    WALL_HIT = "WALL_HIT"
+}
+
+export enum GAME_SCORE_EVENT_POINTS {
+    WALL_HIT = 1000
+}
+
 export const GAME_CONSTANTS = {
     
 }
@@ -44,6 +52,7 @@ export type Vector = {
 export interface IStartGame {
     start: boolean;
     player: 1 | 2;
+    state: IGameRoomState
 }
 
 export interface IPlayData {
@@ -53,10 +62,50 @@ export interface IPlayData {
 
 export interface IScoreData {
     player: number,
-    score: number,
-    scoreDiff: number
+    currentScore: number,
+    event: GAME_SCORE_EVENTS
 }
 
 export interface IGameRoomReturn {
     roomId: string
+}
+
+// {
+//     players: [
+//         {
+//             player: 1,
+//             score: 1000
+//         },
+//         {
+//             player: 2,
+//             score: 4000
+//         }
+//     ],
+//     game: {
+//         status: "started",
+//         player: 1
+//     }
+// }
+
+export enum GameStateStatus {
+    WAITING_FOR_PLAYERS = 1,
+    PLAYERS_READY,
+    GAME_STARTED,
+    GAME_OVER
+}
+
+export interface IPlayerState {
+    id: string,
+    player: number,
+    score: number
+}
+
+export interface IGameState {
+    status: GameStateStatus,
+    currentPlayer: number
+}
+
+export interface IGameRoomState {
+    players: IPlayerState[]
+    game: IGameState
 }

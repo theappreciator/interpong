@@ -1,4 +1,5 @@
-import { IPlayData, IStartGame } from "../types";
+import { IGameRoomState, IScoreData } from "@interpong/common";
+import { IPlayData, IStartGame } from "@interpong/common";
 import SocketService from "./socketService";
 
 export interface IGameService<T> {
@@ -6,13 +7,15 @@ export interface IGameService<T> {
 
     onGameFocusEnter(listener: (playData: IPlayData) => void): void;
     doGameFocusLeave(playData: IPlayData): void;
+    onGameScoreChange(listener: (gameRoomState: IGameRoomState) => void): void;
+    doGameScoreChange(scoreData: IScoreData): void
 
     onGameCompleted(listener: () => void): void;
 }
 
 export interface IRoomService<T> {
     onDisconnectedFromRoom(listener: (roomId: string) => void): void;
-    onRoomReadyToStartGame(listener: () => void): void;
+    onRoomReadyToStartGame(listener: (roomId: string) => void): void;
 }
 
 export interface INetworkServiceConsumer {

@@ -1,10 +1,9 @@
 import { INetworkService, INetworkServiceConsumer, IRoomService, SocketService } from "../../services";
-import { IGameRoomReturn, IPlayData, IScoreData, IStartGame } from '@interpong/common';
+import { IGameRoomState, IPlayData, IRoomState, IScoreData, IStartGame } from '@interpong/common';
 import { Socket } from "socket.io-client";
 import { IGameRoomController } from "..";
 import { SocketError } from "../../utils/errors/socketError";
 import { GAME_EVENTS, ROOM_CONSTANTS, ROOM_EVENTS } from "@interpong/common";
-import { IGameRoomState } from "@interpong/common";
 
 
 const TIMEOUT_JOIN_GAME_ROOM = 1000;
@@ -17,8 +16,9 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
     private _onConnected: (socket: Socket) => void = (socket) => { this.socket = socket; console.log("Default SocketGameRoomController onConnected") };
     private _onReConnected: (socket: Socket) => void = (socket) => { this.socket = socket; console.log("Default SocketGameRoomController onReConnected") };
 	private _onDisconnected: (message: string) => void = () => {console.log("Default SocketGameRoomController onDisconnected")};
+    private _onRoomsUpdate: (roomStates: IRoomState[]) => void = (roomStates) => {console.log("Default SocketGameRoomController onRoomUpdate", roomStates)};
     private _onDisconnectedFromRoom: (roomId: string) => void = () => {};
-    private _onRoomReadyToStartGame: (roomId: string) => void = () => {};
+    private _onRoomReadyToStartGame: (roomState: IRoomState) => void = () => {};
     private _onPing: () => void = () => {};
     private _onPong: () => void = () => {};
     private _onStartGame: (startGameData: IStartGame) => void = (startGameData) => {console.log("Default SocketGameRoomController onStartGame", startGameData)};
@@ -77,14 +77,19 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
                 });
             }
 
-            this.socket.on(ROOM_EVENTS.JOIN_ROOM_SUCCESS, ({ roomId }: IGameRoomReturn) => {
-                if (!roomId.startsWith(ROOM_CONSTANTS.ROOM_IDENTIFIER) && !roomId.endsWith(roomName)) {
+            let actualRoomName = roomName;
+            if (roomName.toUpperCase().startsWith(ROOM_CONSTANTS.ROOM_IDENTIFIER)) {
+                actualRoomName = roomName.substring(ROOM_CONSTANTS.ROOM_IDENTIFIER.length);
+            }
+
+            this.socket.on(ROOM_EVENTS.JOIN_ROOM_SUCCESS, (roomState: IRoomState) => {
+                if (!roomState.roomId.startsWith(ROOM_CONSTANTS.ROOM_IDENTIFIER) && !roomState.roomId.endsWith(actualRoomName)) {
                     this.removeSyncRoomJoinEvents(timeout);
-                    rj("event " + ROOM_EVENTS.JOIN_ROOM_SUCCESS + " name mismatch " + roomName);
+                    rj("event " + ROOM_EVENTS.JOIN_ROOM_SUCCESS + " name mismatch " + actualRoomName);
                 }
 
                 this.removeSyncRoomJoinEvents(timeout);
-                rs(roomId);
+                rs(roomState.roomId);
             });
 
             this.socket.on(ROOM_EVENTS.JOIN_ROOM_ERROR, ({ error }) => {
@@ -93,7 +98,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
             }); 
 
             console.log("About to emit", ROOM_EVENTS.JOIN_ROOM);
-            this.socket.emit(ROOM_EVENTS.JOIN_ROOM, { roomName });
+            this.socket.emit(ROOM_EVENTS.JOIN_ROOM, { roomName: actualRoomName });
             
             const timeout = setTimeout(() => {
                 this.removeSyncRoomJoinEvents();
@@ -191,11 +196,29 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
         this._onDisconnected = listener;
     }
 
+    public doGetRooms(): void {
+        if (!this.socket) {
+            throw new SocketError({
+                name: "SOCKET_NOT_CONNECTED",
+                message: "Socket is not connected",
+                cause: "doPing()"
+            });
+        }
+
+        console.log("About to emit", ROOM_EVENTS.ROOMS_UPDATE);
+
+        this.socket.emit(ROOM_EVENTS.ROOMS_UPDATE);  
+    }
+
+    public onRoomsUpdate(listener: (roomStates: IRoomState[]) => void): void {
+        this._onRoomsUpdate = listener;
+    }
+
     public onDisconnectedFromRoom(listener: (roomId: string) => void): void {
         this._onDisconnectedFromRoom = listener;
     }
 
-    public onRoomReadyToStartGame(listener: (roomId: string) => void): void {
+    public onRoomReadyToStartGame(listener: (roomState: IRoomState) => void): void {
         this._onRoomReadyToStartGame = listener;
     }
 
@@ -239,12 +262,14 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
             });
         }
 
-        this.socket.on(ROOM_EVENTS.ROOM_DISCONNECT, (roomId) => this._onDisconnectedFromRoom(roomId));
+        this.socket.on(ROOM_EVENTS.ON_ROOMS_UPDATE, (roomStates: IRoomState[]) => this._onRoomsUpdate(roomStates));
 
-        this.socket.on(ROOM_EVENTS.ROOM_READY, ({ roomId }: IGameRoomReturn, ack: (value: string) => void) => {
-            console.log(`We were notified room ${roomId} is ready!`);
+        this.socket.on(ROOM_EVENTS.ROOM_DISCONNECT, (roomId: string) => this._onDisconnectedFromRoom(roomId));
+
+        this.socket.on(ROOM_EVENTS.ROOM_READY, (roomState: IRoomState, ack: (value: string) => void) => {
+            console.log(`We were notified room ${roomState.roomId} is ready!`);
             ack("ACK");
-            this._onRoomReadyToStartGame(roomId);
+            this._onRoomReadyToStartGame(roomState);
         });
 
         this.socket.on(GAME_EVENTS.START_GAME, (startGameData) => this._onStartGame(startGameData));

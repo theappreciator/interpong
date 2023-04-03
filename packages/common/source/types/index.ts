@@ -34,7 +34,9 @@ export enum ROOM_EVENTS {
     JOIN_ROOM_ERROR = "join_room_error",
     JOIN_ROOM_SUCCESS = "join_room_success",
     ROOM_READY = "room_ready",
-    ROOM_DISCONNECT = "room_disconnect"
+    ROOM_DISCONNECT = "room_disconnect",
+    ROOMS_UPDATE = "rooms_update",
+    ON_ROOMS_UPDATE = "on_rooms_update"
 }
 
 export const ROOM_CONSTANTS = {
@@ -66,8 +68,10 @@ export interface IScoreData {
     event: GAME_SCORE_EVENTS
 }
 
-export interface IGameRoomReturn {
-    roomId: string
+export interface IRoomState {
+    roomId: string,
+    numberOfPlayers: number,
+    maxNumberOfPlayers: number
 }
 
 // {

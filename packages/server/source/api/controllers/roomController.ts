@@ -8,7 +8,7 @@ import {
 import {Service} from 'typedi';
 import { Namespace, Server, Socket } from "socket.io";
 import { DefaultEventsMap } from "socket.io/dist/typed-events";
-import { GAME_EVENTS, ROOM_CONSTANTS, ROOM_EVENTS } from "@interpong/common";
+import { GAME_EVENTS, IRoomState, ROOM_CONSTANTS, ROOM_EVENTS } from "@interpong/common";
 import chalk from "chalk";
 import * as log4js from "log4js";
 import { getSocketPrettyName } from "../../util/shared";
@@ -29,6 +29,29 @@ export class RoomController {
     constructor(
         private gameController: GameController
     ) {}
+
+    @OnMessage(ROOM_EVENTS.ROOMS_UPDATE)
+    public async roomsUpdate(
+        @SocketIO() io: Server,
+        @ConnectedSocket() socket: Socket
+    ) {
+        logger.info(chalk.cyan("Request list rooms: ", getSocketPrettyName(socket)));
+
+        const roomStates: IRoomState[] = [];
+        for (const [roomId, sockets] of io.sockets.adapter.rooms.entries()) {
+            // TODO: this logic to get only rooms matching ROOM| needs to be in a utility
+            if (roomId.toUpperCase().startsWith(ROOM_CONSTANTS.ROOM_IDENTIFIER.toUpperCase())) {
+                const room: IRoomState = {
+                    roomId: roomId,
+                    numberOfPlayers: sockets.size,
+                    maxNumberOfPlayers: ROOM_CONSTANTS.ROOM_MAX_NUMBER_OF_PLAYERS
+                }
+                roomStates.push(room);
+            }
+        }
+
+        socket.emit(ROOM_EVENTS.ON_ROOMS_UPDATE, roomStates);
+    }
 
     @OnMessage(ROOM_EVENTS.JOIN_ROOM)
     public async joinGame(
@@ -60,12 +83,18 @@ export class RoomController {
                 const gameRoomStateService = new GameRoomStateService(roomId);
                 const playerState = gameRoomStateService.addPlayer(socket.id);
 
-                socket.emit(ROOM_EVENTS.JOIN_ROOM_SUCCESS, { roomId }); // TODO: add player number response here
+                const roomState: IRoomState = {
+                    roomId: roomId,
+                    numberOfPlayers: updatedSocketsInRoom.length,
+                    maxNumberOfPlayers: ROOM_CONSTANTS.ROOM_MAX_NUMBER_OF_PLAYERS
+                }
+
+                socket.emit(ROOM_EVENTS.JOIN_ROOM_SUCCESS, roomState);
 
                 logger.info(chalk.cyan(
                     "Room join success:  ",
                     getSocketPrettyName(socket),
-                    `${roomId} : ${playerState.player}/${updatedSocketsInRoom.length || 0}`,
+                    `${roomId}: ${playerState.player}/${updatedSocketsInRoom.length || 0}`,
                     updatedSocketsInRoom.length === ROOM_CONSTANTS.ROOM_MAX_NUMBER_OF_PLAYERS ? "[MAX]" : ""
                 ));
 
@@ -86,18 +115,18 @@ export class RoomController {
 
         logger.info(chalk.cyan("Room at max players:", roomId + ":", "[" + socketsInRoomStr + "]"));
         
-        io.to(roomId).timeout(5000).emit(ROOM_EVENTS.ROOM_READY, { roomId }, async (err: any, responses: string[]) => {
+        const roomState: IRoomState = {
+            roomId: roomId,
+            numberOfPlayers: socketsInRoom.size,
+            maxNumberOfPlayers: ROOM_CONSTANTS.ROOM_MAX_NUMBER_OF_PLAYERS
+        };
+        
+        io.to(roomId).timeout(5000).emit(ROOM_EVENTS.ROOM_READY, roomState, async (err: any, responses: string[]) => {
             if (err) {
                 console.log("Clients did not all reply in 5000ms");
             } else {
                 if (responses.filter(r => r === "ACK").length === responses.length) {
-
                     this.gameController.startGame(io, roomId);
-
-                    // logger.info(chalk.cyan("Starting game:      ", roomName + ":", "[" + socketsInRoomStr + "]"));
-                    // const sockets = await io.in(roomName).fetchSockets();
-                    // sockets[0].emit(GAME_EVENTS.START_GAME, { start: true, player: 1 } );
-                    // sockets[1].emit(GAME_EVENTS.START_GAME, { start: true, player: 2 } );
                 }
                 else {
                     console.log("Not all clients responded with ACK");
@@ -107,16 +136,4 @@ export class RoomController {
 
     }
     
-    // private async roomReady(socket: Socket, roomName: string) {       
-    //     console.log("Emitting from socket [" + socket.id + "] [" + ROOM_EVENTS.ROOM_READY + "] to room [" + roomName + "]"); 
-    //     socket
-    //         .to(roomName)
-    //         .emit(ROOM_EVENTS.ROOM_READY);
-
-    //     console.log("Emitting to socket [" + socket.id + "] [" + ROOM_EVENTS.ROOM_READY + "]"); 
-
-    //     socket.emit(ROOM_EVENTS.ROOM_READY);
-
-    //     console.log("Room is joined and waiting on both clients to confirm!");
-    // }
 }

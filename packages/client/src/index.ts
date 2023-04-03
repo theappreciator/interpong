@@ -10,7 +10,7 @@ import { Socket } from "socket.io-client";
 import { DefaultEventsMap } from '@socket.io/component-emitter';
 import { SocketService } from "./services";
 import { start } from 'repl';
-import { GameStateStatus, GAME_CONSTANTS, IGameRoomState, IPlayData, IPlayerState, IScoreData, IStartGame, Vector } from '@interpong/common';
+import { GameStateStatus, GAME_CONSTANTS, IGameRoomState, IPlayData, IPlayerState, IRoomState, IScoreData, IStartGame, Vector } from '@interpong/common';
 import { IGameRoomController, SocketGameRoomController } from './controllers/';
 import { GAME_EVENTS } from '@interpong/common';
 import { SoloMovementEvents, SpriteActions } from './sprites/events';
@@ -329,7 +329,7 @@ function initGameObjects() {
         new SimpleHealthStrategy());
     // const coin = new Coin(0xfcf8ec, 10, {x:0, y:0}, {x:0, y:0});
     // const ball = new BouncingBall(0xe42e2e, 20, {x:6, y:7}, {x:0, y:0});
-    const ball = thisPlayer === 1 ? new TransferBall(0xff2222, 20, {x: -4, y: 3}, {x: 480, y: 200}, ["right"] ) : undefined;
+
     // const monsters: Monster[] = [];
     controls = new Controls(
         (e) => onkeydown(e, player),
@@ -343,7 +343,7 @@ function initGameObjects() {
         player,
         // coin,
         // monsters,
-        ball,
+        // ball,
         // onPlayerCollideWithMonster: playerCollideWithMonster,
         // onPlayerCollideWithCoin: playerCollideWithCoin,
         onMovementEvent: ballMovementEvents
@@ -358,9 +358,9 @@ function initGameObjects() {
     const canvasElement = document.getElementById("canvas");
     canvasElement?.appendChild(board.app.view);
 
-    const playButton: HTMLObjectElement | null = document.querySelector("#play");
-    if (playButton)
-        playButton.addEventListener("click", () => startGame());
+    // const playButton: HTMLObjectElement | null = document.querySelector("#play");
+    // if (playButton)
+    //     playButton.addEventListener("click", () => startGame());
 
 }
 
@@ -421,8 +421,8 @@ function startGame() {
 
     reset();
 
-    updateLevel(1);
-    updateHealth(board.player.health);
+    // updateLevel(1);
+    // updateHealth(board.player.health);
 
     // const gamePlayerLabel = document.getElementById("game_ready-player");
     // if (gamePlayerLabel)
@@ -440,6 +440,16 @@ function startGame() {
     setupControls();
 
     startFps();
+
+    const ballPosition: Vector = {x: 532, y: Math.random() * 512};
+    const ballDirection: Vector = {x: -4, y: 3};
+
+    const ball = thisPlayer === 1 ? new TransferBall(0x22dd22, 20, ballDirection, ballPosition, ["right"] ) : undefined;
+    console.log("Just created a new ball", ball ? ballPosition : undefined, ball ? ballDirection : undefined );
+
+
+    if (ball)
+        board.addNewBall(ball);
 
     // board.addMonster();
     board.app.ticker.add(gameLoop);
@@ -547,6 +557,63 @@ const transitionState = (nextState: TransitionStates, preTransition:() => void =
 
 /* GAME ROOM CONNECTIVITY */
 
+const handleRoomListUpdate = (roomStates: IRoomState[]) => {
+    const roomsElement = document.getElementById("game_room_selector-room_list")
+    if (roomsElement) {
+        const noneRoomsElement = roomsElement.firstElementChild;
+        if (!roomStates || roomStates.length <= 0) {
+            noneRoomsElement?.classList.remove("hidden");
+        }
+        else {
+            noneRoomsElement?.classList.add("hidden");
+
+            // TODO: need to handle when a room goes away in between renders, the div will remain
+            const sortedRooms = roomStates.sort((a, b) => ('' + b.roomId).localeCompare(a.roomId));
+            for (let i = 0; i < sortedRooms.length; i++) {
+                const room = sortedRooms[i];
+                // TODO: display the room name instead of using the room id
+                const roomElementId = `room-socket-${room.roomId}`
+                let div = document.getElementById(roomElementId);
+                if (!div) {
+                    div = document.createElement("div");
+                    div.id = roomElementId;
+                    div.classList.add("room");
+                }
+
+                let roomSpan = div.firstElementChild as HTMLElement;
+                if (!roomSpan) {
+                    roomSpan = document.createElement("span");
+                    roomSpan.classList.add("room_id_label");
+                    roomSpan.innerText = `${room.roomId}`;
+                    div.append(roomSpan);
+                }
+
+                let span = roomSpan.nextElementSibling as HTMLElement;
+                if (!span) {
+                    span = document.createElement("span");
+                    span.classList.add("room_number_players");
+                    div.append(span);
+                }
+                span.innerText = `${room.numberOfPlayers}/${room.maxNumberOfPlayers}`;
+
+                let button = span.nextElementSibling as HTMLElement;
+                if (!button) {
+                    button = document.createElement("button");
+                    button.innerText = "Join"
+                    button.classList.add("room_join_button");
+                    button.addEventListener("click", (e: MouseEvent) => {
+                        e.preventDefault();
+                        joinRoom(room.roomId);
+                    })
+                    span.insertAdjacentElement("afterend", button);
+                }
+
+                roomsElement.prepend(div);
+            }
+        }
+    }
+}
+
 const connectToServer = async () => {
     const url = process.env.SOCKET_SERVER_URL;
     if (!url) {
@@ -557,12 +624,20 @@ const connectToServer = async () => {
     const isConnected = () => {
         console.log("Firing index isConnected()");
 
+        gameRoomController.onRoomsUpdate(handleRoomListUpdate);
+        
         transitionState(
             "game_room_selector",
             () => {
                 const gameRoomSelectorButton: HTMLElement | null = document.getElementById("game_room_selector-join_room");
                 if (gameRoomSelectorButton)
-                    gameRoomSelectorButton.addEventListener("click", joinRoom);
+                    gameRoomSelectorButton.addEventListener("click", handleJoinRoom);
+            },
+            () => {
+                gameRoomController.doGetRooms();
+                // setTimeout(() => {
+                //     joinRoom("auto_join_room");
+                // }, 200);
             }
         );
     };
@@ -590,7 +665,60 @@ const connectToServer = async () => {
     gameRoomController.connect();
 };
 
-const joinRoom = async (e: MouseEvent) => {
+const joinRoom = async (roomName: string) => {
+    console.log("About to join room", roomName);
+    if (roomName) {
+        gameRoomController.onStartGame((startGameData: IStartGame) => {
+            // TODO: There is a bug where the gameboard gets shown every time this is called, creating multiple visible gameboards.
+            console.log("Firing onStartGame()");
+            thisPlayer = startGameData.player;
+            currentPlayer = startGameData.state.game.currentPlayer;
+            console.log("starting as player", thisPlayer);
+            transitionState(
+                "game_ready",
+                () => {},
+                () => {
+                    gameRoomController.onGameFocusEnter((playData) => {
+                        makeIncomingBall(playData.position, playData.direction);
+                    });
+                    gameRoomController.onGameScoreChange((gameRoomState) => {
+                        handleScoreChange(gameRoomState);
+                    });
+                    initGameObjects();
+                    startGame();
+
+                    updatePlayers(startGameData.state);
+                }
+            );
+        });
+
+        gameRoomController.onRoomReadyToStartGame((roomState: IRoomState) => {
+            console.log("The room is ready!", roomState.roomId);
+        });
+
+        await gameRoomController
+        .joinGameRoom(roomName)
+        .then((joined) => {
+            if (joined) {
+                transitionState(
+                    "game_room_waiting",
+                    () => {},
+                    () => {
+                        const roomLabel = document.getElementById("state-game_room_waiting-room_label");
+                        if (roomLabel) {
+                            roomLabel.innerText = `Room name: ${roomName}`;
+                        }
+                    }
+                );
+            }
+        })
+        .catch((err) => {
+            alert(err + ", Room Name: " + roomName);
+        });
+    }
+};
+
+const handleJoinRoom = (e: MouseEvent) => {
     e.preventDefault();
 
     const gameRoomNameInput: HTMLInputElement | null = document.getElementById("game_room_selector-room_name") as HTMLInputElement | null;
@@ -598,48 +726,10 @@ const joinRoom = async (e: MouseEvent) => {
         const gameRoomName = gameRoomNameInput.value
 
         if (gameRoomName) {
-            gameRoomController.onStartGame((startGameData: IStartGame) => {
-                console.log("Firing onStartGame()");
-                thisPlayer = startGameData.player;
-                currentPlayer = startGameData.state.game.currentPlayer;
-                console.log("starting as player", thisPlayer);
-                transitionState(
-                    "game_ready",
-                    () => {},
-                    () => {
-                        gameRoomController.onGameFocusEnter((playData) => {
-                            makeIncomingBall(playData.position, playData.direction);
-                        });
-                        gameRoomController.onGameScoreChange((gameRoomState) => {
-                            handleScoreChange(gameRoomState);
-                        });
-                        initGameObjects();
-                        startGame();
-
-                        updatePlayers(startGameData.state);
-                    }
-                );
-            });
-
-            gameRoomController.onRoomReadyToStartGame((roomId: string) => {
-                console.log("The room is ready!", roomId);
-            });
-
-            await gameRoomController
-            .joinGameRoom(gameRoomName)
-            .then((joined) => {
-                if (joined) {
-                    transitionState(
-                        "game_room_waiting"
-                    );
-                }
-            })
-            .catch((err) => {
-                alert(err + ", Room Name: " + gameRoomName);
-            });
+            joinRoom(gameRoomName);
         }
     }
-};
+}
 
 /* END GAME ROOM CONNECTIVITY */
 

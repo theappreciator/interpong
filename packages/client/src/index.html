@@ -11,21 +11,30 @@
     <div id="main" class="main">
       <h1>INTERPONG</h1>
       <div class="state" id="state-waiting_connect">
-        Waiting to connect...
+        <h2>Waiting to connect...</h2>
       </div>
-      <div id="jesstest"></div>
+      <!-- <div id="jesstest"></div> -->
       <div class="state hidden" id="state-game_room_selector">
-        Choose a game room
-        <input id="game_room_selector-room_name" type="text" value="test_room"/>
-        <button id = "game_room_selector-join_room">Join</button>
+        <h2>Enter a room name</h2>
+        <div id="game_room_selector-room_inputs">
+          <input id="game_room_selector-room_name" type="text" value="test_room"/>
+          <button id = "game_room_selector-join_room" class="room_join_button">Join</button>
+        </div>
+        <hr/>
+        <h2>Game Room List</h2>
+        <div id="game_room_selector-room_list">
+          <div>None</div>
+        </div>
       </div>
       <div class="state hidden" id="state-game_room_waiting">
-        Waiting for other player to join...
+        <h2 id="state-game_room_waiting-room_label"></h2>
+        Waiting for other player to join room...
       </div>
       <div class="state hidden" id="state-game_ready">
         <div class="">
           <div id="canvas"></div>
           <div id="display">
+            <div id="room">Room: room_name</div>
             <div id="score">Your score:<span></span></div>
 
             <div id="game_ready-players"></div>
@@ -34,7 +43,7 @@
             <div id="health" class="hidden">Health:<span></span></div>
             <div id="status"></div>
             <div id="actions"><button id="play">Play</button></div>
-            <button id="addMonster" style="visibility: hidden;">Add Monster</button> -->
+            <button id="addMonster" style="visibility: hidden;">Add Monster</button`-->
             <div id="fps">FPS:<span></span></div>
           </div>
         </div>
@@ -44,15 +53,27 @@
   </body>
   <style>
 
+    body {
+      font-family: 'Roboto', sans-serif;
+      font-size: 24px;
+    }
     h1 {
       font-family: 'Roboto', sans-serif;
       font-size: 80px;
       text-align: left;
       margin: 0px;
       padding: 0px;
-      margin-bottom: 20px;
+      /* margin-bottom: 20px; */
       letter-spacing: 10px;
       border-bottom: 1px #ccc solid;
+    }
+    h2 {
+      font-family: 'Roboto', sans-serif;
+      font-size: 40px;
+      text-align: left;
+      margin: 0px;
+      margin-top: 20px;
+      margin-bottom: 10px;
     }
 
     #game_ready-button {
@@ -80,8 +101,6 @@
       margin: 0 auto;
       width: var(--width);
       height: var(--height);
-      font-size: 32px;
-      font-family: Arial, Helvetica, sans-serif;
     }
 
     canvas {
@@ -89,34 +108,66 @@
       top: 0;
       z-index: 10;
       border: 1px solid #888;
-      margin-bottom: 20px;
     }
 
     #state-waiting_connect {
       margin-bottom: 20px;
     }
 
-    #state-game_room_selector > input {
-      height: 30px;
-      width: 408px;
-      font-size: 17px;
+    .room {
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      height: 40px;
+      margin-bottom: 10px;
+    }
+
+    .room_id_label {
+      flex-grow: 1;
+      text-align: left;
+      margin-right: 10px;
+      align-items: center;
+      display: flex;
+      justify-content: start;
+    }
+
+    .room_number_players {
+      flex-grow: 1;
+      text-align: right;
+      margin-right: 10px;
+      align-items: center;
+      display: flex;
+      justify-content: end;
+    }
+
+    #game_room_selector-room_inputs {
+      display: flex;
+      justify-content: space-between;
+      height: 40px;
+    }
+    
+    #game_room_selector-room_inputs > input {
+      flex-grow: 1;
+      margin-right: 10px;
+      font-size: 24px;
       outline: none;
       border: 1px solid #19914b;
       border-radius: 3px;
-      padding: 0 10px;
+      padding: 4 12px;
+      font-family: 'Roboto', sans-serif;
     }
 
-    #state-game_room_selector > button {
+    .room_join_button {
       outline: none;
       background-color: #19914b;
       color: #fff;
       font-size: 17px;
       border: 2px solid transparent;
       border-radius: 5px;
-      padding: 4px 18px;
-      transition: all 230ms ease-in-out;
-      margin-top: 1em;
+      /* padding: 4px 18px; */
+      /* transition: all 230ms ease-in-out; */
       cursor: pointer;
+      width: 80px;
     }
 
     #state-game_ready {
@@ -140,6 +191,16 @@
       border-bottom: 1px #ccc solid;
       margin-bottom: 8px;
       padding-bottom: 8px;
+    }
+
+    #room {
+      margin: 0px;
+      padding: 0px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      text-align: right;
+      font-style: italic;
+      font-size: 18px;
     }
 
     #score, #level, #combo, #health, #fps, .player {

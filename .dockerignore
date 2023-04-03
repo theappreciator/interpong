@@ -9,3 +9,6 @@ origcli
 client-old
 .parcel-cache
 .cache
+packages/client/dist
+packages/server/client
+packages/server/distribution

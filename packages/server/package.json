@@ -12,9 +12,10 @@
     "start:ci-stop-gap": "ts-node ./source/server",
     "build": "npm run clean && tsc -p ./tsconfig.server.json",
     "build:check": "tsc -p ./tsconfig.server.json --noEmit",
-    "build:common": "cd common && npm run build",
+    "build:common": "cd ../common && npm run build",
+    "build:client": "cd ../client && npm run build && cp -R ./dist ../server/client",
     "clean": "rm -rf distribution",
-    "clean:modules": "rm -rf node_modules && rm -rf node_modules.nosync && mkdir node_modules.nosync && ln -s node_modules.nosync node_modules",
+    "clean:modules": "rm -rf node_modules && rm -rf node_modules.nosync && mkdir -p node_modules.nosync && ln -s node_modules.nosync node_modules",
     "clean:package-lock": "rm -f package-lock.json"
   },
   "author": "Jess Tucker <jessjesstheappreciator@gmail.com>",

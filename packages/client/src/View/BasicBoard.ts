@@ -14,7 +14,6 @@ export interface BasicBoardProps {
     player: PlayerType,
     // coin: Coin,
     // monsters: Monster[],
-    ball?: BallType,
     // onPlayerCollideWithMonster: (continuePlaying: boolean) => void,
     // onPlayerCollideWithCoin: () => void,
     onMovementEvent: (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector) => SpriteActions[],
@@ -50,7 +49,6 @@ export class BasicBoard {
         player,
         // coin,
         // monsters,
-        ball,
         // onPlayerCollideWithMonster,
         // onPlayerCollideWithCoin,
         onMovementEvent
@@ -63,7 +61,6 @@ export class BasicBoard {
         this._player = player;
         // this._coin = coin;
         // this._monsters = monsters;
-        this._ball = ball;
 
         // this._playerCollideWithMonster = () => {
         //     console.log("Triggering collision with monster");
@@ -90,9 +87,6 @@ export class BasicBoard {
 
         this._app.stage.addChild(this._player.getSpriteObj());
         // this._app.stage.addChild(this._coin.getSpriteObj());
-        if (this._ball)
-            this._app.stage.addChild(this._ball.getSpriteObj());
-        // this._monsters.forEach(m => this._app.stage.addChild(m.getSpriteObj()));
 
         // const markerColor = 0x00ffff;
         // const marker100a = new PIXI.Graphics();

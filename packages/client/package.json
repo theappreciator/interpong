@@ -9,10 +9,11 @@
     "start:dev": "parcel serve src/index.html",
     "watch": "parcel watch src/index.html",
     "build": "npm run clean && parcel build --dist-dir dist",
+    "ci:build": "rm -fr ./dist && parcel build --dist-dir dist",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rm -rf dist && rm -fr .cache && rm -rf .parcel-cache && npm run clean:parcel",
-    "clean:parcel": "rm -rf ../../.parcel-cache && rm -rf ../../.parcel-cache.nosync && mkdir ../../.parcel-cache.nosync && ln -s ../../.parcel-cache.nosync ../../.parcel-cache",
-    "clean:modules": "rm -rf node_modules && rm -rf node_modules.nosync && mkdir node_modules.nosync && ln -s node_modules.nosync node_modules",
+    "clean:parcel": "cd ../../ && rm -rf .parcel-cache && rm -rf .parcel-cache.nosync && mkdir .parcel-cache.nosync && ln -s .parcel-cache.nosync .parcel-cache",
+    "clean:modules": "rm -rf node_modules && rm -rf node_modules.nosync && mkdir -p node_modules.nosync && ln -s node_modules.nosync node_modules",
     "clean:package-lock": "rm -f package-lock.json"
   },
   "dependencies": {

@@ -251,7 +251,7 @@ const ballMovementEventScoreOtherPlayer = (movementEvent: SoloMovementEvents[], 
             event: GAME_SCORE_EVENTS.WALL_HIT
         }
         gameRoomController.doGameScoreChange(scoreData);
-        updateScore(newScore);
+        // updateScore(newScore);
     }
 
     return [];
@@ -704,9 +704,15 @@ const joinRoom = async (roomName: string) => {
                     "game_room_waiting",
                     () => {},
                     () => {
+                        // TODO: there is a bug here.  Need a graceful way to get the room name vs. id, and intelligently swap between them
                         const roomLabel = document.getElementById("state-game_room_waiting-room_label");
                         if (roomLabel) {
                             roomLabel.innerText = `Room name: ${roomName}`;
+                        }
+
+                        const gameRoomLabel = document.getElementById("room");
+                        if (gameRoomLabel) {
+                            gameRoomLabel.innerText = `Room name: ${roomName}`;
                         }
                     }
                 );

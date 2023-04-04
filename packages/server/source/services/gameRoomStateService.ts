@@ -70,11 +70,11 @@ class GameRoomStateService {
         const pointsForEvent = GAME_SCORE_EVENT_POINTS[event] || 0;
 
         const gameRoomState = {...this.getGameRoomState()};
-        const playerState = gameRoomState.players.find(p => p.id === socketId);
-        if (!playerState) {
-            throw new Error(`Player state not found for player ${socketId}`);
-        }
-        playerState.score = playerState?.score + pointsForEvent;
+        // TODO: consider a scoring strategy to get passed in
+        const otherPlayers = gameRoomState.players.filter(p => p.id !== socketId);
+        otherPlayers.forEach(p => {
+            p.score = p.score + pointsForEvent;
+        })
         return this.updateGameRoomState(gameRoomState);
     }
 

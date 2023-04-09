@@ -1,0 +1,14 @@
+export enum SoloMovementEvents {
+    HIT_LEFT_WALL,
+    HIT_RIGHT_WALL,
+    HIT_TOP_WALL,
+    HIT_BOTTOM_WALL,
+    TRANSFERRED_LEFT_WALL,
+    TRANSFERRED_RIGHT_WALL,
+    TRANSFERRED_TOP_WALL,
+    TRANSFERRED_BOTTOM_WALL
+}
+
+export enum SpriteActions {
+    DESTROY = 1
+}

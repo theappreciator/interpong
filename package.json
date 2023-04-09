@@ -16,14 +16,17 @@
     "clean:common:modules": "npm run clean:modules -w packages/common",
     "clean:client": "npm run clean -w packages/client",
     "clean:client:modules": "npm run clean:modules -w packages/client",
-    "clean:modules": "rm -rf node_modules && npm run clean:modules -ws -if-present",
+    "clean:modules": "rm -rf node_modules && rm -rf node_modules.nosync && mkdir -p node_modules.nosync && ln -s node_modules.nosync node_modules && npm run clean:modules -ws -if-present",
     "clean:server": "npm run clean -w packages/server",
     "clean:server:modules": "npm run clean:modules -w packages/server",
+    "clean:server:client": "rm -rf ./packages/server/client || true",
     "clean:package-lock": "rm -f package-lock.json && npm run clean:package-lock -ws",
-    "start:dev": "concurrently --kill-others \"npm run build:common:watch\" \"npm run start:dev:server\" \"npm run start:dev:client\"",
     "start:dev:client": "npm run start:dev -w packages/client",
     "start:dev:server": "npm run start:dev -w packages/server",
-    "start:server": "npm run start -w packages/server",
+    "start:server": "npm run start:prod -w packages/server",
+    "start:server:ci-stop-gap": "npm run start:ci-stop-gap -w packages/server",
+    "ci:create-app": "npm run build:server && npm run ci:build:client && cp -R ./packages/client/dist ./packages/server/client",
+    "ci:build:client": "npm run ci:build -w packages/client",
     "nuke": "npm run clean && npm run clean:modules && npm run clean:package-lock && npm cache clear --force"
   },
   "author": "Jess Tucker <jessjesstheappreciator@gmail.com>",
@@ -33,13 +36,8 @@
     "./packages/client",
     "./packages/server"
   ],
-  "devDependencies": {
-    "@types/babel__core": "^7.20.0",
-    "@types/jest": "^29.4.0",
-    "ts-jest": "^29.0.5"
-  },
   "dependencies": {
-    "reflect-metadata": "^0.1.13",
-    "tsyringe": "^4.7.0"
+    "buffer": "^5.7.1",
+    "punycode": "^1.4.1"
   }
 }

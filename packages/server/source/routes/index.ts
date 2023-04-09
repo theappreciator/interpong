@@ -12,12 +12,18 @@ const router = express.Router();
 //   res.sendFile(path.join(__dirname, '..', '..', 'client', 'distribution', req.url))
 // })
 
-// router.get("/*", async (req, res) => {
-//   res.sendFile(path.join(__dirname, '..', '..', 'client', 'distribution', req.url))
-// });
+router.get("/favicon.ico", async (req, res) => {
+  return;
+});
 
 router.get("/", async (req, res) => {
-  res.sendFile(path.join(__dirname, '..', '..', 'client', 'distribution', 'index.html'))
+  res.sendFile(path.join(__dirname, '..', '..', 'client', 'index.html'))
 });
+
+router.get("/*", async (req, res) => {
+  res.sendFile(path.join(__dirname, '..', '..', 'client', req.url))
+});
+
+
 
 module.exports = router;

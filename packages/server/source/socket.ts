@@ -1,5 +1,9 @@
-import { useSocketServer } from "socket-controllers";
+import { Container, Service } from 'typedi';
+import { SocketControllers } from "socket-controllers";
 import { Server, Socket} from "socket.io";
+import chalk from "chalk";
+import * as log4js from "log4js";
+const logger = log4js.getLogger();
 
 
 
@@ -10,11 +14,16 @@ export default (httpServer: any) => {
     },
   });
 
-  io.on("connection", (socket: Socket) => {
-    console.log("DEBUG - Connection happened on io.on('connection')", socket.id);
-  });
-
-  useSocketServer(io, { controllers: [__dirname + "/api/controllers/*.ts"] });
+  // io.on("connection", (socket: Socket) => {
+  //   logger.debug("Connection happened on io.on('connection')", socket.id);
+  // });
+  new SocketControllers(
+    {
+      io: io,
+      container: Container,
+      controllers: [__dirname + "/api/controllers/*"]
+    }
+  );
 
   return io;
 };

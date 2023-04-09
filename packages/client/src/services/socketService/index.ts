@@ -1,10 +1,19 @@
 import { SOCKET_EVENTS } from "@interpong/common";
+import { DefaultEventsMap } from "@socket.io/component-emitter";
 import { io, Socket } from "socket.io-client";
-import { DefaultEventsMap } from '@socket.io/component-emitter';
+import { INetworkService } from "..";
 
-class SocketService {
-	public socket: Socket | null = null;
-	public didConnectPreviously = false;
+
+
+const TIMEOUT_CONNECTING = 1000;
+
+class SocketService implements INetworkService<Socket> {
+	private didConnectPreviously = false;
+
+	private isReConnected: (socket: Socket) => void = () => {console.log("Default SocketService onReconnected")};
+	private isDisconnected: (message: string) => void = () => {console.log("Default SocketService onDisconnected")};
+	private isPing: () => void = () => {};
+	private isPong: () => void = () => {};
 
 	private static _instance: SocketService;
 
@@ -14,61 +23,76 @@ class SocketService {
 		return this._instance || (this._instance = new this());
 	}
 
-	public connect(
-		url: string,
-		isConnected: () => void,
-		isDisconnected: (err?: Error) => void
-	): Promise<Socket<DefaultEventsMap, DefaultEventsMap>> {
+	public createConnector(
+		url: string
+	): Promise<Socket> {
 
-		return new Promise((rs, rj) => {
-			this.socket = io(url);
+		return new Promise<Socket>((rs, rj) => {
+			const socket = io(url);
 
-			if (!this.socket) return rj();
+			if (!socket) {
+				rj("Socket couldn't connect and was null")
+			};
 
-			this.socket.on("connect_error", (err) => {
+			socket.on("connect_error", (err) => {
 				console.log("Connection error: ", err);
+
+				clearTimeout(timeout);
 				rj(err);
 
-				isDisconnected();
+				this.isDisconnected(err.message);
 			});
 
-			this.socket.on("disconnect", (reason) => {
+			socket.on("disconnect", (reason) => {
 				console.log("Disconnected from socket server!", reason);
-
-				isDisconnected();
+				this.isDisconnected(reason);
 			})
 
-			this.socket.on("connect", () => {
+			socket.on("connect", () => {
 				if (!this.didConnectPreviously) {
 					this.didConnectPreviously = true;
-					console.log("Connected to the socket server!");
-					rs(this.socket as Socket);
+					clearTimeout(timeout);
+					rs(socket);
 				}
 				else {
-					console.log("Automatically re-connected to the socket server!");
+					this.isReConnected(socket);
 				}
-
-				isConnected();
 			});
+
+			socket.on(SOCKET_EVENTS.PING, this.isPing);
+			socket.on(SOCKET_EVENTS.PONG, this.isPong);
+
+            const timeout = setTimeout(() => {
+                rj("Event: Connecting to server timed out")
+            }, TIMEOUT_CONNECTING);		
 		});
 	}
 
-	public async doPing(
-		socket: Socket
-	) {
+	public onReConnected(listener: (socket: Socket) => void) {
+		console.log("Setting SocketService onReConnected()");
+		this.isReConnected = listener;
+	}
+
+	public onDisconnected(listener: (message: string) => void) {
+		console.log("Setting SocketService onDisconnected");
+		this.isDisconnected = listener;
+	}	
+
+	public doPing(socket: Socket): void {
 		console.log("About to send " + SOCKET_EVENTS.PING);
 		socket.emit(SOCKET_EVENTS.PING);
 	}
 
-	public async onPong(
-		socket: Socket,
+	public onPing(
 		listener: () => void
 	) {
-		if (socket.hasListeners(SOCKET_EVENTS.PONG)) {
-			socket.off(SOCKET_EVENTS.PONG);
-		}
-		
-		socket.on(SOCKET_EVENTS.PONG, listener);
+		this.isPing = listener;
+	}
+
+	public onPong(
+		listener: () => void
+	) {
+		this.isPong = listener;
 	}
 }
 

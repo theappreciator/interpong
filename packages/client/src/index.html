@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
+    <link rel=stylesheet type="text/css" href="styles.css">
+    <title>Interpong</title>
+  </head>
+  <body>
+    <div id="main" class="main">
+      <h1>INTERPONG</h1>
+      <div class="state" id="state-waiting_connect">
+        <h2>Waiting to connect...</h2>
+      </div>
+      <!-- <div id="jesstest"></div> -->
+      <div class="state hidden" id="state-game_room_selector">
+        <h2>Enter a room name</h2>
+        <div id="game_room_selector-room_inputs">
+          <input id="game_room_selector-room_name" type="text" value="test_room"/>
+          <button id = "game_room_selector-join_room" class="room_join_button">Join</button>
+        </div>
+        <hr/>
+        <h2>Game Room List</h2>
+        <div id="game_room_selector-room_list">
+          <div>None</div>
+        </div>
+      </div>
+      <div class="state hidden" id="state-game_room_waiting">
+        <h2 id="state-game_room_waiting-room_label"></h2>
+        Waiting for other player to join room...
+      </div>
+      <div class="state hidden" id="state-game_ready">
+        <div class="">
+          <div id="canvas"></div>
+          <div id="display">
+            <div id="room">Room:</div>
+            <div id="game_ready-teams">
+              <div id="game_ready-teams_left" class="team">
+                <div id="game_ready-teams_left_header"></div>
+                <h3>
+                  <span>Team Left</span>
+                  <span id="game_ready-teams_left_score"></span>
+                </h3>
+                <div id="game_ready-teams_left_footer"></div>
+                <div id="game_ready-teams_left_players"></div>
+              </div>
+              <div id="game_ready-teams_right" class="team">
+                <div id="game_ready-teams_right_header"></div>
+                <h3>
+                  <span>Team Right</span>
+                  <span id="game_ready-teams_right_score"></span>
+                </h3>
+                <div id="game_ready-teams_right_footer"></div>
+                <div id="game_ready-teams_right_players"></div>
+              </div>
+            </div>
+
+            <div id="game_ready-players"></div>
+            <!-- <div id="level" class="hidden">Level:<span></span></div>
+            <div id="combo" class="hidden">Multiplier:<span></span></div>
+            <div id="health" class="hidden">Health:<span></span></div>
+            <div id="status"></div>
+            <div id="actions"><button id="play">Play</button></div>
+            <button id="addMonster" style="visibility: hidden;">Add Monster</button`-->
+            <div id="fps">FPS:<span></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./index.ts"></script>
+  </body>
+</html>

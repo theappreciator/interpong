@@ -3,14 +3,36 @@
 /**
  * Module dependencies.
  */
-
+import "reflect-metadata";
 import * as dotenv from 'dotenv'; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 dotenv.config();
-import "reflect-metadata";
 import app from "./app";
 var debug = require("debug")("socketio-server:server");
 import * as http from "http";
 import socketServer from "./socket";
+import * as log4js from "log4js";
+import { PersistService } from "./services";
+log4js.configure({
+  appenders: {
+    normal: {
+      type: "stdout",
+      layout: {
+        type: "pattern",
+        pattern: "%[[%d{yyyy/MM/dd-hh.mm.ss} %x{level1char}]%] %m",
+        tokens: {
+          level1char: function (logEvent) {
+            return logEvent.level.levelStr.substring(0, 1);
+          },
+          level3char: function (logEvent) {
+            return logEvent.level.levelStr.substring(0, 3);
+          },
+        },
+      },
+    }
+  },
+  categories: { default: { appenders: ["normal"], level: "debug" } },
+});
+const logger = log4js.getLogger();
 
 /**
  * Get port from environment and store in Express.

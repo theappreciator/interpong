@@ -9,5 +9,7 @@ export interface MoveStrategy {
     stopRight: (player: Player) => void;
     moveDown: (player: Player) => void;
     stopDown: (player: Player) => void;
+    stopMoving: (player: Player) => void;
     setPointerEvents: (player: Player) => void;
+
 }

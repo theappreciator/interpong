@@ -61,11 +61,6 @@ class GameRoomStateService {
         }
     }
 
-    // public updatePlayerState(playerState: IPlayerState): void {
-    //     const gameRoomState = {...this.getGameRoomState()};
-    //     gameRoomState.players.set(playerState.player, playerState);
-    // }
-
     public updatePlayerScore(socketId: string, event: GAME_SCORE_EVENTS): IGameRoomState {
         const pointsForEvent = GAME_SCORE_EVENT_POINTS[event] || 0;
 

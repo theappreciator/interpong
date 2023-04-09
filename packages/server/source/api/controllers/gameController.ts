@@ -121,20 +121,4 @@ export class GameController {
         else
             console.log("Error gameWin()");
     }
-
-    // @OnMessage(GAME_EVENTS.READY_FOR_GAME)
-    // public async readyForGame(
-    //     @SocketIO() io: Server,
-    //     @ConnectedSocket() socket: Socket,
-    //     @MessageBody() message: any
-    // ) {
-    //     const gameRoom = getRoomForSocket(socket);
-
-    //     if (gameRoom) {
-    //         this.startGame(socket, gameRoom);
-    //     }
-    //     else {
-    //         console.log("Error readyForGame()");
-    //     }
-    // }
 }

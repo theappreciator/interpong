@@ -29,6 +29,7 @@
     "@types/morgan": "^1.9.4",
     "@types/node": "^18.11.18",
     "@types/object-inspect": "^1.8.1",
+    "@types/uuid": "^9.0.1",
     "chalk": "^4.1.2",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
@@ -47,6 +48,7 @@
     "socket.io": "^4.6.1",
     "ts-node": "^10.9.1",
     "typedi": "^0.10.0",
-    "typescript": "^4.9.4"
+    "typescript": "^4.9.4",
+    "uuid": "^9.0.0"
   }
 }

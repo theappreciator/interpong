@@ -59,6 +59,7 @@ export interface IStartGame {
 }
 
 export interface IPlayData {
+    id: uuid,
     position: Vector,
     direction: Vector
 }

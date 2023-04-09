@@ -21,7 +21,7 @@ export enum GAME_SCORE_EVENTS {
 }
 
 export enum GAME_SCORE_EVENT_POINTS {
-    WALL_HIT = 1000
+    WALL_HIT = 10
 }
 
 export const GAME_CONSTANTS = {
@@ -53,7 +53,8 @@ export type Vector = {
 
 export interface IStartGame {
     start: boolean;
-    player: 1 | 2;
+    player: IPlayerState,
+    enterBall: boolean;
     state: IGameRoomState
 }
 
@@ -98,18 +99,22 @@ export enum GameStateStatus {
     GAME_OVER
 }
 
+export const teamTypes = ["left", "right"];
+export type TeamType = typeof teamTypes[number];
+
 export interface IPlayerState {
     id: string,
-    player: number,
+    playerNumber: number,
+    team: TeamType,
     score: number
 }
 
 export interface IGameState {
     status: GameStateStatus,
-    currentPlayer: number
+    currentPlayer: IPlayerState | undefined
 }
 
 export interface IGameRoomState {
-    players: IPlayerState[]
+    players: IPlayerState[],
     game: IGameState
 }

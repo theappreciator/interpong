@@ -1,4 +1,4 @@
-import { GameStateStatus, GAME_EVENTS, IGameRoomState, IPlayData, IPlayerState, IScoreData } from "@interpong/common";
+import { GameStateStatus, GAME_EVENTS, IGameRoomState, IPlayData, IPlayerState, IScoreData, IStartGame } from "@interpong/common";
 import {
     ConnectedSocket,
     MessageBody,
@@ -13,11 +13,7 @@ import chalk from "chalk";
 import * as log4js from "log4js";
 import { getRoomForSocket, getSocketsInRoom } from "../../util/roomUtils";
 import GameRoomStateService from "../../services/gameRoomStateService";
-import { IStartGame } from "@interpong/common";
 const logger = log4js.getLogger();
-
-const PLAYER_1 = "x";
-const PLAYER_2 = "o";
 
 @SocketController()
 @Service()
@@ -31,14 +27,17 @@ export class GameController {
 
         const sockets = await getSocketsInRoom(io, roomName);
 
+        // TODO: How is this working alongside the addPlayer method?
         const player1: IPlayerState = {
             id: sockets[0].id,
-            player: 1,
+            playerNumber: 1,
+            team: "left",
             score: 0
         };
         const player2: IPlayerState = {
             id: sockets[1].id,
-            player: 2,
+            playerNumber: 2,
+            team: "right",
             score: 0
         };
         const players = [];
@@ -48,11 +47,24 @@ export class GameController {
             players: players,
             game: {
                 status: GameStateStatus.GAME_STARTED,
-                currentPlayer: 1
+                currentPlayer: player1
             }
         };
-        sockets[0].emit(GAME_EVENTS.START_GAME, { start: true, player: player1.player, state: gameRoomState} );
-        sockets[1].emit(GAME_EVENTS.START_GAME, { start: true, player: player2.player, state: gameRoomState} );
+        const playerWithBall = Math.ceil(Math.random() * 2);
+        const startGameData1: IStartGame= {
+            start: true,
+            player: player1,
+            enterBall: playerWithBall === player1.playerNumber,
+            state: gameRoomState
+        };
+        const startGameData2: IStartGame= {
+            start: true,
+            player: player2,
+            enterBall: playerWithBall === player2.playerNumber,
+            state: gameRoomState
+        };
+        sockets[0].emit(GAME_EVENTS.START_GAME, startGameData1);
+        sockets[1].emit(GAME_EVENTS.START_GAME, startGameData2);
     }
 
     @OnMessage(GAME_EVENTS.UPDATE_GAME)
@@ -86,7 +98,7 @@ export class GameController {
             const updatedGameRoomState = gameRoomStateService.updatePlayerScore(socket.id, message.event);
             const thisPlayer = updatedGameRoomState.players.find(f => f.id === socket.id);
 
-            logger.info(chalk.cyan(`Sending game score:  ${roomId}: [ from: player:${thisPlayer?.player} score:${thisPlayer?.score}]`));
+            logger.info(chalk.cyan(`Sending game score:  ${roomId}: [ from: player:${thisPlayer?.playerNumber} score:${thisPlayer?.score}]`));
             // socket.to(roomId).emit(GAME_EVENTS.ON_UPDATE_SCORE, updatedGameRoomState);
             io.to(roomId).emit(GAME_EVENTS.ON_UPDATE_SCORE, updatedGameRoomState);
         }

@@ -81,6 +81,7 @@ export class RoomController {
                 const updatedSocketsInRoom = await getSocketsInRoom(io, roomId);
 
                 const gameRoomStateService = new GameRoomStateService(roomId);
+                // TODO: How is this working alongside the gameController->startGame() method?
                 const playerState = gameRoomStateService.addPlayer(socket.id);
 
                 const roomState: IRoomState = {
@@ -94,7 +95,7 @@ export class RoomController {
                 logger.info(chalk.cyan(
                     "Room join success:  ",
                     getSocketPrettyName(socket),
-                    `${roomId}: ${playerState.player}/${updatedSocketsInRoom.length || 0}`,
+                    `${roomId}: ${playerState.playerNumber}/${updatedSocketsInRoom.length || 0}`,
                     updatedSocketsInRoom.length === ROOM_CONSTANTS.ROOM_MAX_NUMBER_OF_PLAYERS ? "[MAX]" : ""
                 ));
 

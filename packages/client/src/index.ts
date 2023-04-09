@@ -10,14 +10,14 @@ import { Socket } from "socket.io-client";
 import { DefaultEventsMap } from '@socket.io/component-emitter';
 import { SocketService } from "./services";
 import { start } from 'repl';
-import { GameStateStatus, GAME_CONSTANTS, IGameRoomState, IPlayData, IPlayerState, IRoomState, IScoreData, IStartGame, Vector } from '@interpong/common';
+import { GameStateStatus, GAME_CONSTANTS, IGameRoomState, IPlayData, IPlayerState, IRoomState, IScoreData, IStartGame, Vector, teamTypes} from '@interpong/common';
 import { IGameRoomController, SocketGameRoomController } from './controllers/';
 import { GAME_EVENTS } from '@interpong/common';
 import { SoloMovementEvents, SpriteActions } from './sprites/events';
 import { TransferTypes } from './sprites/TransferBall';
 import RectanglePlayer from './sprites/RectanglePlayer';
 import UpDownMoveStrategy from './strategies/UpDownMoveStrategy';
-import { Sprite } from 'pixi.js';
+import { Sprite, TextureMatrix } from 'pixi.js';
 import { GAME_SCORE_EVENTS } from '@interpong/common';
 import MockGameRoomController from './controllers/__mocks__/MockGameRoomController';
 
@@ -219,8 +219,8 @@ const playerCollideWithMonster = (continuePlaying: boolean) => {
 }
 
 const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector): SpriteActions[] => {
-    if ((thisPlayer === 1 && movementEvent.includes(SoloMovementEvents.TRANSFERRED_RIGHT_WALL)) ||
-        (thisPlayer === 2 && movementEvent.includes(SoloMovementEvents.TRANSFERRED_LEFT_WALL))) {
+    if ((thisPlayerNumber === 1 && movementEvent.includes(SoloMovementEvents.TRANSFERRED_RIGHT_WALL)) ||
+        (thisPlayerNumber === 2 && movementEvent.includes(SoloMovementEvents.TRANSFERRED_LEFT_WALL))) {
 
         console.log("Transferred", position, direction);
 
@@ -240,13 +240,13 @@ const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], pos
 }
 
 const ballMovementEventScoreOtherPlayer = (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector): SpriteActions[] => {
-    if ((thisPlayer === 1 && movementEvent.includes(SoloMovementEvents.HIT_LEFT_WALL)) ||
-        (thisPlayer === 2 && movementEvent.includes(SoloMovementEvents.HIT_RIGHT_WALL))) {
+    if ((thisPlayerNumber === 1 && movementEvent.includes(SoloMovementEvents.HIT_LEFT_WALL)) ||
+        (thisPlayerNumber === 2 && movementEvent.includes(SoloMovementEvents.HIT_RIGHT_WALL))) {
 
         const scoreDiff = DEFAULTS.score.increment;
         const newScore = score + scoreDiff;
         const scoreData: IScoreData = {
-            player: thisPlayer,
+            player: thisPlayerNumber,
             currentScore: score,
             event: GAME_SCORE_EVENTS.WALL_HIT
         }
@@ -275,10 +275,10 @@ const ballMovementEvents = (movementEvent: SoloMovementEvents[], position: Vecto
 }
 
 const handleScoreChange = (gameRoomState: IGameRoomState) => {
-    const thisPlayerState = Array.from(gameRoomState.players.values()).find(p => p.player === thisPlayer);
+    const thisPlayerState = gameRoomState.players.find(p => p.playerNumber === thisPlayerNumber);
 
     if (!thisPlayerState) {
-        throw new Error(`Player state for player ${thisPlayer} unexpectedly undefined`);
+        throw new Error(`Player state for player ${thisPlayerNumber} unexpectedly undefined`);
     }
 
     updateScore(thisPlayerState.score);
@@ -293,10 +293,10 @@ const makeIncomingBall = (position: Vector, direction: Vector) => {
         y: direction.y
     };
     const newPosition = {
-        x: thisPlayer === 1 ? 532 : -20,
+        x: thisPlayerNumber === 1 ? 532 : -20,
         y: position.y
     }
-    const exitSide: TransferTypes = thisPlayer === 1 ? "right" : "left";
+    const exitSide: TransferTypes = thisPlayerNumber === 1 ? "right" : "left";
 
     console.log("About to enter a new ball", newPosition, newDirection);
     const ball = new TransferBall(0x22dd22, 20, newDirection, newPosition, [exitSide] );
@@ -304,7 +304,7 @@ const makeIncomingBall = (position: Vector, direction: Vector) => {
 }
 
 const makeTestBall = (position: Vector, direction: Vector) => {
-    const exitSide: TransferTypes = thisPlayer === 1 ? "right" : "left";
+    const exitSide: TransferTypes = thisPlayerNumber === 1 ? "right" : "left";
 
     console.log("About to enter a new ball", position, direction);
     const ball = new BouncingBall(0xff2222, 20, direction, position);
@@ -319,7 +319,7 @@ function initGameObjects() {
         DEFAULTS.player.height,
         {x:DEFAULTS.player.direction.x, y:DEFAULTS.player.direction.y},
         {
-            x: thisPlayer === 1 ?
+            x: thisPlayerNumber === 1 ?
                 DEFAULTS.player.startPos.x : 
                 DEFAULTS.width - DEFAULTS.player.startPos.x - DEFAULTS.player.width,
             y: DEFAULTS.player.startPos.y
@@ -385,37 +385,75 @@ function gameLoop(delta: number): void {
 }
 
 function updatePlayers(gameRoomState: IGameRoomState) {
-    const playersElement = document.getElementById("game_ready-players")
-    if (playersElement) {
-        const sortedPlayers = gameRoomState.players.sort((a, b) => a.score - b.score);
-        for (let i = 0; i < sortedPlayers.length; i++) {
-            const player = sortedPlayers[i];
-            const playerElementId = `players-socket-${player.id}`
-            let div = document.getElementById(playerElementId);
-            if (!div) {
-                div = document.createElement("div");
-                div.id = playerElementId;
-                div.classList.add("player");
-                div.innerText = `Player ${player.player} ${thisPlayer === player.player ? '(you)' : ''}`;
-            }
+    // const playersElement = document.getElementById("game_ready-players")
+    // if (playersElement) {
+    //     const sortedPlayers = gameRoomState.players.sort((a, b) => a.score - b.score);
+    //     for (let i = 0; i < sortedPlayers.length; i++) {
+    //         const player = sortedPlayers[i];
+    //         const playerElementId = `players-socket-${player.id}`
+    //         let div = document.getElementById(playerElementId);
+    //         if (!div) {
+    //             div = document.createElement("div");
+    //             div.id = playerElementId;
+    //             div.classList.add("player");
+    //             div.innerText = `Player ${player.playerNumber} ${thisPlayerNumber === player.playerNumber ? '(you)' : ''}`;
+    //         }
 
-            let span = div.firstElementChild as HTMLElement;
-            if (!span) {
-                span = document.createElement("span");
-                div.append(span);
-            }
-            span.innerText = `${player.score.toLocaleString()}`;
+    //         let span = div.firstElementChild as HTMLElement;
+    //         if (!span) {
+    //             span = document.createElement("span");
+    //             div.append(span);
+    //         }
+    //         span.innerText = `${player.score.toLocaleString()}`;
 
-            playersElement.prepend(div);
+    //         playersElement.prepend(div);
 
-            if (player.player === thisPlayer) {
-                // TODO: reconcile when local score data is different from server score data
+    //         if (player.playerNumber === thisPlayerNumber) {
+    //             // TODO: reconcile when local score data is different from server score data
+    //         }
+    //     }
+
+
+        for (let teamType of teamTypes) {
+            const teamElement = document.getElementById(`game_ready-teams_${teamType}_players`);
+            if (teamElement) {
+                const players = gameRoomState.players.filter(p => p.team === teamType).sort((a, b) => a.score = b.score);
+                for (let i = 0; i < players.length; i++) {
+                    const player = players[i];
+                    const playerElementId = `players-${teamType}-socket-${player.id}`
+                    let div = document.getElementById(playerElementId);
+                    if (!div) {
+                        div = document.createElement("div");
+                        div.id = playerElementId;
+                        div.classList.add("team-player");
+                        div.innerText = `Player ${player.playerNumber} ${thisPlayerNumber === player.playerNumber ? '(you)' : ''}`;
+                    }
+
+                    let span = div.firstElementChild as HTMLElement;
+                    if (!span) {
+                        span = document.createElement("span");
+                        div.append(span);
+                    }
+                    span.innerText = `${player.score.toLocaleString()}`;
+
+                    teamElement.prepend(div);
+
+                    if (player.playerNumber === thisPlayerNumber) {
+                        // TODO: reconcile when local score data is different from server score data
+                    }
+                }
+
+                const teamScore = players.map(p => p.score).reduce((s, acc = 0) => acc + s);
+                const teamScoreElement = document.getElementById(`game_ready-teams_${teamType}_score`);
+                if (teamScoreElement) {
+                    teamScoreElement.innerText = teamScore.toLocaleString();
+                }
             }
         }
-    }
+    // }
 }
 
-function startGame() {
+function startGame(addBall: boolean) {
 
     console.log("START GAME");
 
@@ -441,15 +479,23 @@ function startGame() {
 
     startFps();
 
-    const ballPosition: Vector = {x: 532, y: Math.random() * 512};
-    const ballDirection: Vector = {x: -4, y: 3};
-
-    const ball = thisPlayer === 1 ? new TransferBall(0x22dd22, 20, ballDirection, ballPosition, ["right"] ) : undefined;
-    console.log("Just created a new ball", ball ? ballPosition : undefined, ball ? ballDirection : undefined );
+    // const ball = thisPlayerNumber === 1 ? new TransferBall(0x22dd22, 20, ballDirection, ballPosition, ["right"] ) : undefined;
+    // console.log("Just created a new ball", ball ? ballPosition : undefined, ball ? ballDirection : undefined );
 
 
-    if (ball)
-        board.addNewBall(ball);
+    // if (ball)
+    //     board.addNewBall(ball);
+
+    if (addBall) {
+        const xPos = thisPlayerNumber === 1 ? 532 : -20;
+        const yPos = Math.random() * 512;
+        const ballPosition: Vector = {x: xPos, y: yPos};
+
+        const xDir = thisPlayerNumber === 1 ? -4 : 4;
+        const yDir = 3.15;
+        const ballDirection: Vector = {x: xDir, y: yDir};
+        makeIncomingBall(ballPosition, ballDirection);
+    }
 
     // board.addMonster();
     board.app.ticker.add(gameLoop);
@@ -476,9 +522,9 @@ function endFps() {
 
 const changePlayer = (playData: IPlayData) => {
     
-    currentPlayer = (currentPlayer === 1) ? 2 : 1;
+    currentPlayerNumber = (currentPlayerNumber === 1) ? 2 : 1;
 
-    if (currentPlayer === 1) {
+    if (currentPlayerNumber === 1) {
         changePlayer1();
     }
     else {
@@ -635,9 +681,9 @@ const connectToServer = async () => {
             },
             () => {
                 gameRoomController.doGetRooms();
-                // setTimeout(() => {
-                //     joinRoom("auto_join_room");
-                // }, 200);
+                setTimeout(() => {
+                    joinRoom("auto_join_room");
+                }, 200);
             }
         );
     };
@@ -671,21 +717,23 @@ const joinRoom = async (roomName: string) => {
         gameRoomController.onStartGame((startGameData: IStartGame) => {
             // TODO: There is a bug where the gameboard gets shown every time this is called, creating multiple visible gameboards.
             console.log("Firing onStartGame()");
-            thisPlayer = startGameData.player;
-            currentPlayer = startGameData.state.game.currentPlayer;
-            console.log("starting as player", thisPlayer);
+            console.log(startGameData);
+            thisPlayerNumber = startGameData.player.playerNumber;
+            currentPlayerNumber = startGameData.state.game.currentPlayer?.playerNumber;
+            console.log("starting as player", thisPlayerNumber);
             transitionState(
                 "game_ready",
                 () => {},
                 () => {
                     gameRoomController.onGameFocusEnter((playData) => {
+                        console.log("Making a ball from onGameFocusEnter", playData);
                         makeIncomingBall(playData.position, playData.direction);
                     });
                     gameRoomController.onGameScoreChange((gameRoomState) => {
                         handleScoreChange(gameRoomState);
                     });
                     initGameObjects();
-                    startGame();
+                    startGame(startGameData.enterBall);
 
                     updatePlayers(startGameData.state);
                 }
@@ -755,8 +803,8 @@ let fpsInterval: NodeJS.Timer;
 
 let gameRoomController: IGameRoomController<Socket>;
 let currentState: TransitionStates = "waiting_connect";
-let thisPlayer: number;
-let currentPlayer: number;
+let thisPlayerNumber: number;
+let currentPlayerNumber: number | undefined;
 
 /* END GLOBALS */
 
@@ -768,25 +816,27 @@ if (!testGame) connectToServer();
 if (testGame) transitionState(
     "game_ready",
     () => { 
-        thisPlayer = 1;
+        thisPlayerNumber = 1;
         gameRoomController = new MockGameRoomController();
         gameRoomController.connect();
         gameRoomController.onGameScoreChange((gameRoomState) => {
             handleScoreChange(gameRoomState);
         });
         initGameObjects();
-        startGame();
-        makeTestBall({x: 480, y: 200}, {x: -4, y: 3});
+        startGame(false);
+        makeTestBall({x: 480, y: 200}, {x: -4, y: 2.35});
 
         const player1: IPlayerState = {
             id: "ABCD",
-            player: 1,
+            playerNumber: 1,
+            team: "left",
             score: 0
         };
         const player2: IPlayerState = {
             id: "ZYXW",
-            player: 2,
-            score: 5000
+            playerNumber: 2,
+            team: "right",
+            score: 50
         };
         const players: IPlayerState[] = [];
         players.push(player1);
@@ -794,7 +844,7 @@ if (testGame) transitionState(
         const gameRoomState: IGameRoomState = {
             players: players,
             game: {
-                currentPlayer: 1,
+                currentPlayer: player1,
                 status: GameStateStatus.GAME_STARTED
             }
         }

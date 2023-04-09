@@ -59,6 +59,13 @@ export default class RectanglePlayer extends Shape implements IRectangle {
             .drawRect(0, 0, width, height)
             .endFill();
 
+        let touched = false;
+        rectangle.interactive = true;
+        // rectangle.on("pointerdown", () => touched = true);
+        // rectangle.on("pointerup", () => touched = false);
+        // rectangle.on("pointermove", (event: PIXI.FederatedPointerEvent) => console.log("moved", touched, event));
+        // rectangle.on("globalmousemove", (event: PIXI.FederatedPointerEvent) => console.log("global moved", touched, event));
+
         super(rectangle, color, v, startPos);
 
         this._normalShape = {

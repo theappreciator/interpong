@@ -1,0 +1,217 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    font-size: 24px;
+}
+h1 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 80px;
+    text-align: left;
+    margin: 0px;
+    padding: 0px;
+    /* margin-bottom: 20px; */
+    letter-spacing: 10px;
+    border-bottom: 1px #ccc solid;
+}
+h2 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 40px;
+    text-align: left;
+    margin: 0px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+:root {
+    --width: 512px;
+    --height: 512px;
+}
+
+#main {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+    width: var(--width);
+    height: var(--height);
+}
+
+canvas {
+    left: 0;
+    top: 0;
+    z-index: 10;
+    border: 1px solid #888;
+}
+
+#state-waiting_connect {
+    margin-bottom: 20px;
+}
+
+.room {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    height: 40px;
+    margin-bottom: 10px;
+}
+
+.room_id_label {
+    flex-grow: 1;
+    text-align: left;
+    margin-right: 10px;
+    align-items: center;
+    display: flex;
+    justify-content: start;
+}
+
+.room_number_players {
+    flex-grow: 1;
+    text-align: right;
+    margin-right: 10px;
+    align-items: center;
+    display: flex;
+    justify-content: end;
+}
+
+#game_room_selector-room_inputs {
+    display: flex;
+    justify-content: space-between;
+    height: 40px;
+}
+
+#game_room_selector-room_inputs > input {
+    flex-grow: 1;
+    margin-right: 10px;
+    font-size: 24px;
+    outline: none;
+    border: 1px solid #19914b;
+    border-radius: 3px;
+    padding: 4 12px;
+    font-family: 'Roboto', sans-serif;
+}
+
+.room_join_button {
+    outline: none;
+    background-color: #19914b;
+    color: #fff;
+    font-size: 17px;
+    border: 2px solid transparent;
+    border-radius: 5px;
+    /* padding: 4px 18px; */
+    /* transition: all 230ms ease-in-out; */
+    cursor: pointer;
+    width: 80px;
+}
+
+#state-game_ready {
+    
+}
+
+#display {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: var(--width);
+}
+
+#game_ready-teams {
+    display: flex;
+    justify-content:space-around
+}
+
+#game_ready-teams > h3 {
+    padding: 0px;
+    margin: 0px;
+}
+
+.team {
+    width: 100%;
+    padding: 0px;
+    margin-bottom: 20px;
+}
+
+.team h3 {
+    padding: 0px;
+    margin: 0px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.team-header-left {
+
+}
+
+
+
+#game_ready-teams_left {
+    padding-right: 6px;
+}
+
+#game_ready-teams_right {
+    padding-left: 6px;
+}
+
+#game_ready-teams_left_header {
+    background-color: #b40808;
+    height: 20px;
+}
+
+#game_ready-teams_left_footer {
+    background-color: #b40808;
+    height: 4px;
+}
+
+#game_ready-teams_right_header {
+    background-color: #1638c2;
+    height: 20px;
+}
+
+#game_ready-teams_right_footer{
+    background-color: #1638c2;
+    height: 4px;
+}
+
+#game_ready-players > div:first-child {
+    border-top: 1px #ccc solid;
+    margin-top: 8px;
+    padding-top: 8px;
+}    
+
+#game_ready-players > div:last-child {
+    border-bottom: 1px #ccc solid;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+}
+
+#room {
+    margin: 0px;
+    padding: 0px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    text-align: right;
+    font-style: italic;
+    font-size: 18px;
+}
+
+#score, #level, #combo, #health, #fps, .player, .team-player {
+    display: flex;
+    justify-content: space-between;
+}
+
+#fps {
+    border-top: 1px #ccc solid;
+    padding-top: 10px;
+}
+
+#status {
+    text-align: center;
+}
+
+#actions {
+    text-align: center;
+    visibility: hidden
+}
+
+.hidden { 
+    visibility:hidden;
+    display:none;
+}

@@ -73,13 +73,15 @@ class MockGameRoomController implements IGameRoomController<string> {
     doGameScoreChange(scoreData: IScoreData): void {
         const player1: IPlayerState = {
             id: "ABCD",
-            player: 1,
+            playerNumber: 1,
+            team: "left",
             score: scoreData.currentScore + GAME_SCORE_EVENT_POINTS[scoreData.event]
         };
         const player2: IPlayerState = {
             id: "ZYXW",
-            player: 2,
-            score: 5000
+            playerNumber: 2,
+            team: "right",
+            score: 50
         };
         const players: IPlayerState[] = [];
         players.push(player1);
@@ -87,7 +89,7 @@ class MockGameRoomController implements IGameRoomController<string> {
         const gameRoomState: IGameRoomState = {
             players: players,
             game: {
-                currentPlayer: 1,
+                currentPlayer: player1,
                 status: GameStateStatus.GAME_STARTED
             }
         }

@@ -27,7 +27,7 @@ enum Corners {
 }
 
 export class BasicBoard {
-    private _app: PIXI.Application;
+    private _app: PIXI.Application<HTMLCanvasElement>;
     private _player: PlayerType;
     // private _coin: Coin;
     // private _monsters: Monster[];
@@ -81,9 +81,14 @@ export class BasicBoard {
             return actions;
         }
 
-        this._app = new PIXI.Application({width, height, antialias:true});
+        this._app = new PIXI.Application<HTMLCanvasElement>({
+            width,
+            height,
+            antialias:true,
+            backgroundColor
+        });
         this._app.ticker.stop();
-        this._app.renderer.backgroundColor = backgroundColor;
+        // this._app.renderer.backgroundColor = backgroundColor;
 
         this._app.stage.addChild(this._player.getSpriteObj());
         // this._app.stage.addChild(this._coin.getSpriteObj());
@@ -123,8 +128,8 @@ export class BasicBoard {
         // this._app.stage.addChild(marker100vb);
     }
 
-    get app(): PIXI.Application {
-        return this._app;
+    get app(): PIXI.Application<HTMLCanvasElement> {
+        return this._app
     }
 
     get score(): number {

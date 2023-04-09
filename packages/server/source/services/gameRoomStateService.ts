@@ -1,4 +1,4 @@
-import { GameStateStatus, GAME_SCORE_EVENTS, GAME_SCORE_EVENT_POINTS, IGameRoomState, IGameState, IPlayerState, ROOM_CONSTANTS } from "@interpong/common";
+import { GameStateStatus, GAME_SCORE_EVENTS, GAME_SCORE_EVENT_POINTS, IGameRoomState, IGameState, IPlayerState, ROOM_CONSTANTS, TeamType } from "@interpong/common";
 import socket from "../socket";
 import PersistService from "./persistService";
 
@@ -19,7 +19,7 @@ class GameRoomStateService {
                 players: [],
                 game: {
                     status: GameStateStatus.WAITING_FOR_PLAYERS,
-                    currentPlayer: 0
+                    currentPlayer: undefined
                 }
             };
 
@@ -27,7 +27,7 @@ class GameRoomStateService {
         }
     }
 
-    public getGameStateCurrentPlayer(): number {
+    public getGameStateCurrentPlayer(): IPlayerState | undefined {
         return this.getGameRoomState().game.currentPlayer;
     }
 
@@ -78,9 +78,19 @@ class GameRoomStateService {
         return this.updateGameRoomState(gameRoomState);
     }
 
+    // TODO: obviously this needs to be updated to evenly distribute players to teams
+    private getTeam(playerNumber: number): TeamType {
+        if (playerNumber % 2 == 0) {
+            return "right";
+        }
+        else {
+            return "left";
+        }
+    }
+
     public addPlayer(socketId: string): IPlayerState {
         const gameRoomState = {...this.getGameRoomState()};
-        const sortedPlayerNumbers = gameRoomState.players.map(p => p.player).sort((a, b) => a - b);
+        const sortedPlayerNumbers = gameRoomState.players.map(p => p.playerNumber).sort((a, b) => a - b);
         let lastN = 0;
         for (const n of sortedPlayerNumbers) {
             if (n !== lastN + 1) {
@@ -91,14 +101,13 @@ class GameRoomStateService {
         const playerNumber: number = lastN + 1;
         const player: IPlayerState = {
             id: socketId,
-            player: playerNumber,
+            playerNumber: playerNumber,
+            team: this.getTeam(playerNumber),
             score: 0
         }
         gameRoomState.players.push(player);
         this.updateGameRoomState(gameRoomState);
 
-    
-        
         return player;
     }
 

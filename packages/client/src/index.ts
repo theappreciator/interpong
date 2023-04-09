@@ -808,7 +808,7 @@ let currentPlayerNumber: number | undefined;
 
 /* END GLOBALS */
 
-const testGame = false;
+const testGame = true;
 
 if (!testGame) connectToServer();
 

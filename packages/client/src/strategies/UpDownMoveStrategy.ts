@@ -1,11 +1,11 @@
 import Player, { RectanglePlayerShapePointed } from "../sprites/RectanglePlayer";
 import { MoveStrategy } from "./MoveStrategy";
-import * as PIXI from 'pixi.js';
-import { DEFAULTS } from "../constants";
+import BaseMoveStrategy from "./BaseMoveStrategy";
+import { Vector } from "@interpong/common";
 
 
 
-export default class UpDownMoveStrategy implements MoveStrategy {
+export default class UpDownMoveStrategy extends BaseMoveStrategy implements MoveStrategy {
     moveLeft(player: Player) {
         // player.v.x = -player.speed; 
     }
@@ -38,21 +38,44 @@ export default class UpDownMoveStrategy implements MoveStrategy {
         player.v.y = 0;
     }
 
-    setPointerEvents(player: Player) {
-        const shape = player.getSpriteObj()
-        shape.interactive = true;
+    stopMoving(player: Player) {
+        player.v.x = 0;
+        player.v.y = 0;
+    }
 
-        let touched = false;
-        shape.on("pointerdown", (event: PIXI.FederatedPointerEvent) => {
-            touched = true;
-            player.updateShape(RectanglePlayerShapePointed);
+    protected onPointerDown(downPosition: Vector, player: Player) {
+        this._isTouched = true;
+        player.updateShape(RectanglePlayerShapePointed);
 
-            if (event.global.y === player.center.y) {
-                player.stopDown();
-                player.stopUp();
+        if (downPosition.y === player.center.y) {
+            player.stopMoving();
+        }
+        else {
+            const isPointerAbove = downPosition.y < player.center.y;
+            if (isPointerAbove) {
+                player.moveUp();
             }
             else {
-                const isPointerAbove = event.global.y < player.center.y;
+                player.moveDown();
+            }
+        }
+    }
+
+    protected onPointerUp(upPosition: Vector, player: Player) {
+        if (this._isTouched) {
+            this._isTouched = false;
+            player.updateShape();
+            player.stopMoving();
+        };
+    }
+
+    protected onPointerMove(position: Vector, player: Player): void {
+        if (this._isTouched) {
+            if (position.y === player.center.y) {
+                player.stopMoving();
+            }
+            else {
+                const isPointerAbove = position.y < player.center.y;
                 if (isPointerAbove) {
                     player.moveUp();
                 }
@@ -60,42 +83,6 @@ export default class UpDownMoveStrategy implements MoveStrategy {
                     player.moveDown();
                 }
             }
-            
-        });
-        shape.on("pointerup", () => {
-            if (touched) {
-                touched = false;
-                player.updateShape();
-
-                player.stopUp();
-                player.stopDown();
-            };
-        });
-        shape.on("pointerupoutside", () => {
-            if (touched) {
-                touched = false;
-                player.updateShape();
-
-                player.stopUp();
-                player.stopDown();
-            }
-        });
-        shape.on("globalpointermove", (event: PIXI.FederatedPointerEvent) => {
-            if (touched) {
-                if (event.global.y === player.center.y) {
-                    player.stopDown();
-                    player.stopUp();
-                }
-                else {
-                    const isPointerAbove = event.global.y < player.center.y;
-                    if (isPointerAbove) {
-                        player.moveUp();
-                    }
-                    else {
-                        player.moveDown();
-                    }
-                }
-            }
-        });
+        }
     }
 }

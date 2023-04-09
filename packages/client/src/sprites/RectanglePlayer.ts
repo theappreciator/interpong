@@ -231,6 +231,10 @@ export default class RectanglePlayer extends Shape implements IRectangle {
         this._moveStrategy.stopDown(this);
     }
 
+    stopMoving() {
+        this._moveStrategy.stopMoving(this);
+    }
+
     slowDown() {
         this._speedStrategy.decrement(this);
     }

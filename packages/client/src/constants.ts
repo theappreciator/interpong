@@ -10,7 +10,7 @@ const DEFAULTS = {
     },
     player: {
         speed: 1.5,
-        width: 20,
+        width: 40,
         height: 200,
         health: 3,
         startPos: {

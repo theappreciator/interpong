@@ -154,10 +154,10 @@ export class BasicBoard {
             const newBallDirection = Collision.checkPlayerAndBall(this._player, this._ball);
             if (newBallDirection) {
                 this._ball.updateShape(undefined, newBallDirection);
-                this._player.updateShape(RectanglePlayerShapeHit);
+                // this._player.updateShape(RectanglePlayerShapeHit);
             } 
             else {
-                this._player.updateShape();
+                // this._player.updateShape();
             }
 
             const ballMovementEvents = this._ball.update(viewWidth, viewHeight) || [];
@@ -172,10 +172,10 @@ export class BasicBoard {
                 const newBallDirection = Collision.checkPlayerAndBall(this._player, this._ball);
                 if (newBallDirection) {
                     this._ball.updateShape(undefined, newBallDirection);
-                    this._player.updateShape(RectanglePlayerShapeHit);
+                    // this._player.updateShape(RectanglePlayerShapeHit);
                 } 
                 else {
-                    this._player.updateShape();
+                    // this._player.updateShape();
                 }
             }
         }

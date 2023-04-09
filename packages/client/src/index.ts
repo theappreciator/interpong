@@ -681,9 +681,9 @@ const connectToServer = async () => {
             },
             () => {
                 gameRoomController.doGetRooms();
-                setTimeout(() => {
-                    joinRoom("auto_join_room");
-                }, 200);
+                // setTimeout(() => {
+                //     joinRoom("auto_join_room");
+                // }, 200);
             }
         );
     };
@@ -824,7 +824,9 @@ if (testGame) transitionState(
         });
         initGameObjects();
         startGame(false);
-        makeTestBall({x: 480, y: 200}, {x: -4, y: 2.35});
+        const yPos = Math.random() * 512;
+        const yDir = ((Math.random() < 0.5) ? -1 : 1) * 3.15;
+        makeTestBall({x: 480, y: yPos}, {x: -4, y: yDir});
 
         const player1: IPlayerState = {
             id: "ABCD",

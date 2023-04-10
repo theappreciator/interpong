@@ -1,4 +1,4 @@
-import { IStartGame, IPlayData, IGameRoomState, IScoreData, IPlayerState, GAME_SCORE_EVENT_POINTS, GameStateStatus, ROOM_CONSTANTS, IRoomState } from "@interpong/common";
+import { IStartGame, IPlayData, IGameRoomState, IScoreData, IPlayerState, GAME_SCORE_EVENT_POINTS, GameStateStatus, ROOM_CONSTANTS, IRoomState, IBallState } from "@interpong/common";
 import { IGameRoomController } from "..";
 
 
@@ -13,7 +13,7 @@ class MockGameRoomController implements IGameRoomController<string> {
     private _onPing: () => void = () => {};
     private _onPong: () => void = () => {};
     private _onStartGame: (options: IStartGame) => void = (options) => {console.log("Default MockGameRoomController onStartGame", options)};
-    private _onGameFocusEnter: (playData: IPlayData) => void = (playData) => {console.log("Default MockGameRoomController onGameFocusEnter", playData)};
+    private _onGameBallEnterBoard: (ball: IBallState) => void = (ball) => {console.log("Default MockGameRoomController onGameBallEnterBoard", ball)};
     private _onGameScoreChange: (gameRoomState: IGameRoomState) => void = (gameRoomState) => {console.log("Default ScoketGameRoomController onGameScoreChange", gameRoomState)};
 
 
@@ -61,10 +61,10 @@ class MockGameRoomController implements IGameRoomController<string> {
     onStartGame(listener: (options: IStartGame) => void): void {
         this._onStartGame = listener;
     }
-    onGameFocusEnter(listener: (playData: IPlayData) => void): void {
-        this._onGameFocusEnter = listener;
+    onGameBallEnterBoard(listener: (ball: IBallState) => void) {
+        this._onGameBallEnterBoard = listener;
     }
-    doGameFocusLeave(playData: IPlayData): void {
+    doGameBallLeaveBoard(ball: IBallState) {
         return;
     }
     onGameScoreChange(listener: (gameRoomState: IGameRoomState) => void): void {
@@ -89,14 +89,14 @@ class MockGameRoomController implements IGameRoomController<string> {
         const gameRoomState: IGameRoomState = {
             players: players,
             game: {
-                currentPlayer: player1,
                 status: GameStateStatus.GAME_STARTED
-            }
+            },
+            balls: [] // TODO: this needs somthing dummied in
         }
         this._onGameScoreChange(gameRoomState);
     }
     onGameCompleted(listener: () => void): void {
-        this._onGameFocusEnter = listener;
+        throw new Error("Method not implemented.");
     }
     connect(): void {
         return;

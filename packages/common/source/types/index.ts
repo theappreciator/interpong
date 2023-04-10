@@ -10,6 +10,8 @@ export enum GAME_EVENTS {
     // ON_READY_FOR_GAME = "on_ready_for_game",
     UPDATE_GAME = "update_game", // the outgoing event from client->server
     ON_UPDATE_GAME = "on_update_game", // the incoming event from server->client. 
+    UPDATE_BALL = "update_ball",
+    ON_UPDATE_BALL = "on_update_ball",
     UPDATE_SCORE = "update_score", // the outgoing event from the client->server
     ON_UPDATE_SCORE = "on_update_score", // the incoming event from server->client
     WIN_GAME = "win_game",
@@ -54,12 +56,11 @@ export type Vector = {
 export interface IStartGame {
     start: boolean;
     player: IPlayerState,
-    enterBall: boolean;
     state: IGameRoomState
 }
 
 export interface IPlayData {
-    id: uuid,
+    id: string,
     position: Vector,
     direction: Vector
 }
@@ -96,6 +97,7 @@ export interface IRoomState {
 export enum GameStateStatus {
     WAITING_FOR_PLAYERS = 1,
     PLAYERS_READY,
+    GAME_STARTING,
     GAME_STARTED,
     GAME_OVER
 }
@@ -112,10 +114,18 @@ export interface IPlayerState {
 
 export interface IGameState {
     status: GameStateStatus,
-    currentPlayer: IPlayerState | undefined
+}
+
+export interface IBallState {
+    id: string,
+    bounces: number,
+    players: number[],
+    lastPosition: Vector,
+    lastDirection: Vector
 }
 
 export interface IGameRoomState {
     players: IPlayerState[],
+    balls: IBallState[],
     game: IGameState
 }

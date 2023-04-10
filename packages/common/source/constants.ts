@@ -23,6 +23,16 @@ const DEFAULTS = {
         },
         invulnerableMillis: 2000,
         flashMillis: 200
+    },
+    ball: {
+        radius: 20,
+        offscreenLeft: -20,
+        offscreenRight: 532,
+        direction: {
+            x: 4,
+            y: 3.15
+        },
+        waitTimeMillisforNext: 1000
     }
 }
 

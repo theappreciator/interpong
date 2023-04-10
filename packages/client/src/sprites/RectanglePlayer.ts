@@ -1,9 +1,8 @@
 import * as PIXI from 'pixi.js';
 import { HealthStrategy } from '../strategies/HealthStrategy';
-import { DEFAULTS } from "../constants";
 import { MoveStrategy } from '../strategies/MoveStrategy';
 import { SpeedStrategy } from '../strategies/SpeedStrategy';
-import { Vector } from '@interpong/common';
+import { DEFAULTS, Vector } from '@interpong/common';
 import { SoloMovementEvents } from './events';
 import Shape from './Shape';
 import { Sprite } from './Sprite';

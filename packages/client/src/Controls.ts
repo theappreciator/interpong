@@ -11,7 +11,7 @@ export default class Controls {
     private _keyUpListener: (ev: KeyboardEvent) => void;
 
     constructor(keyDownLister: (ev: KeyboardEvent) => void, keyUpLister: (ev: KeyboardEvent) => void) {
-       this.reset();
+        this.reset();
 
         this._keyDownListener = keyDownLister;
         this._keyUpListener = keyUpLister;

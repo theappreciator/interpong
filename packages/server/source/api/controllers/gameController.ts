@@ -1,4 +1,4 @@
-import { GameStateStatus, GAME_EVENTS, IGameRoomState, IPlayData, IPlayerState, IScoreData, IStartGame } from "@interpong/common";
+import { GameStateStatus, GAME_EVENTS, IBallState, IGameRoomState, IPlayData, IPlayerState, IScoreData, IStartGame, Vector } from "@interpong/common";
 import {
     ConnectedSocket,
     MessageBody,
@@ -11,60 +11,64 @@ import { Server, Socket } from "socket.io";
 import { DefaultEventsMap } from "socket.io/dist/typed-events";
 import chalk from "chalk";
 import * as log4js from "log4js";
-import { getRoomForSocket, getSocketsInRoom } from "../../util/roomUtils";
+import { getRoomForSocket, getRoomIdFromName, getSocketIdsInRoom, getSocketsInRoom } from "../../util/roomUtils";
 import GameRoomStateService from "../../services/gameRoomStateService";
+import { getGameRoomStartedState, getPlayerNumberWithBall, getStartingBalls, getStartingPlayers } from "../../util/gameUtils";
+import socket from "../../socket";
+import { DEFAULTS } from "@interpong/common";
 const logger = log4js.getLogger();
+
+
 
 @SocketController()
 @Service()
 export class GameController {
 
     public async startGame(io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>, roomName: string) {
-        const socketsInRoom = io.sockets.adapter.rooms.get(roomName) || new Set<string>();
-        const socketsInRoomStr = Array.from(socketsInRoom).join(", ");
+        const roomId = getRoomIdFromName(roomName);
+        const socketsInRoom = await getSocketsInRoom(io, roomId);
+        const socketsInRoomStr = socketsInRoom.map(s => s.id).join(", ");
 
-        logger.info(chalk.cyan("Starting game:      ", roomName + ":", "[" + socketsInRoomStr + "]"));
+        logger.info(chalk.cyan("Starting game:      ", roomId + ":", "[" + socketsInRoomStr + "]"));
 
-        const sockets = await getSocketsInRoom(io, roomName);
+        // TODO: need to reconcile how to update the game state to started and verify the ball state is saved as well
+        const gameRoomStateService = new GameRoomStateService(roomId);
 
-        // TODO: How is this working alongside the addPlayer method?
-        const player1: IPlayerState = {
-            id: sockets[0].id,
-            playerNumber: 1,
-            team: "left",
-            score: 0
-        };
-        const player2: IPlayerState = {
-            id: sockets[1].id,
-            playerNumber: 2,
-            team: "right",
-            score: 0
-        };
-        const players = [];
-        players.push(player1);
-        players.push(player2);
-        const gameRoomState: IGameRoomState = {
-            players: players,
-            game: {
-                status: GameStateStatus.GAME_STARTED,
-                currentPlayer: player1
+        const players = gameRoomStateService.getGameRoomState().players
+        const player1 = players.find(p => p.playerNumber === 1);
+        const player2 = players.find(p => p.playerNumber === 2);
+        if (!player1 || !player2 || (players.length != socketsInRoom.length)) {
+            throw new Error("Could not start game, not all sockets could be identified");
+        }
+
+        const playerNumberWithBall = getPlayerNumberWithBall(players.length);
+        const playerWithBall = players.find(p => p.playerNumber === playerNumberWithBall);
+        const balls = getStartingBalls(playerNumberWithBall, 1);
+
+        const gameRoomState = gameRoomStateService.updateGameStateStatusStarting(balls);
+
+        for (let i = 0; i < players.length; i++) {
+            const player = players[i];
+            const playerStartGameData: IStartGame= {
+                start: true,
+                player: player,
+                state: gameRoomState
+            };
+            const socket = socketsInRoom.find(s => s.id === player.id);
+            if (!socket) {
+                throw new Error("Could not get socket from player");
             }
-        };
-        const playerWithBall = Math.ceil(Math.random() * 2);
-        const startGameData1: IStartGame= {
-            start: true,
-            player: player1,
-            enterBall: playerWithBall === player1.playerNumber,
-            state: gameRoomState
-        };
-        const startGameData2: IStartGame= {
-            start: true,
-            player: player2,
-            enterBall: playerWithBall === player2.playerNumber,
-            state: gameRoomState
-        };
-        sockets[0].emit(GAME_EVENTS.START_GAME, startGameData1);
-        sockets[1].emit(GAME_EVENTS.START_GAME, startGameData2);
+            socket.emit(GAME_EVENTS.START_GAME, playerStartGameData);
+        }
+
+        const socketWithBall = socketsInRoom.find(s => s.id === playerWithBall?.id);
+        for (const ball of balls) {
+            setTimeout(() => {
+                socketWithBall?.emit(GAME_EVENTS.ON_UPDATE_BALL, ball);
+            }, Math.random() * DEFAULTS.ball.waitTimeMillisforNext); 
+        }
+
+        gameRoomStateService.updateGameStateStatus(GameStateStatus.GAME_STARTED);
     }
 
     @OnMessage(GAME_EVENTS.UPDATE_GAME)
@@ -84,6 +88,53 @@ export class GameController {
         }
     }
 
+    @OnMessage(GAME_EVENTS.UPDATE_BALL)
+    public async updateBall(
+        @SocketIO() io: Server,
+        @ConnectedSocket() socket: Socket,
+        @MessageBody() message: IBallState
+    ) {
+        const roomId = getRoomForSocket(socket);
+
+        if (roomId) {
+            logger.info(chalk.cyan(`Receive ball update: ${roomId}-${socket.id}: [ ${message.id} px:${message.lastPosition.x} py:${message.lastPosition.y} dx:${message.lastDirection.x} dy:${message.lastDirection.y}]`));
+
+            const gameRoomStateService = new GameRoomStateService(roomId);
+            const originalGameRoomState = gameRoomStateService.getGameRoomState();
+            const player = gameRoomStateService.getPlayerState(socket.id);
+            const incomingBall = gameRoomStateService.getBallState(message.id);
+
+            incomingBall.bounces = incomingBall.bounces + 1;
+            incomingBall.lastDirection.x = incomingBall.lastDirection.x * -1
+            incomingBall.lastDirection.y = message.lastDirection.y;
+            incomingBall.lastPosition.x = player.playerNumber === 2 ? DEFAULTS.ball.offscreenRight : DEFAULTS.ball.offscreenLeft;
+            incomingBall.lastPosition.y = message.lastPosition.y;
+            incomingBall.players.push(player.playerNumber);
+
+            const updatedBalls = [];
+            for (let i = 0; i < originalGameRoomState.balls.length; i++) {
+                const originalBall = originalGameRoomState.balls[i];
+                if (originalBall.id === incomingBall.id) {
+                    updatedBalls.push(incomingBall);
+                }
+                else {
+                    updatedBalls.push({...originalBall});
+                }
+            }
+
+            const gameRoomState = {...gameRoomStateService.getGameRoomState()};
+            gameRoomState.balls = updatedBalls;
+            gameRoomStateService.updateGameRoomState(gameRoomState);
+
+            logger.info(chalk.cyan(`Sending ball update: ${roomId}: [ ${incomingBall.id} px:${incomingBall.lastPosition.x} py:${incomingBall.lastPosition.y} dx:${incomingBall.lastDirection.x} dy:${incomingBall.lastDirection.y}]`));
+
+            socket.to(roomId).emit(GAME_EVENTS.ON_UPDATE_BALL, incomingBall);
+        }
+        else {
+            console.log("Error updateGame()");  
+        }
+    }
+
     @OnMessage(GAME_EVENTS.UPDATE_SCORE)
     public async updateScore(
         @SocketIO() io: Server,
@@ -97,8 +148,9 @@ export class GameController {
             const gameRoomStateService = new GameRoomStateService(roomId);
             const updatedGameRoomState = gameRoomStateService.updatePlayerScore(socket.id, message.event);
             const thisPlayer = updatedGameRoomState.players.find(f => f.id === socket.id);
+            const otherPlayer = updatedGameRoomState.players.find(f => f.id !== socket.id);
 
-            logger.info(chalk.cyan(`Sending game score:  ${roomId}: [ from: player:${thisPlayer?.playerNumber} score:${thisPlayer?.score}]`));
+            logger.info(chalk.cyan(`Sending game score:  ${roomId}: [ from p${thisPlayer?.playerNumber} to p${otherPlayer?.playerNumber} new score:${otherPlayer?.score}]`));
             // socket.to(roomId).emit(GAME_EVENTS.ON_UPDATE_SCORE, updatedGameRoomState);
             io.to(roomId).emit(GAME_EVENTS.ON_UPDATE_SCORE, updatedGameRoomState);
         }

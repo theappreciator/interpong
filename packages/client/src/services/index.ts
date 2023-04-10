@@ -1,12 +1,12 @@
-import { IGameRoomState, IRoomState, IScoreData } from "@interpong/common";
+import { IBallState, IGameRoomState, IRoomState, IScoreData } from "@interpong/common";
 import { IPlayData, IStartGame } from "@interpong/common";
 import SocketService from "./socketService";
 
 export interface IGameService<T> {
     onStartGame(listener: (options: IStartGame) => void): void;
 
-    onGameFocusEnter(listener: (playData: IPlayData) => void): void;
-    doGameFocusLeave(playData: IPlayData): void;
+    onGameBallEnterBoard(listener: (ball: IBallState) => void): void;
+    doGameBallLeaveBoard(ball: IBallState): void;
     onGameScoreChange(listener: (gameRoomState: IGameRoomState) => void): void;
     doGameScoreChange(scoreData: IScoreData): void
 

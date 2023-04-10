@@ -1,4 +1,4 @@
-import { GameStateStatus, GAME_SCORE_EVENTS, GAME_SCORE_EVENT_POINTS, IGameRoomState, IGameState, IPlayerState, ROOM_CONSTANTS, TeamType } from "@interpong/common";
+import { GameStateStatus, GAME_SCORE_EVENTS, GAME_SCORE_EVENT_POINTS, IBallState, IGameRoomState, IGameState, IPlayerState, ROOM_CONSTANTS, TeamType } from "@interpong/common";
 import socket from "../socket";
 import PersistService from "./persistService";
 
@@ -19,17 +19,17 @@ class GameRoomStateService {
                 players: [],
                 game: {
                     status: GameStateStatus.WAITING_FOR_PLAYERS,
-                    currentPlayer: undefined
-                }
+                },
+                balls: []
             };
 
             this._persist.save(this._roomId, initialGameRoomState);
         }
     }
 
-    public getGameStateCurrentPlayer(): IPlayerState | undefined {
-        return this.getGameRoomState().game.currentPlayer;
-    }
+    // public getGameStateCurrentPlayer(): IPlayerState | undefined {
+    //     return this.getGameRoomState().game.currentPlayer;
+    // }
 
     public getGameStateStatus(): GameStateStatus {
         return this.getGameRoomState().game.status;
@@ -38,6 +38,13 @@ class GameRoomStateService {
     public updateGameStateStatus(newStatus: GameStateStatus): IGameRoomState {
         const gameRoomState = {...this.getGameRoomState()};
         gameRoomState.game.status = newStatus;
+        return this.updateGameRoomState(gameRoomState);
+    }
+
+    public updateGameStateStatusStarting(balls: IBallState[]): IGameRoomState {
+        const gameRoomState = {...this.getGameRoomState()};
+        gameRoomState.game.status = GameStateStatus.GAME_STARTING;
+        gameRoomState.balls = [...balls];
         return this.updateGameRoomState(gameRoomState);
     }
 
@@ -58,6 +65,16 @@ class GameRoomStateService {
         }
         else {
             throw new Error(`Player State (player ${socketId}) unexpectedly undefined`);
+        }
+    }
+
+    public getBallState(ballId: string): IBallState {
+        const ballState = this.getGameRoomState()?.balls.find(b => b.id === ballId);
+        if (ballState) {
+            return ballState;
+        }
+        else {
+            throw new Error(`Ball State (ball ${ballId}) unexpectedly undefined`);
         }
     }
 

@@ -1,5 +1,5 @@
 import { INetworkService, INetworkServiceConsumer, IRoomService, SocketService } from "../../services";
-import { IGameRoomState, IPlayData, IRoomState, IScoreData, IStartGame } from '@interpong/common';
+import { IBallState, IGameRoomState, IPlayData, IRoomState, IScoreData, IStartGame } from '@interpong/common';
 import { Socket } from "socket.io-client";
 import { IGameRoomController } from "..";
 import { SocketError } from "../../utils/errors/socketError";
@@ -22,7 +22,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
     private _onPing: () => void = () => {};
     private _onPong: () => void = () => {};
     private _onStartGame: (startGameData: IStartGame) => void = (startGameData) => {console.log("Default SocketGameRoomController onStartGame", startGameData)};
-    private _onGameFocusEnter: (playData: IPlayData) => void = (playData) => {console.log("Default SocketGameRoomController onGameFocusEnter", playData)};
+    private _onGameBallEnterBoard: (ball: IBallState) => void = (ball) => {console.log("Default SocketGameRoomController onGameBallEnterBoard", ball)};
     private _onGameScoreChange: (gameRoomState: IGameRoomState) => void = (gameRoomState) => {console.log("Default ScoketGameRoomController onGameScoreChange", gameRoomState)};
 
     private networkService: INetworkService<Socket>
@@ -144,18 +144,18 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
         }
     }
 
-    public doGameFocusLeave(playData: IPlayData): void {
+    public doGameBallLeaveBoard(ball: IBallState): void {
         if (!this.socket) {
             throw new SocketError({
                 name: "SOCKET_NOT_CONNECTED",
                 message: "Socket is not connected",
-                cause: "doPing()"
+                cause: "doGameBallLeaveBoard()"
             });
         }
 
-        console.log("About to emit", GAME_EVENTS.UPDATE_GAME, playData);
+        console.log("About to emit", GAME_EVENTS.UPDATE_BALL, ball);
 
-        this.socket.emit(GAME_EVENTS.UPDATE_GAME, playData);
+        this.socket.emit(GAME_EVENTS.UPDATE_BALL, ball);
     }
 
     public doGameScoreChange(scoreData: IScoreData): void {
@@ -163,11 +163,11 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
             throw new SocketError({
                 name: "SOCKET_NOT_CONNECTED",
                 message: "Socket is not connected",
-                cause: "doPing()"
+                cause: "doGameScoreChange()"
             });
         }
 
-        console.log("About to emit", GAME_EVENTS.UPDATE_SCORE, scoreData);
+        // console.log("About to emit", GAME_EVENTS.UPDATE_SCORE, scoreData);
 
         this.socket.emit(GAME_EVENTS.UPDATE_SCORE, scoreData);
     }
@@ -227,9 +227,9 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
         this._onStartGame = listener;
     }
 
-    public onGameFocusEnter(listener: (playData: IPlayData) => void): void {
-        console.log("Setting SocketGameRoomController onGameFocusEnter()");
-        this._onGameFocusEnter = listener;
+    public onGameBallEnterBoard(listener: (ball: IBallState) => void): void {
+        console.log("Setting SocketGameRoomController onGameBallEnterBoard()");
+        this._onGameBallEnterBoard = listener;
     }
 
     public onGameScoreChange(listener: (gameRoomState: IGameRoomState) => void): void {
@@ -273,7 +273,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
         });
 
         this.socket.on(GAME_EVENTS.START_GAME, (startGameData) => this._onStartGame(startGameData));
-        this.socket.on(GAME_EVENTS.ON_UPDATE_GAME, (playData) => this._onGameFocusEnter(playData));
+        this.socket.on(GAME_EVENTS.ON_UPDATE_BALL, (ball) => this._onGameBallEnterBoard(ball));
         this.socket.on(GAME_EVENTS.ON_UPDATE_SCORE, (gameRoomState) => this._onGameScoreChange(gameRoomState));
     }
 

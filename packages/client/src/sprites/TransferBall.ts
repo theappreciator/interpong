@@ -10,9 +10,10 @@ export type TransferTypes = "left" | "right" | "top" | "bottom";
 export default class TransferBall extends Shape implements ICircle {
 
     private _radius: number;
+    private _ballId: string;
     private _transferTypes: TransferTypes[];
 
-    constructor(color: number, radius: number, v: Vector, startPos: Vector, transferTypes: TransferTypes[]) {
+    constructor(color: number, radius: number, v: Vector, startPos: Vector, ballId: string, transferTypes: TransferTypes[]) {
 
         let circle = new PIXI.Graphics();
         circle.x = startPos?.x || 0 + radius;
@@ -25,12 +26,17 @@ export default class TransferBall extends Shape implements ICircle {
         super(circle, color, v, startPos);
 
         this._radius = radius;
+        this._ballId = ballId;
         this._transferTypes = transferTypes;
        
     }
 
     get radius(): number {
         return this._radius;
+    }
+
+    get ballId(): string {
+        return this._ballId;
     }
 
     updateShape(position?: Vector, direction?: Vector, color?: number, radius?: number) {

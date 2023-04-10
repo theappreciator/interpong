@@ -1,8 +1,7 @@
 import * as PIXI from 'pixi.js';
-import { DEFAULTS } from './constants';
 import Controls from './Controls';
 import SimpleMoveStrategy from './strategies/SimpleMoveStrategy';
-import { Player, Coin, Monster, BouncingBall, TransferBall } from './sprites';
+import { Player, Coin, Monster, BouncingBall, TransferBall, BallType } from './sprites';
 import { BasicBoard, BasicBoardProps } from './View/BasicBoard';
 import SimpleSpeedStrategy from './strategies/SimpleSpeedStrategy';
 import { SimpleHealthStrategy } from './strategies/SimpleHealthStrategy';
@@ -10,7 +9,7 @@ import { Socket } from "socket.io-client";
 import { DefaultEventsMap } from '@socket.io/component-emitter';
 import { SocketService } from "./services";
 import { start } from 'repl';
-import { GameStateStatus, GAME_CONSTANTS, IGameRoomState, IPlayData, IPlayerState, IRoomState, IScoreData, IStartGame, Vector, teamTypes} from '@interpong/common';
+import { GameStateStatus, GAME_CONSTANTS, IGameRoomState, IPlayData, IPlayerState, IRoomState, IScoreData, IStartGame, Vector, teamTypes, IBallState, DEFAULTS} from '@interpong/common';
 import { IGameRoomController, SocketGameRoomController } from './controllers/';
 import { GAME_EVENTS } from '@interpong/common';
 import { SoloMovementEvents, SpriteActions } from './sprites/events';
@@ -20,6 +19,8 @@ import UpDownMoveStrategy from './strategies/UpDownMoveStrategy';
 import { Sprite, TextureMatrix } from 'pixi.js';
 import { GAME_SCORE_EVENTS } from '@interpong/common';
 import MockGameRoomController from './controllers/__mocks__/MockGameRoomController';
+import { v4 as uuidv4 } from 'uuid';
+
 
 
 
@@ -218,18 +219,23 @@ const playerCollideWithMonster = (continuePlaying: boolean) => {
     }
 }
 
-const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector): SpriteActions[] => {
+const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], ball: BallType): SpriteActions[] => {
     if ((thisPlayerNumber === 1 && movementEvent.includes(SoloMovementEvents.TRANSFERRED_RIGHT_WALL)) ||
         (thisPlayerNumber === 2 && movementEvent.includes(SoloMovementEvents.TRANSFERRED_LEFT_WALL))) {
 
-        console.log("Transferred", position, direction);
+        console.log("Transferred", ball.center, ball.v);
 
-        const playData: IPlayData = {position, direction};
-        gameRoomController.doGameFocusLeave(playData);
+        // const playData: IPlayData = {id: ball.ballId, position: ball.center, direction: ball.v};
+        // gameRoomController.doGameFocusLeave(playData);
 
-        // setTimeout(() => {
-        //     makeIncomingBall(position, direction);
-        // }, 1);
+        const ballState: IBallState = {
+            id: ball.ballId,
+            bounces: 0, // TODO: this is unreliable from the client, and unused on the server's receiver for this event
+            players: [], // TODO: this is unreliable from the client, and unused on the server's receiver for this event
+            lastPosition: ball.center,
+            lastDirection: ball.v
+        }
+        gameRoomController.doGameBallLeaveBoard(ballState);
 
         const actions: SpriteActions[] = [];
         actions.push(SpriteActions.DESTROY);
@@ -239,7 +245,7 @@ const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], pos
     return [];
 }
 
-const ballMovementEventScoreOtherPlayer = (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector): SpriteActions[] => {
+const ballMovementEventScoreOtherPlayer = (movementEvent: SoloMovementEvents[], ball: BallType): SpriteActions[] => {
     if ((thisPlayerNumber === 1 && movementEvent.includes(SoloMovementEvents.HIT_LEFT_WALL)) ||
         (thisPlayerNumber === 2 && movementEvent.includes(SoloMovementEvents.HIT_RIGHT_WALL))) {
 
@@ -259,16 +265,16 @@ const ballMovementEventScoreOtherPlayer = (movementEvent: SoloMovementEvents[], 
 
 
 
-const ballMovementEvents = (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector): SpriteActions[] => {
+const ballMovementEvents = (movementEvent: SoloMovementEvents[], ball: BallType): SpriteActions[] => {
     let actions: SpriteActions[] = [];
 
 
     if (movementEvent.includes(SoloMovementEvents.TRANSFERRED_RIGHT_WALL) || movementEvent.includes(SoloMovementEvents.TRANSFERRED_LEFT_WALL)) {
-        const newActions = ballMovementEventDestroyOnExit(movementEvent, position, direction)
+        const newActions = ballMovementEventDestroyOnExit(movementEvent, ball)
         actions = [...newActions];
     }
     else if (movementEvent.includes(SoloMovementEvents.HIT_LEFT_WALL) || movementEvent.includes(SoloMovementEvents.HIT_RIGHT_WALL)) {
-        actions = [...(ballMovementEventScoreOtherPlayer(movementEvent, position, direction))];
+        actions = [...(ballMovementEventScoreOtherPlayer(movementEvent, ball))];
     }
 
     return actions;
@@ -287,28 +293,30 @@ const handleScoreChange = (gameRoomState: IGameRoomState) => {
 
 }
 
-const makeIncomingBall = (position: Vector, direction: Vector) => {
-    const newDirection = {
-        x: direction.x,
-        y: direction.y
-    };
-    const newPosition = {
-        x: thisPlayerNumber === 1 ? 532 : -20,
-        y: position.y
-    }
-    const exitSide: TransferTypes = thisPlayerNumber === 1 ? "right" : "left";
+// const makeIncomingBall = (position: Vector, direction: Vector) => {
+const makeIncomingBall = (ball: IBallState) => {
+    // const newDirection = {
+    //     x: direction.x,
+    //     y: direction.y
+    // };
+    // const newPosition = {
+    //     x: thisPlayerNumber === 1 ? 532 : -20,
+    //     y: position.y
+    // }
+    const exitSide: TransferTypes = thisPlayerNumber === 1 ? "right" : "left"; // TODO: this can be driven by team
 
-    console.log("About to enter a new ball", newPosition, newDirection);
-    const ball = new TransferBall(0x22dd22, 20, newDirection, newPosition, [exitSide] );
-    board.addNewBall(ball);
+    console.log("About to enter a new ball", ball.lastPosition, ball.lastDirection);
+    ballsInPlay.push({...ball});
+    const ballSprite = new TransferBall(0x22dd22, DEFAULTS.ball.radius, ball.lastDirection, ball.lastPosition, ball.id, [exitSide]);
+    board.addNewBall(ballSprite);
 }
 
 const makeTestBall = (position: Vector, direction: Vector) => {
     const exitSide: TransferTypes = thisPlayerNumber === 1 ? "right" : "left";
 
-    console.log("About to enter a new ball", position, direction);
-    const ball = new BouncingBall(0xff2222, 20, direction, position);
-    // const ball = new TransferBall(0xff2222, 20, direction, position, ["right"]);
+    console.log("About to enter a new test ball", position, direction);
+    const ball = new BouncingBall(0xff2222, DEFAULTS.ball.radius, direction, position, "mytestball");
+    // const ball = new TransferBall(0xff2222, DEFAULTS.ball.radius, direction, position, "mytestball", ["right"]);
     board.addNewBall(ball);
 }
 
@@ -327,8 +335,7 @@ function initGameObjects() {
         new UpDownMoveStrategy(),
         new SimpleSpeedStrategy(),
         new SimpleHealthStrategy());
-    // const coin = new Coin(0xfcf8ec, 10, {x:0, y:0}, {x:0, y:0});
-    // const ball = new BouncingBall(0xe42e2e, 20, {x:6, y:7}, {x:0, y:0});
+    // const ball = new BouncingBall(0xe42e2e, DEFAULTS.ball.radius, {x:6, y:7}, {x:0, y:0});
 
     // const monsters: Monster[] = [];
     controls = new Controls(
@@ -453,7 +460,7 @@ function updatePlayers(gameRoomState: IGameRoomState) {
     // }
 }
 
-function startGame(addBall: boolean) {
+function startGame() {
 
     console.log("START GAME");
 
@@ -479,25 +486,17 @@ function startGame(addBall: boolean) {
 
     startFps();
 
-    // const ball = thisPlayerNumber === 1 ? new TransferBall(0x22dd22, 20, ballDirection, ballPosition, ["right"] ) : undefined;
-    // console.log("Just created a new ball", ball ? ballPosition : undefined, ball ? ballDirection : undefined );
+    // if (addBall) {
+    //     const xPos = thisPlayerNumber === 1 ? 532 : -20;
+    //     const yPos = Math.random() * 512;
+    //     const ballPosition: Vector = {x: xPos, y: yPos};
 
+    //     const xDir = thisPlayerNumber === 1 ? -4 : 4;
+    //     const yDir = 3.15;
+    //     const ballDirection: Vector = {x: xDir, y: yDir};
+    //     makeIncomingBall(ballPosition, ballDirection);
+    // }
 
-    // if (ball)
-    //     board.addNewBall(ball);
-
-    if (addBall) {
-        const xPos = thisPlayerNumber === 1 ? 532 : -20;
-        const yPos = Math.random() * 512;
-        const ballPosition: Vector = {x: xPos, y: yPos};
-
-        const xDir = thisPlayerNumber === 1 ? -4 : 4;
-        const yDir = 3.15;
-        const ballDirection: Vector = {x: xDir, y: yDir};
-        makeIncomingBall(ballPosition, ballDirection);
-    }
-
-    // board.addMonster();
     board.app.ticker.add(gameLoop);
     board.app.ticker.start();
 }
@@ -520,41 +519,41 @@ function endFps() {
     clearInterval(fpsInterval);
 }
 
-const changePlayer = (playData: IPlayData) => {
+// const changePlayer = (playData: IPlayData) => {
     
-    currentPlayerNumber = (currentPlayerNumber === 1) ? 2 : 1;
+//     currentPlayerNumber = (currentPlayerNumber === 1) ? 2 : 1;
 
-    if (currentPlayerNumber === 1) {
-        changePlayer1();
-    }
-    else {
-        changePlayer2();
-    }
-}
+//     if (currentPlayerNumber === 1) {
+//         changePlayer1();
+//     }
+//     else {
+//         changePlayer2();
+//     }
+// }
 
-const changePlayer1 = () => {
-    const playerLabel = document.getElementById("game_ready-current_player");
-    if (playerLabel)
-        playerLabel.innerText = "Turn: Player 1";    
+// const changePlayer1 = () => {
+//     const playerLabel = document.getElementById("game_ready-current_player");
+//     if (playerLabel)
+//         playerLabel.innerText = "Turn: Player 1";    
     
-    const gameButton = document.getElementById("game_ready-button");
-    if (gameButton) {
-        gameButton.classList.remove("player2");
-        gameButton.classList.add("player1");
-    }
-}
+//     const gameButton = document.getElementById("game_ready-button");
+//     if (gameButton) {
+//         gameButton.classList.remove("player2");
+//         gameButton.classList.add("player1");
+//     }
+// }
 
-const changePlayer2 = () => {
-    const playerLabel = document.getElementById("game_ready-current_player");
-    if (playerLabel)
-        playerLabel.innerText = "Turn: Player 2";    
+// const changePlayer2 = () => {
+//     const playerLabel = document.getElementById("game_ready-current_player");
+//     if (playerLabel)
+//         playerLabel.innerText = "Turn: Player 2";    
     
-    const gameButton = document.getElementById("game_ready-button");
-    if (gameButton) {
-        gameButton.classList.remove("player1");
-        gameButton.classList.add("player2");
-    }
-}
+//     const gameButton = document.getElementById("game_ready-button");
+//     if (gameButton) {
+//         gameButton.classList.remove("player1");
+//         gameButton.classList.add("player2");
+//     }
+// }
 
 // const handleBoardIsAPlay = () => {
 //     if (currentPlayer === thisPlayer) {
@@ -681,9 +680,9 @@ const connectToServer = async () => {
             },
             () => {
                 gameRoomController.doGetRooms();
-                // setTimeout(() => {
-                //     joinRoom("auto_join_room");
-                // }, 200);
+                setTimeout(() => {
+                    joinRoom("auto_join_room");
+                }, 200);
             }
         );
     };
@@ -719,21 +718,20 @@ const joinRoom = async (roomName: string) => {
             console.log("Firing onStartGame()");
             console.log(startGameData);
             thisPlayerNumber = startGameData.player.playerNumber;
-            currentPlayerNumber = startGameData.state.game.currentPlayer?.playerNumber;
             console.log("starting as player", thisPlayerNumber);
             transitionState(
                 "game_ready",
                 () => {},
                 () => {
-                    gameRoomController.onGameFocusEnter((playData) => {
-                        console.log("Making a ball from onGameFocusEnter", playData);
-                        makeIncomingBall(playData.position, playData.direction);
-                    });
+                    gameRoomController.onGameBallEnterBoard((ball) => {
+                        console.log("Making a ball from onGameBallEnterBoard", ball);
+                        makeIncomingBall(ball);
+                    })
                     gameRoomController.onGameScoreChange((gameRoomState) => {
                         handleScoreChange(gameRoomState);
                     });
                     initGameObjects();
-                    startGame(startGameData.enterBall);
+                    startGame();
 
                     updatePlayers(startGameData.state);
                 }
@@ -804,11 +802,11 @@ let fpsInterval: NodeJS.Timer;
 let gameRoomController: IGameRoomController<Socket>;
 let currentState: TransitionStates = "waiting_connect";
 let thisPlayerNumber: number;
-let currentPlayerNumber: number | undefined;
+let ballsInPlay: IBallState[] = [];
 
 /* END GLOBALS */
 
-const testGame = true;
+const testGame = false;
 
 if (!testGame) connectToServer();
 
@@ -823,10 +821,12 @@ if (testGame) transitionState(
             handleScoreChange(gameRoomState);
         });
         initGameObjects();
-        startGame(false);
-        const yPos = Math.random() * 512;
-        const yDir = ((Math.random() < 0.5) ? -1 : 1) * 3.15;
-        makeTestBall({x: 480, y: yPos}, {x: -4, y: yDir});
+        startGame();
+        const yPos = Math.random() * DEFAULTS.width;
+        const yDir = ((Math.random() < 0.5) ? -1 : 1) * DEFAULTS.ball.direction.y;
+        const pos = {x: 480, y: yPos};
+        const dir = {x: -4, y: yDir};
+        makeTestBall(pos, dir);
 
         const player1: IPlayerState = {
             id: "ABCD",
@@ -843,12 +843,21 @@ if (testGame) transitionState(
         const players: IPlayerState[] = [];
         players.push(player1);
         players.push(player2);
+        const ball: IBallState = {
+            id: uuidv4(),
+            bounces: 0,
+            players: [],
+            lastPosition: pos,
+            lastDirection: dir
+        };
+        const balls: IBallState[] = [];
+        balls.push(ball);
         const gameRoomState: IGameRoomState = {
             players: players,
             game: {
-                currentPlayer: player1,
                 status: GameStateStatus.GAME_STARTED
-            }
+            },
+            balls: balls
         }
         updatePlayers(gameRoomState);
 

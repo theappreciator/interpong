@@ -1,4 +1,8 @@
+import { IPlayerState } from "@interpong/common";
 import { Socket, Server } from "socket.io";
+import { DefaultEventsMap } from "socket.io/dist/typed-events";
+import GameRoomStateService from "../services/gameRoomStateService";
+
 
 const SPACE_INDENT="  ";
 

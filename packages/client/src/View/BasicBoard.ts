@@ -16,7 +16,7 @@ export interface BasicBoardProps {
     // monsters: Monster[],
     // onPlayerCollideWithMonster: (continuePlaying: boolean) => void,
     // onPlayerCollideWithCoin: () => void,
-    onMovementEvent: (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector) => SpriteActions[],
+    onMovementEvent: (movementEvent: SoloMovementEvents[], ball: BallType) => SpriteActions[],
 }
 
 enum Corners {
@@ -37,7 +37,7 @@ export class BasicBoard {
     // private _playerCollideWithMonster: () => void = () => {};
     // private _playerCollideWithCoin: (coin: Coin) => void = () => {};
 
-    private _movementEvent: (movementEvent: SoloMovementEvents[], position: Vector, direction: Vector) => SpriteActions[] = () => [];
+    private _movementEvent: (movementEvent: SoloMovementEvents[], ball: BallType) => SpriteActions[] = () => [];
 
     private _score: number;
     private _level: number;
@@ -76,8 +76,8 @@ export class BasicBoard {
         //     this._player.speedUp();
         // }
 
-        this._movementEvent = (movementEvent, position, direction) => {
-            const actions = [...onMovementEvent(movementEvent, position, direction)];
+        this._movementEvent = (movementEvent, ball) => {
+            const actions = [...onMovementEvent(movementEvent, ball)];
             return actions;
         }
 
@@ -162,7 +162,7 @@ export class BasicBoard {
 
             const ballMovementEvents = this._ball.update(viewWidth, viewHeight) || [];
             if (ballMovementEvents.length > 0) {
-                const spriteActions = this._movementEvent(ballMovementEvents, this._ball.center, this._ball.v);
+                const spriteActions = this._movementEvent(ballMovementEvents, this._ball);
                 if (spriteActions.includes(SpriteActions.DESTROY)) {
                     this._ball.remove(this.app);
                     this._ball = undefined;

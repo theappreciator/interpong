@@ -1,5 +1,5 @@
 import { INetworkService, INetworkServiceConsumer, IRoomService, SocketService } from "../../services";
-import { IBallState, IGameRoomState, IPlayData, IRoomState, IScoreData, IStartGame } from '@interpong/common';
+import { IBallState, IBallUpdateState, IGameRoomState, IPlayData, IRoomState, IScoreData, IStartGame } from '@interpong/common';
 import { Socket } from "socket.io-client";
 import { IGameRoomController } from "..";
 import { SocketError } from "../../utils/errors/socketError";
@@ -144,7 +144,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
         }
     }
 
-    public doGameBallLeaveBoard(ball: IBallState): void {
+    public doGameBallLeaveBoard(ball: IBallUpdateState): void {
         if (!this.socket) {
             throw new SocketError({
                 name: "SOCKET_NOT_CONNECTED",

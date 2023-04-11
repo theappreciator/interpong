@@ -1,4 +1,4 @@
-import { GameStateStatus, GAME_EVENTS, IBallState, IGameRoomState, IPlayData, IPlayerState, IScoreData, IStartGame, Vector } from "@interpong/common";
+import { GameStateStatus, GAME_EVENTS, IBallState, IBallUpdateState, IGameRoomState, IPlayData, IPlayerState, IScoreData, IStartGame, Vector } from "@interpong/common";
 import {
     ConnectedSocket,
     MessageBody,
@@ -16,6 +16,7 @@ import GameRoomStateService from "../../services/gameRoomStateService";
 import { getGameRoomStartedState, getPlayerNumberWithBall, getStartingBalls, getStartingPlayers } from "../../util/gameUtils";
 import socket from "../../socket";
 import { DEFAULTS } from "@interpong/common";
+import { randomNumberWithVariance } from "../../util/shared";
 const logger = log4js.getLogger();
 
 
@@ -41,9 +42,7 @@ export class GameController {
             throw new Error("Could not start game, not all sockets could be identified");
         }
 
-        const playerNumberWithBall = getPlayerNumberWithBall(players.length);
-        const playerWithBall = players.find(p => p.playerNumber === playerNumberWithBall);
-        const balls = getStartingBalls(playerNumberWithBall, 1);
+        const balls = getStartingBalls(2, 5);
 
         const gameRoomState = gameRoomStateService.updateGameStateStatusStarting(balls);
 
@@ -61,11 +60,14 @@ export class GameController {
             socket.emit(GAME_EVENTS.START_GAME, playerStartGameData);
         }
 
-        const socketWithBall = socketsInRoom.find(s => s.id === playerWithBall?.id);
+        // TODO solve for no undefined below
         for (const ball of balls) {
+            const playerWithBall = players.find(p => p.playerNumber === ball.players[0]);
+            const socketWithBall = socketsInRoom.find(s => s.id === playerWithBall?.id);
+
             setTimeout(() => {
                 socketWithBall?.emit(GAME_EVENTS.ON_UPDATE_BALL, ball);
-            }, Math.random() * DEFAULTS.ball.waitTimeMillisforNext); 
+            }, randomNumberWithVariance(DEFAULTS.ball.waitTimeMillisForNext, DEFAULTS.ball.waitTimeMillisForNextVariance));
         }
 
         gameRoomStateService.updateGameStateStatus(GameStateStatus.GAME_STARTED);
@@ -92,7 +94,7 @@ export class GameController {
     public async updateBall(
         @SocketIO() io: Server,
         @ConnectedSocket() socket: Socket,
-        @MessageBody() message: IBallState
+        @MessageBody() message: IBallUpdateState
     ) {
         const roomId = getRoomForSocket(socket);
 
@@ -101,15 +103,15 @@ export class GameController {
 
             const gameRoomStateService = new GameRoomStateService(roomId);
             const originalGameRoomState = gameRoomStateService.getGameRoomState();
-            const player = gameRoomStateService.getPlayerState(socket.id);
-            const incomingBall = gameRoomStateService.getBallState(message.id);
+            const fromPlayer = gameRoomStateService.getPlayerState(socket.id);
+            const incomingBall = {...gameRoomStateService.getBallState(message.id)};
 
             incomingBall.bounces = incomingBall.bounces + 1;
             incomingBall.lastDirection.x = incomingBall.lastDirection.x * -1
             incomingBall.lastDirection.y = message.lastDirection.y;
-            incomingBall.lastPosition.x = player.playerNumber === 2 ? DEFAULTS.ball.offscreenRight : DEFAULTS.ball.offscreenLeft;
+            incomingBall.lastPosition.x = fromPlayer.playerNumber === 1 ? DEFAULTS.ball.offscreenLeft : DEFAULTS.ball.offscreenRight;
             incomingBall.lastPosition.y = message.lastPosition.y;
-            incomingBall.players.push(player.playerNumber);
+            incomingBall.players.push(fromPlayer.playerNumber);
 
             const updatedBalls = [];
             for (let i = 0; i < originalGameRoomState.balls.length; i++) {

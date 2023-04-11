@@ -29,10 +29,13 @@ const DEFAULTS = {
         offscreenLeft: -20,
         offscreenRight: 532,
         direction: {
-            x: 4,
-            y: 3.15
+            x: 3,
+            y: 3.15,
+            xVariance: 1,
+            yVariance: 1
         },
-        waitTimeMillisforNext: 1000
+        waitTimeMillisForNext: 2000,
+        waitTimeMillisForNextVariance: 1000
     }
 }
 

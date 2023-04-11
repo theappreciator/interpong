@@ -1,9 +1,7 @@
-import { DEFAULTS, GameStateStatus, IBallState, IGameRoomState, IPlayerState, TeamType, Vector } from "@interpong/common"
+import { DEFAULTS, GameStateStatus, IBallState, IGameRoomState, IPlayerState, randomColorNumber, randomNumberBetween, randomNumberWithVariance, TeamType, Vector } from "@interpong/common"
 import { RemoteSocket } from "socket.io";
 import { DefaultEventsMap } from "socket.io/dist/typed-events";
 import { v4 as uuidv4 } from 'uuid';
-import { randomNumberBetween, randomNumberWithVariance } from "./shared";
-import Color from "color";
 
 
 
@@ -27,10 +25,9 @@ function getStartingBalls(numberOfPlayers: number, numberOfBalls: number) {
         const hue = Math.floor(Math.random() * 361);
         const saturation = randomNumberBetween(70, 100);
         const lightness = randomNumberBetween(30, 90);
-        const color = Color(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
         const ball: IBallState = {
             id: uuidv4(),
-            color: color.rgbNumber(),
+            color: randomColorNumber(),
             bounces: 0,
             players: [playerWithBall],
             lastPosition: ballPosition,

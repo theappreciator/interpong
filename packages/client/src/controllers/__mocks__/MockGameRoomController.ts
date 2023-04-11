@@ -1,5 +1,6 @@
-import { IStartGame, IPlayData, IGameRoomState, IScoreData, IPlayerState, GAME_SCORE_EVENT_POINTS, GameStateStatus, ROOM_CONSTANTS, IRoomState, IBallState } from "@interpong/common";
+import { IStartGame, IPlayData, IGameRoomState, IScoreData, IPlayerState, GAME_SCORE_EVENT_POINTS, GameStateStatus, ROOM_CONSTANTS, IRoomState, IBallState, getRandomMockBall } from "@interpong/common";
 import { IGameRoomController } from "..";
+import { Player } from "../../sprites";
 
 
 class MockGameRoomController implements IGameRoomController<string> {
@@ -20,6 +21,15 @@ class MockGameRoomController implements IGameRoomController<string> {
     constructor() {
 
     }
+
+    /* Mocking methods */
+
+    makeTestBall() {
+        const ball = getRandomMockBall(1);
+        this._onGameBallEnterBoard(ball);
+    }
+
+    /* Mocked up interface methods */
 
     joinGameRoom(roomName: string): Promise<string> {
         return Promise.resolve("joinGameRoom");

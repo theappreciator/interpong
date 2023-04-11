@@ -9,7 +9,7 @@ import { Socket } from "socket.io-client";
 import { DefaultEventsMap } from '@socket.io/component-emitter';
 import { SocketService } from "./services";
 import { start } from 'repl';
-import { GameStateStatus, GAME_CONSTANTS, IGameRoomState, IPlayData, IPlayerState, IRoomState, IScoreData, IStartGame, Vector, teamTypes, IBallState, DEFAULTS, IBallUpdateState} from '@interpong/common';
+import { GameStateStatus, GAME_CONSTANTS, IGameRoomState, IPlayData, IPlayerState, IRoomState, IScoreData, IStartGame, Vector, teamTypes, IBallState, DEFAULTS, IBallUpdateState, mockPlayer2, mockPlayer1, mockBall, mockGameRoomState} from '@interpong/common';
 import { IGameRoomController, SocketGameRoomController } from './controllers/';
 import { GAME_EVENTS } from '@interpong/common';
 import { SoloMovementEvents, SpriteActions } from './sprites/events';
@@ -301,13 +301,13 @@ const makeIncomingBall = (ball: IBallState) => {
     board.addNewBall(ballSprite);
 }
 
-const makeTestBall = (position: Vector, direction: Vector) => {
+const makeTestBall = (ball: IBallState) => {
     const exitSide: TransferTypes = thisPlayerNumber === 1 ? "right" : "left";
 
-    console.log("About to enter a new test ball", position, direction);
-    const ball = new BouncingBall(0xff2222, DEFAULTS.ball.radius, direction, position, "mytestball");
+    console.log("About to enter a new test ball", ball.lastPosition, ball.lastDirection);
+    const ballSprite = new BouncingBall(ball.color, DEFAULTS.ball.radius, ball.lastDirection, ball.lastPosition, ball.id);
     // const ball = new TransferBall(0xff2222, DEFAULTS.ball.radius, direction, position, "mytestball", ["right"]);
-    board.addNewBall(ball);
+    board.addNewBall(ballSprite);
 }
 
 function initGameObjects() {
@@ -597,9 +597,9 @@ const connectToServer = async () => {
             },
             () => {
                 gameRoomController.doGetRooms();
-                setTimeout(() => {
-                    joinRoom("auto_join_room");
-                }, 200);
+                // setTimeout(() => {
+                //     joinRoom("auto_join_room");
+                // }, 200);
             }
         );
     };
@@ -721,117 +721,33 @@ let ballsInPlay: IBallState[] = [];
 
 /* END GLOBALS */
 
-const testGame = false;
+const testGame = true;
 
 if (!testGame) connectToServer();
 
 // Dummy in the game board
 if (testGame) transitionState(
     "game_ready",
-    () => { 
+    async () => { 
         thisPlayerNumber = 1;
+
         gameRoomController = new MockGameRoomController();
         gameRoomController.connect();
+        gameRoomController.onGameBallEnterBoard((ball) => {
+            makeTestBall(ball);
+        })
         gameRoomController.onGameScoreChange((gameRoomState) => {
             handleScoreChange(gameRoomState);
         });
 
-        const yPos = Math.random() * DEFAULTS.width;
-        const yDir = ((Math.random() < 0.5) ? -1 : 1) * DEFAULTS.ball.direction.y;
-        const pos = {x: 480, y: yPos};
-        const dir = {x: -4, y: yDir};
-        makeTestBall(pos, dir);
-
-        const player1: IPlayerState = {
-            id: "ABCD",
-            playerNumber: 1,
-            team: "left",
-            score: 0
-        };
-        const player2: IPlayerState = {
-            id: "ZYXW",
-            playerNumber: 2,
-            team: "right",
-            score: 50
-        };
-        const players: IPlayerState[] = [];
-        players.push(player1);
-        players.push(player2);
-        const ball: IBallState = {
-            id: uuidv4(),
-            color: Math.random() * 256 * 256 * 256,
-            bounces: 0,
-            players: [],
-            lastPosition: pos,
-            lastDirection: dir
-        };
-        const balls: IBallState[] = [];
-        balls.push(ball);
-        const gameRoomState: IGameRoomState = {
-            players: players,
-            game: {
-                status: GameStateStatus.GAME_STARTED
-            },
-            balls: balls
-        }
-
         initGameObjects();
-        startGame(gameRoomState);
+        startGame(mockGameRoomState);
+
+        const testBalls = 5;
+        const timeBetweenBalls = 500;
+        for (let i = 0; i < testBalls; i++) {
+            (gameRoomController as MockGameRoomController).makeTestBall();
+            await new Promise(resolve => setTimeout(resolve, timeBetweenBalls));
+        }
     }
 );
-
-// const element = document.getElementById("jesstest");
-// if (element) {
-//     const div1 = document.createElement("div");
-//     div1.id = "div-jesstest1";
-//     div1.innerText = "test1";
-
-//     const span1 = document.createElement("span");
-//     span1.innerText = "---my span1";
-//     div1.appendChild(span1);
-//     element.appendChild(div1);  
-    
-//     const div2 = document.createElement("div");
-//     div2.id = "div-jesstest2";
-//     div2.innerText = "test2";
-
-//     const span2 = document.createElement("span");
-//     span2.innerText = "---my span2";
-//     div2.appendChild(span2);
-//     element.appendChild(div2);
-    
-//     const div3 = document.createElement("div");
-//     div3.id = "div-jesstest3";
-//     div3.innerText = "test3";
-
-//     const span3 = document.createElement("span");
-//     span3.innerText = "---my span3";
-//     div3.appendChild(span3);
-//     element.appendChild(div3);
-
-//     for (let i = 1; i <= 6; i++) {
-//         let div = document.getElementById("div-jesstest" + i);
-//         if (!div) {
-//             div = document.createElement("div");
-//             div.id = "div-jesstest" + i;
-//             div.innerText = "test LOOP " + i;
-//             element.appendChild(div);
-//         }
-
-//         let span = div.firstElementChild as HTMLElement;
-//         if (!span) {
-//             span = document.createElement("span");
-//             div.appendChild(span);
-//         }
-//         span.innerText = "---my span LOOP" + i;
-
-//     }
-
-//     const parent = document.getElementById("jesstest");
-//     if (parent) {
-//         const toMove = (document.getElementById("div-jesstest4") as HTMLElement);
-//         let ref = document.getElementById("div-jesstest2");
-
-//         parent.insertBefore(toMove, ref);
-//     }
-// }

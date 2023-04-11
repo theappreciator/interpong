@@ -1,4 +1,4 @@
-import { GameStateStatus, GAME_EVENTS, IBallState, IBallUpdateState, IGameRoomState, IPlayData, IPlayerState, IScoreData, IStartGame, Vector } from "@interpong/common";
+import { GameStateStatus, GAME_EVENTS, IBallState, IBallUpdateState, IGameRoomState, IPlayData, IPlayerState, IScoreData, IStartGame, randomNumberWithVariance, Vector } from "@interpong/common";
 import {
     ConnectedSocket,
     MessageBody,
@@ -16,7 +16,6 @@ import GameRoomStateService from "../../services/gameRoomStateService";
 import { getGameRoomStartedState, getPlayerNumberWithBall, getStartingBalls, getStartingPlayers } from "../../util/gameUtils";
 import socket from "../../socket";
 import { DEFAULTS } from "@interpong/common";
-import { randomNumberWithVariance } from "../../util/shared";
 const logger = log4js.getLogger();
 
 

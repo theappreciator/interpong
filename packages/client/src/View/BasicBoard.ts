@@ -12,10 +12,6 @@ export interface BasicBoardProps {
     height: number,
     backgroundColor: number,
     player: PlayerType,
-    // coin: Coin,
-    // monsters: Monster[],
-    // onPlayerCollideWithMonster: (continuePlaying: boolean) => void,
-    // onPlayerCollideWithCoin: () => void,
     onMovementEvent: (movementEvent: SoloMovementEvents[], ball: BallType) => SpriteActions[],
 }
 
@@ -29,13 +25,9 @@ enum Corners {
 export class BasicBoard {
     private _app: PIXI.Application<HTMLCanvasElement>;
     private _player: PlayerType;
-    // private _coin: Coin;
-    // private _monsters: Monster[];
-    private _ball?: BallType;
+    private _balls: BallType[];
     
     private _markers: Rectangle[];
-    // private _playerCollideWithMonster: () => void = () => {};
-    // private _playerCollideWithCoin: (coin: Coin) => void = () => {};
 
     private _movementEvent: (movementEvent: SoloMovementEvents[], ball: BallType) => SpriteActions[] = () => [];
 
@@ -47,34 +39,14 @@ export class BasicBoard {
         height,
         backgroundColor,
         player,
-        // coin,
-        // monsters,
-        // onPlayerCollideWithMonster,
-        // onPlayerCollideWithCoin,
         onMovementEvent
     }: BasicBoardProps) {
         this._score = 0;
         this._level = 0;
-
         this._markers = [];
+        this._balls = [];
 
         this._player = player;
-        // this._coin = coin;
-        // this._monsters = monsters;
-
-        // this._playerCollideWithMonster = () => {
-        //     console.log("Triggering collision with monster");
-        //     const isDead = this._player.takeDamage();
-        //     console.log("isDead?", isDead);
-        //     onPlayerCollideWithMonster(!isDead);
-        // }
-        // this._playerCollideWithCoin = (coin: Coin) => { 
-        //     console.log("Triggering collision with coin");
-        //     onPlayerCollideWithCoin();
-        //     coin.random(this._app.view.width, this._app.view.height);
-        //     this.addMonster();
-        //     this._player.speedUp();
-        // }
 
         this._movementEvent = (movementEvent, ball) => {
             const actions = [...onMovementEvent(movementEvent, ball)];
@@ -84,48 +56,11 @@ export class BasicBoard {
         this._app = new PIXI.Application<HTMLCanvasElement>({
             width,
             height,
-            antialias:true,
+            antialias: true,
             backgroundColor
         });
         this._app.ticker.stop();
-        // this._app.renderer.backgroundColor = backgroundColor;
-
         this._app.stage.addChild(this._player.getSpriteObj());
-        // this._app.stage.addChild(this._coin.getSpriteObj());
-
-        // const markerColor = 0x00ffff;
-        // const marker100a = new PIXI.Graphics();
-        // marker100a.x = 0;
-        // marker100a.y = 0;
-        // marker100a
-        //     .beginFill(markerColor)
-        //     .drawRect(0, 0, 100, 10)
-        //     .endFill();
-        // this._app.stage.addChild(marker100a);
-        // const marker100b = new PIXI.Graphics();
-        // marker100b.x = 0;
-        // marker100b.y = 0;
-        // marker100b
-        //     .beginFill(markerColor)
-        //     .drawRect(100, 10, 100, 10)
-        //     .endFill();
-        // this._app.stage.addChild(marker100b);
-        // const marker100v = new PIXI.Graphics();
-        // marker100v.x = 0;
-        // marker100v.y = 0;
-        // marker100v
-        //     .beginFill(markerColor)
-        //     .drawRect(0, 0, 10, 100)
-        //     .endFill();
-        // this._app.stage.addChild(marker100v);
-        // const marker100vb = new PIXI.Graphics();
-        // marker100vb.x = 0;
-        // marker100vb.y = 0;
-        // marker100vb
-        //     .beginFill(markerColor)
-        //     .drawRect(10, 100, 10, 100)
-        //     .endFill();
-        // this._app.stage.addChild(marker100vb);
     }
 
     get app(): PIXI.Application<HTMLCanvasElement> {
@@ -148,121 +83,54 @@ export class BasicBoard {
         const viewWidth = this.app.view.width;
         const viewHeight = this.app.view.height;
 
-
         this._player.update(viewWidth, viewHeight);
-        if (this._ball) {
-            const newBallDirection = Collision.checkPlayerAndBall(this._player, this._ball);
+
+        const ballsToRemove = [];
+        for (let i = 0; i < this._balls.length; i++) {
+            const ball = this._balls[i];
+            const newBallDirection = Collision.checkPlayerAndBall(this._player, ball);
             if (newBallDirection) {
-                this._ball.updateShape(undefined, newBallDirection);
+                ball.updateShape(undefined, newBallDirection);
                 // this._player.updateShape(RectanglePlayerShapeHit);
             } 
             else {
                 // this._player.updateShape();
             }
 
-            const ballMovementEvents = this._ball.update(viewWidth, viewHeight) || [];
+            const ballMovementEvents = ball.update(viewWidth, viewHeight) || [];
             if (ballMovementEvents.length > 0) {
-                const spriteActions = this._movementEvent(ballMovementEvents, this._ball);
+                const spriteActions = this._movementEvent(ballMovementEvents, ball);
                 if (spriteActions.includes(SpriteActions.DESTROY)) {
-                    this._ball.remove(this.app);
-                    this._ball = undefined;
+                    ball.remove(this.app);
+                    ballsToRemove.push(i);
                 }
             }
             else {
-                const newBallDirection = Collision.checkPlayerAndBall(this._player, this._ball);
+                const newBallDirection = Collision.checkPlayerAndBall(this._player, ball);
                 if (newBallDirection) {
-                    this._ball.updateShape(undefined, newBallDirection);
+                    ball.updateShape(undefined, newBallDirection);
                     // this._player.updateShape(RectanglePlayerShapeHit);
                 } 
                 else {
                     // this._player.updateShape();
                 }
-            }
+            }      
         }
 
-        // this._coin.update(this._app.view.width, this._app.view.height);
-        // if (Collision.checkPlayerAndCoin(this._player, this._coin)) {
-        //     this._playerCollideWithCoin(this._coin);
-        // }
-
-        // this._monsters.forEach(m => {
-        //     let alreadyCollided = false;
-        //     if (Collision.checkPlayerAndMonster(this._player, m)) {
-        //         this._playerCollideWithMonster();
-        //         alreadyCollided = true;
-        //     }
-        //     if (!alreadyCollided) {
-        //        m.update(viewWidth, viewHeight);
-
-        //         if (Collision.checkPlayerAndMonster(this._player, m)) {
-        //             this._playerCollideWithMonster();
-        //         }
-        //     }
-        //     else {
-        //         m.remove(this.app);
-        //     }
-        //});
-
-        
+        for (let i = (ballsToRemove.length - 1); i >= 0; i--) {
+            const index = ballsToRemove[i];
+            this._balls.splice(index, 1);
+        }
     }
 
     reset(): void {
-        // this._monsters.forEach(m => m.reset(this.app));
-        // this._monsters = [];
         this._player?.reset(this.app);
-        this._ball?.reset(this.app);
-        // this._coin?.reset(this.app);
-    }
-
-    getCornerPos(): Vector {
-        const corner = Math.ceil(Math.random() * 4);
-        let x, y;
-
-        switch (corner) {
-            case (Corners.TOP_LEFT):
-                x = 0;
-                y = 0;
-                break;
-            case (Corners.TOP_RIGHT):
-                x = this._app.view.width;
-                y = 0;
-                break;
-            case (Corners.BOTTOM_RIGHT):
-                x = this._app.view.width;
-                y = this._app.view.height;
-                break;
-            case (Corners.BOTTOM_LEFT):
-                x = 0;
-                y = this._app.view.height;
-                break;
-            default:
-                x = 0; y = 0;
-                break;
-        }
-
-        return {x, y};
+        this._balls.forEach(b => b.reset(this.app));
+        this._balls = [];
     }
 
     addNewBall(ball: BallType) {
-        this._ball = ball;
-        this._app.stage.addChild(this._ball.getSpriteObj());
+        this._balls.push(ball);
+        this._app.stage.addChild(ball.getSpriteObj());
     }
-
-    // addMonster() {
-    //     const radius = Math.random() * 10 + 10;
-
-    //     const randomCorner = this.getCornerPos();
-
-    //     const x = Math.min(Math.max(randomCorner.x, radius), this._app.view.width - radius);
-    //     const y = Math.min(Math.max(randomCorner.y, radius), this._app.view.height - radius);
-
-    //     const v: Vector = {
-    //         x: (2 + (Math.random() * 4)) * ((randomCorner.x <= radius) ? 1 : -1),
-    //         y: (2 + (Math.random() * 4)) * ((randomCorner.y <= radius) ? 1 : -1)
-    //     }
-
-    //     const monster = new Monster(0x79a3b1, radius, v, {x, y});
-    //     this._monsters.push(monster);
-    //     this._app.stage.addChild(monster.getSpriteObj());
-    // }
 }

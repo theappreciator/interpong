@@ -20,7 +20,19 @@ const getRoomsPrettyName = (rooms:Map<string, Set<string>>, requesterId?: string
     return roomsDetail;
 }
 
+const randomNumberBetween = (n1: number, n2: number) => {
+    const random = Math.random();
+    const diff = Math.abs(n2 - n1);
+    return n1 + (random * diff);
+}
+
+const randomNumberWithVariance = (n1: number, variance: number) => {
+    return randomNumberBetween(n1 - variance, n1 + variance);
+}
+
 export {
     getSocketPrettyName,
-    getRoomsPrettyName
+    getRoomsPrettyName,
+    randomNumberBetween,
+    randomNumberWithVariance
 }

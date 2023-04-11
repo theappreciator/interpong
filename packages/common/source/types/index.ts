@@ -116,12 +116,15 @@ export interface IGameState {
     status: GameStateStatus,
 }
 
-export interface IBallState {
+export interface IBallUpdateState {
     id: string,
-    bounces: number,
-    players: number[],
     lastPosition: Vector,
     lastDirection: Vector
+}
+export interface IBallState extends IBallUpdateState {
+    color: number,
+    bounces: number,
+    players: number[]
 }
 
 export interface IGameRoomState {

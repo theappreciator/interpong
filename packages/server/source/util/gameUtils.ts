@@ -2,6 +2,8 @@ import { DEFAULTS, GameStateStatus, IBallState, IGameRoomState, IPlayerState, Te
 import { RemoteSocket } from "socket.io";
 import { DefaultEventsMap } from "socket.io/dist/typed-events";
 import { v4 as uuidv4 } from 'uuid';
+import { randomNumberBetween, randomNumberWithVariance } from "./shared";
+import Color from "color";
 
 
 
@@ -9,26 +11,34 @@ function getPlayerNumberWithBall(numberOfPlayers: number) {
     return Math.floor(Math.random() * numberOfPlayers) + 1;
 }
 
-function getStartingBalls(playerWithBall: number, numberOfBalls: number) {
+function getStartingBalls(numberOfPlayers: number, numberOfBalls: number) {
     const balls: IBallState[] = [];
 
-    const xPos = playerWithBall === 1 ? DEFAULTS.ball.offscreenRight : DEFAULTS.ball.offscreenLeft;
-    const yPos = Math.random() * DEFAULTS.width;
-    const ballPosition: Vector = {x: xPos, y: yPos};
+    for(let i = 1; i <= numberOfBalls; i++) {
+        const playerWithBall = getPlayerNumberWithBall(numberOfPlayers);
+        const xPos = playerWithBall === 1 ? DEFAULTS.ball.offscreenRight : DEFAULTS.ball.offscreenLeft;
+        const yPos = Math.random() * DEFAULTS.width;
+        const ballPosition: Vector = {x: xPos, y: yPos};
 
-    const xDir = (playerWithBall === 1 ? -1 : 1) * DEFAULTS.ball.direction.x
-    const yDir = DEFAULTS.ball.direction.y
-    const ballDirection: Vector = {x: xDir, y: yDir};
+        const xDir = (playerWithBall === 1 ? -1 : 1) * randomNumberWithVariance(DEFAULTS.ball.direction.x, DEFAULTS.ball.direction.xVariance);
+        const yDir = randomNumberWithVariance(DEFAULTS.ball.direction.y, DEFAULTS.ball.direction.yVariance); 
+        const ballDirection: Vector = {x: xDir, y: yDir};
 
-    const ball: IBallState = {
-        id: uuidv4(),
-        bounces: 0,
-        players: [playerWithBall],
-        lastPosition: ballPosition,
-        lastDirection: ballDirection
+        const hue = Math.floor(Math.random() * 361);
+        const saturation = randomNumberBetween(70, 100);
+        const lightness = randomNumberBetween(30, 90);
+        const color = Color(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+        const ball: IBallState = {
+            id: uuidv4(),
+            color: color.rgbNumber(),
+            bounces: 0,
+            players: [playerWithBall],
+            lastPosition: ballPosition,
+            lastDirection: ballDirection
+        }
+
+        balls.push(ball);
     }
-
-    balls.push(ball);
 
     return balls;
 }

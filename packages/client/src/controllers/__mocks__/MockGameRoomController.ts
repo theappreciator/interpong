@@ -1,6 +1,6 @@
 import { IStartGame, IPlayData, IGameRoomState, IScoreData, IPlayerState, GAME_SCORE_EVENT_POINTS, GameStateStatus, ROOM_CONSTANTS, IRoomState, IBallState, getRandomMockBall } from "@interpong/common";
 import { IGameRoomController } from "..";
-import { Player } from "../../sprites";
+
 
 
 class MockGameRoomController implements IGameRoomController<string> {
@@ -101,7 +101,8 @@ class MockGameRoomController implements IGameRoomController<string> {
             game: {
                 status: GameStateStatus.GAME_STARTED
             },
-            balls: [] // TODO: this needs somthing dummied in
+            balls: [], // TODO: this needs somthing dummied in
+            highestBounce: 1
         }
         this._onGameScoreChange(gameRoomState);
     }

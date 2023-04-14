@@ -102,8 +102,8 @@ export enum GameStateStatus {
     GAME_OVER
 }
 
-export const teamTypes = ["left", "right"];
-export type TeamType = typeof teamTypes[number];
+export const TeamType = ["left", "right"] as const;
+export type TeamType = typeof TeamType[number];
 
 export interface IPlayerState {
     id: string,
@@ -130,5 +130,6 @@ export interface IBallState extends IBallUpdateState {
 export interface IGameRoomState {
     players: IPlayerState[],
     balls: IBallState[],
+    highestBounce: number,
     game: IGameState
 }

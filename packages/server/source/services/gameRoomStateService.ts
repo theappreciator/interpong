@@ -1,5 +1,6 @@
 import { GameStateStatus, GAME_SCORE_EVENTS, GAME_SCORE_EVENT_POINTS, IBallState, IGameRoomState, IGameState, IPlayerState, ROOM_CONSTANTS, TeamType } from "@interpong/common";
 import socket from "../socket";
+import { getSomeBalls } from "../util/gameUtils";
 import PersistService from "./persistService";
 
 
@@ -20,16 +21,13 @@ class GameRoomStateService {
                 game: {
                     status: GameStateStatus.WAITING_FOR_PLAYERS,
                 },
-                balls: []
+                balls: [],
+                highestBounce: 0
             };
 
             this._persist.save(this._roomId, initialGameRoomState);
         }
     }
-
-    // public getGameStateCurrentPlayer(): IPlayerState | undefined {
-    //     return this.getGameRoomState().game.currentPlayer;
-    // }
 
     public getGameStateStatus(): GameStateStatus {
         return this.getGameRoomState().game.status;
@@ -46,6 +44,16 @@ class GameRoomStateService {
         gameRoomState.game.status = GameStateStatus.GAME_STARTING;
         gameRoomState.balls = [...balls];
         return this.updateGameRoomState(gameRoomState);
+    }
+
+    public addSomeBalls(numberOfBalls: number): IBallState[] {
+        const gameRoomState = {...this.getGameRoomState()};
+        const newBalls = getSomeBalls(gameRoomState.players, numberOfBalls);
+        const existingBalls = [...gameRoomState.balls];
+        gameRoomState.balls = existingBalls.concat(newBalls);
+        this.updateGameRoomState(gameRoomState);
+
+        return newBalls;
     }
 
     public getGameState(): IGameState {
@@ -123,6 +131,7 @@ class GameRoomStateService {
         return player;
     }
 
+    // TODO: need to solve for atomically running this method
     public getGameRoomState(): IGameRoomState {
         const gameRoomState = this._persist.retrieve(this._roomId);
         if (gameRoomState) {
@@ -133,6 +142,7 @@ class GameRoomStateService {
         }
     }
 
+    // TODO: need to solve for atomically running this method, and failing if something changed
     public updateGameRoomState(gameRoomState: IGameRoomState): IGameRoomState {
         this._persist.save(this._roomId, gameRoomState);
         return this.getGameRoomState();
@@ -147,13 +157,16 @@ class GameRoomStateService {
             if (k.startsWith(ROOM_CONSTANTS.ROOM_IDENTIFIER.toLocaleLowerCase())) {
                 const roomId = k;
                 console.log("Working roomId", roomId);
-                const gameRoomState = persistService.retrieve(roomId);
-                if (gameRoomState) {
-                    const player = gameRoomState.players.find(p => p.id === socketId);
+                const originalGameRoomState = persistService.retrieve(roomId);
+                if (originalGameRoomState) {
+                    const player = originalGameRoomState.players.find(p => p.id === socketId);
                     if (player) {
-                        const modifiedGameRoomState = {...gameRoomState};
-                        const modifiedPlayers = gameRoomState.players.filter(p => p.id !== socketId)
+                        const modifiedGameRoomState = {...originalGameRoomState};
+                        const modifiedPlayers = originalGameRoomState.players.filter(p => p.id !== socketId)
                         modifiedGameRoomState.players = [...modifiedPlayers];
+                        if (modifiedPlayers.length === 0 ) {
+                            modifiedGameRoomState.highestBounce = 0;
+                        }
                         persistService.save(roomId, modifiedGameRoomState);
                     }
                 }

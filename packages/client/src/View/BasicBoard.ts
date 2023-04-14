@@ -1,11 +1,8 @@
 import * as PIXI from 'pixi.js';
 import Collision from '../Collision';
-import { BallType, Circle, PlayerType } from '../sprites';
+import { BallType, PlayerType } from '../sprites';
 import { SoloMovementEvents, SpriteActions } from '../sprites/events';
-import Shape from '../sprites/Shape';
 import { Rectangle } from 'pixi.js';
-import { RectanglePlayerShapeHit } from '../sprites/RectanglePlayer';
-import { IPlayData, Vector } from '@interpong/common';
 
 export interface BasicBoardProps {
     width: number,
@@ -61,6 +58,45 @@ export class BasicBoard {
         });
         this._app.ticker.stop();
         this._app.stage.addChild(this._player.getSpriteObj());
+
+        this.routeBackgroundClicksToPlayer(width, height);
+    }
+
+    private routeBackgroundClicksToPlayer(width: number, height: number) {
+        const stageBackground = new PIXI.Sprite(PIXI.Texture.WHITE);
+        stageBackground.width = width;
+        stageBackground.height = height;
+        stageBackground.alpha = 0;
+        stageBackground.interactive = true;
+        stageBackground.on("pointerdown", (event: PIXI.FederatedPointerEvent) => {
+            const position = {
+                x: event.global.x,
+                y: event.global.y
+            }
+            this._player.onPointerDown(position);
+        });
+        stageBackground.on("pointerup", (event: PIXI.FederatedPointerEvent) => {
+            const position = {
+                x: event.global.x,
+                y: event.global.y
+            }
+            this._player.onPointerUp(position);
+        });
+        stageBackground.on("pointerupoutside", (event: PIXI.FederatedPointerEvent) => {
+            const position = {
+                x: event.global.x,
+                y: event.global.y
+            }
+            this._player.onPointerUp(position);
+        });
+        stageBackground.on("globalpointermove", (event: PIXI.FederatedPointerEvent) => {
+            const position = {
+                x: event.global.x,
+                y: event.global.y
+            }
+            this._player.onPointerMove(position);
+        });
+        this._app.stage.addChild(stageBackground);
     }
 
     get app(): PIXI.Application<HTMLCanvasElement> {

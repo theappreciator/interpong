@@ -5,7 +5,7 @@ import SimpleSpeedStrategy from './strategies/SimpleSpeedStrategy';
 import { SimpleHealthStrategy } from './strategies/SimpleHealthStrategy';
 import { Socket } from "socket.io-client";
 import { SocketService } from "./services";
-import { IGameRoomState, IRoomState, IScoreData, IStartGame, IBallState, DEFAULTS, IBallUpdateState, mockGameRoomState, TeamType} from '@interpong/common';
+import { IGameRoomState, IRoomState, IScoreData, IStartGame, IBallState, DEFAULTS, IBallUpdateState, mockGameRoomState, TeamType, randomNumberWithVariance} from '@interpong/common';
 import { IGameRoomController, SocketGameRoomController } from './controllers/';
 import { SoloMovementEvents, SpriteActions } from './sprites/events';
 import { TransferTypes } from './sprites/TransferBall';
@@ -282,12 +282,12 @@ const makeIncomingBall = (ball: IBallState) => {
 
     console.log("About to enter a new ball", ball.lastPosition, ball.lastDirection);
     ballsInPlay.push({...ball});
-    const ballSprite = new TransferBall(ball.color, DEFAULTS.ball.radius, ball.lastDirection, ball.lastPosition, ball.id, [exitSide]);
+    const ballSprite = new TransferBall(ball.color, DEFAULTS.ball.radius, {x:1, y:1}, ball.lastPosition, ball.id, [exitSide]);
     board.addNewBall(ballSprite);
 }
 
 const makeTestBall = (ball: IBallState) => {
-    const exitSide: TransferTypes = thisPlayerNumber === 1 ? "right" : "left";
+    // const exitSide: TransferTypes = thisPlayerNumber === 1 ? "right" : "left";
 
     console.log("About to enter a new test ball", ball.lastPosition, ball.lastDirection);
     const ballSprite = new BouncingBall(ball.color, DEFAULTS.ball.radius, ball.lastDirection, ball.lastPosition, ball.id);
@@ -713,7 +713,7 @@ let ballsInPlay: IBallState[] = [];
 
 /* END GLOBALS */
 
-const testGame = false;
+const testGame = true;
 
 if (!testGame) connectToServer();
 
@@ -739,7 +739,7 @@ if (testGame) transitionState(
         const timeBetweenBalls = 500;
         for (let i = 0; i < testBalls; i++) {
             (gameRoomController as MockGameRoomController).makeTestBall();
-            await new Promise(resolve => setTimeout(resolve, timeBetweenBalls));
+            await new Promise(resolve => setTimeout(resolve, randomNumberWithVariance(timeBetweenBalls, timeBetweenBalls)));
         }
     }
 );

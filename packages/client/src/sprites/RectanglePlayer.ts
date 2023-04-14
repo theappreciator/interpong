@@ -89,8 +89,6 @@ export default class RectanglePlayer extends Shape implements IRectangle {
 
         this._health = DEFAULTS.player.health;
         this._isInvulnerable = false;
-
-        this._moveStrategy.setPointerEvents(this);
     }
 
     getNormalShape(): RectanglePlayerShape {
@@ -232,6 +230,18 @@ export default class RectanglePlayer extends Shape implements IRectangle {
 
     stopMoving() {
         this._moveStrategy.stopMoving(this);
+    }
+
+    onPointerDown(position: Vector) {
+        this._moveStrategy.onPointerDown(position, this);
+    }
+
+    onPointerUp(position: Vector) {
+        this._moveStrategy.onPointerUp(position, this);
+    }
+
+    onPointerMove(position: Vector) {
+        this._moveStrategy.onPointerMove(position, this);
     }
 
     slowDown() {

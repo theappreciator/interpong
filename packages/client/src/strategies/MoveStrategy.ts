@@ -1,15 +1,17 @@
-import Player from "../sprites/RectanglePlayer";
+import { Vector } from "@interpong/common";
+import PlayerType from "../sprites/RectanglePlayer";
 
 export interface MoveStrategy {
-    moveLeft: (player: Player) => void;
-    stopLeft: (player: Player) => void;
-    moveUp: (player: Player) => void;
-    stopUp: (player: Player) => void;
-    moveRight: (player: Player) => void;
-    stopRight: (player: Player) => void;
-    moveDown: (player: Player) => void;
-    stopDown: (player: Player) => void;
-    stopMoving: (player: Player) => void;
-    setPointerEvents: (player: Player) => void;
-
+    onPointerDown: (position: Vector, player: PlayerType) => void;
+    onPointerUp: (position: Vector, player: PlayerType) => void;
+    onPointerMove: (position: Vector, player: PlayerType) => void;
+    moveLeft: (player: PlayerType) => void;
+    stopLeft: (player: PlayerType) => void;
+    moveUp: (player: PlayerType) => void;
+    stopUp: (player: PlayerType) => void;
+    moveRight: (player: PlayerType) => void;
+    stopRight: (player: PlayerType) => void;
+    moveDown: (player: PlayerType) => void;
+    stopDown: (player: PlayerType) => void;
+    stopMoving: (player: PlayerType) => void;
 }

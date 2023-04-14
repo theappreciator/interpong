@@ -43,7 +43,7 @@ export default class UpDownMoveStrategy extends BaseMoveStrategy implements Move
         player.v.y = 0;
     }
 
-    protected onPointerDown(downPosition: Vector, player: Player) {
+    onPointerDown(downPosition: Vector, player: Player) {
         this._isTouched = true;
         player.updateShape(RectanglePlayerShapePointed);
 
@@ -61,7 +61,7 @@ export default class UpDownMoveStrategy extends BaseMoveStrategy implements Move
         }
     }
 
-    protected onPointerUp(upPosition: Vector, player: Player) {
+    onPointerUp(upPosition: Vector, player: Player) {
         if (this._isTouched) {
             this._isTouched = false;
             player.updateShape();
@@ -69,7 +69,7 @@ export default class UpDownMoveStrategy extends BaseMoveStrategy implements Move
         };
     }
 
-    protected onPointerMove(position: Vector, player: Player): void {
+    onPointerMove(position: Vector, player: Player): void {
         if (this._isTouched) {
             if (position.y === player.center.y) {
                 player.stopMoving();

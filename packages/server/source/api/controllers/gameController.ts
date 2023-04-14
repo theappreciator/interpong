@@ -13,7 +13,7 @@ import chalk from "chalk";
 import * as log4js from "log4js";
 import { getRoomForSocket, getRoomIdFromName, getSocketIdsInRoom, getSocketsInRoom } from "../../util/roomUtils";
 import GameRoomStateService from "../../services/gameRoomStateService";
-import { getGameRoomStartedState, getPlayerNumberWithBall, getStartingBalls, getStartingPlayers } from "../../util/gameUtils";
+import { getSomeBalls } from "../../util/gameUtils";
 import socket from "../../socket";
 import { DEFAULTS } from "@interpong/common";
 const logger = log4js.getLogger();
@@ -31,7 +31,6 @@ export class GameController {
 
         logger.info(chalk.cyan("Starting game:      ", roomId + ":", "[" + socketsInRoomStr + "]"));
 
-        // TODO: need to reconcile how to update the game state to started and verify the ball state is saved as well
         const gameRoomStateService = new GameRoomStateService(roomId);
 
         const players = gameRoomStateService.getGameRoomState().players
@@ -41,7 +40,7 @@ export class GameController {
             throw new Error("Could not start game, not all sockets could be identified");
         }
 
-        const balls = getStartingBalls(2, 5);
+        const balls = getSomeBalls(players, 1);
 
         const gameRoomState = gameRoomStateService.updateGameStateStatusStarting(balls);
 
@@ -59,7 +58,7 @@ export class GameController {
             socket.emit(GAME_EVENTS.START_GAME, playerStartGameData);
         }
 
-        // TODO solve for no undefined below
+        // TODO: solve for no undefined below
         for (const ball of balls) {
             const playerWithBall = players.find(p => p.playerNumber === ball.players[0]);
             const socketWithBall = socketsInRoom.find(s => s.id === playerWithBall?.id);
@@ -98,17 +97,22 @@ export class GameController {
         const roomId = getRoomForSocket(socket);
 
         if (roomId) {
-            logger.info(chalk.cyan(`Receive ball update: ${roomId}-${socket.id}: [ ${message.id} px:${message.lastPosition.x} py:${message.lastPosition.y} dx:${message.lastDirection.x} dy:${message.lastDirection.y}]`));
-
             const gameRoomStateService = new GameRoomStateService(roomId);
-            const originalGameRoomState = gameRoomStateService.getGameRoomState();
             const fromPlayer = gameRoomStateService.getPlayerState(socket.id);
+            const toPlayer = gameRoomStateService.getGameRoomState().players.find(p => p.id !== socket.id);
+            logger.info(chalk.cyan(`Receive ball update: ${roomId}: [ ${message.id}-(${fromPlayer.team}) px:${message.lastPosition.x} py:${message.lastPosition.y} dx:${message.lastDirection.x} dy:${message.lastDirection.y}]`));
+
+            const originalGameRoomState = gameRoomStateService.getGameRoomState();
             const incomingBall = {...gameRoomStateService.getBallState(message.id)};
 
-            incomingBall.bounces = incomingBall.bounces + 1;
+            let needAddMoreBalls = false;
+            // TODO: this is tracked as the highest ever for this room.  The state needs to be cleared with everyone leaves the room.
+            const updatedBounces = incomingBall.bounces + 1;
+
+            incomingBall.bounces = updatedBounces;
             incomingBall.lastDirection.x = incomingBall.lastDirection.x * -1
             incomingBall.lastDirection.y = message.lastDirection.y;
-            incomingBall.lastPosition.x = fromPlayer.playerNumber === 1 ? DEFAULTS.ball.offscreenLeft : DEFAULTS.ball.offscreenRight;
+            incomingBall.lastPosition.x = (fromPlayer.team === "left") ? DEFAULTS.ball.offscreenLeft : DEFAULTS.ball.offscreenRight;
             incomingBall.lastPosition.y = message.lastPosition.y;
             incomingBall.players.push(fromPlayer.playerNumber);
 
@@ -125,11 +129,37 @@ export class GameController {
 
             const gameRoomState = {...gameRoomStateService.getGameRoomState()};
             gameRoomState.balls = updatedBalls;
+            if (gameRoomState.highestBounce < updatedBounces) {
+                gameRoomState.highestBounce = updatedBounces;
+
+                if (updatedBounces % DEFAULTS.game.addBallOnBounce === 0) {
+                    needAddMoreBalls = true;
+                }             
+            }
             gameRoomStateService.updateGameRoomState(gameRoomState);
 
-            logger.info(chalk.cyan(`Sending ball update: ${roomId}: [ ${incomingBall.id} px:${incomingBall.lastPosition.x} py:${incomingBall.lastPosition.y} dx:${incomingBall.lastDirection.x} dy:${incomingBall.lastDirection.y}]`));
+            logger.info(chalk.cyan(`Sending ball update: ${roomId}: [ ${incomingBall.id}-(${toPlayer?.team}) px:${incomingBall.lastPosition.x} py:${incomingBall.lastPosition.y} dx:${incomingBall.lastDirection.x} dy:${incomingBall.lastDirection.y}]`));
 
+            // TODO: need to solve for sending the ball to a single player
             socket.to(roomId).emit(GAME_EVENTS.ON_UPDATE_BALL, incomingBall);
+
+            if (needAddMoreBalls) {
+                const newBalls = gameRoomStateService.addSomeBalls(1);
+                for (const ball of newBalls) {
+                    logger.info(chalk.cyan(`Adding new ball:     ${roomId}: [ ${ball.id}-(${JSON.stringify(ball.players)}) px:${ball.lastPosition.x} py:${ball.lastPosition.y} dx:${ball.lastDirection.x} dy:${ball.lastDirection.y}]`));
+
+                    const validateGameRoomStateService = gameRoomStateService.getGameRoomState();
+                    const addBallToPlayer = validateGameRoomStateService.players.find(p => p.playerNumber === ball.players[0]);
+                    if (!addBallToPlayer) {
+                        throw new Error("Player state could not be determined when adding a new ball");
+                    }
+                    const toSocket = io.sockets.sockets.get(addBallToPlayer.id);
+                    if (!toSocket) {
+                        throw new Error("Player state could not be determined when sending a new ball");
+                    }
+                    toSocket.emit(GAME_EVENTS.ON_UPDATE_BALL, ball);
+                }
+            }
         }
         else {
             console.log("Error updateGame()");  

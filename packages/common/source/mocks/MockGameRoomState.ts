@@ -9,7 +9,8 @@ const mockGameRoomState: IGameRoomState = {
     game: {
         status: GameStateStatus.GAME_STARTED
     },
-    balls: [{...mockBall}]
+    balls: [{...mockBall}],
+    highestBounce: 0
 }
 
 export {

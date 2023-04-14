@@ -29,13 +29,16 @@ const DEFAULTS = {
         offscreenLeft: -20,
         offscreenRight: 532,
         direction: {
-            x: 3,
+            x: 4,
             y: 3.15,
             xVariance: 1,
             yVariance: 1
         },
         waitTimeMillisForNext: 2000,
         waitTimeMillisForNextVariance: 1000
+    },
+    game: {
+        addBallOnBounce: 5
     }
 }
 

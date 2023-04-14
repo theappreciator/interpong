@@ -1,37 +1,22 @@
-import * as PIXI from 'pixi.js';
 import Controls from './Controls';
-import SimpleMoveStrategy from './strategies/SimpleMoveStrategy';
-import { Player, Coin, Monster, BouncingBall, TransferBall, BallType } from './sprites';
+import { RectanglePlayer, BouncingBall, TransferBall, BallType, PlayerType } from './sprites';
 import { BasicBoard, BasicBoardProps } from './View/BasicBoard';
 import SimpleSpeedStrategy from './strategies/SimpleSpeedStrategy';
 import { SimpleHealthStrategy } from './strategies/SimpleHealthStrategy';
 import { Socket } from "socket.io-client";
-import { DefaultEventsMap } from '@socket.io/component-emitter';
 import { SocketService } from "./services";
-import { start } from 'repl';
-import { GameStateStatus, GAME_CONSTANTS, IGameRoomState, IPlayData, IPlayerState, IRoomState, IScoreData, IStartGame, Vector, teamTypes, IBallState, DEFAULTS, IBallUpdateState, mockPlayer2, mockPlayer1, mockBall, mockGameRoomState} from '@interpong/common';
+import { IGameRoomState, IRoomState, IScoreData, IStartGame, IBallState, DEFAULTS, IBallUpdateState, mockGameRoomState, TeamType} from '@interpong/common';
 import { IGameRoomController, SocketGameRoomController } from './controllers/';
-import { GAME_EVENTS } from '@interpong/common';
 import { SoloMovementEvents, SpriteActions } from './sprites/events';
 import { TransferTypes } from './sprites/TransferBall';
-import RectanglePlayer from './sprites/RectanglePlayer';
 import UpDownMoveStrategy from './strategies/UpDownMoveStrategy';
-import { Sprite, TextureMatrix } from 'pixi.js';
 import { GAME_SCORE_EVENTS } from '@interpong/common';
 import MockGameRoomController from './controllers/__mocks__/MockGameRoomController';
-import { v4 as uuidv4 } from 'uuid';
 
 
 
 
-// function shake(app: PIXI.Application, className: string) {
-//     return;
-
-//    app.view.className = className;
-//    setTimeout(()=>{app.view.className = ""}, 50);
-// }
-
-function onkeydown(ev: KeyboardEvent, player: Player) {
+function onkeydown(ev: KeyboardEvent, player: PlayerType) {
     switch (ev.key) {
         case "ArrowLeft":
         case "a":
@@ -58,7 +43,7 @@ function onkeydown(ev: KeyboardEvent, player: Player) {
             break;
     }
 }
-function onkeyup(ev: KeyboardEvent, player: Player) {
+function onkeyup(ev: KeyboardEvent, player: PlayerType) {
     switch (ev.key) {
         case "ArrowLeft": 
         case "a":
@@ -363,7 +348,7 @@ function gameLoop(delta: number): void {
 }
 
 function updatePlayers(gameRoomState: IGameRoomState) {
-    for (let teamType of teamTypes) {
+    for (let teamType of TeamType) {
         const teamElement = document.getElementById(`game_ready-teams_${teamType}_players`);
         if (teamElement) {
             const players = gameRoomState.players.filter(p => p.team === teamType).sort((a, b) => a.score = b.score);
@@ -685,6 +670,13 @@ const joinRoom = async (roomName: string) => {
     }
 };
 
+
+
+/* END GAME ROOM CONNECTIVITY */
+
+
+/* UI EVENTS */
+
 const handleJoinRoom = (e: MouseEvent) => {
     e.preventDefault();
 
@@ -698,7 +690,7 @@ const handleJoinRoom = (e: MouseEvent) => {
     }
 }
 
-/* END GAME ROOM CONNECTIVITY */
+/* END UI EVENTS */
 
 
 /* SETUP GLOBALS */ 
@@ -721,7 +713,7 @@ let ballsInPlay: IBallState[] = [];
 
 /* END GLOBALS */
 
-const testGame = true;
+const testGame = false;
 
 if (!testGame) connectToServer();
 

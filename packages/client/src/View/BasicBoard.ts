@@ -125,6 +125,7 @@ export class BasicBoard {
         for (let i = 0; i < this._balls.length; i++) {
             const ball = this._balls[i];
             const newBallDirection = Collision.checkPlayerAndBall(this._player, ball);
+            if (newBallDirection) console.log("playermove - newBallDirection", newBallDirection);
             if (newBallDirection) {
                 ball.updateShape(undefined, newBallDirection);
                 // this._player.updateShape(RectanglePlayerShapeHit);
@@ -143,6 +144,7 @@ export class BasicBoard {
             }
             else {
                 const newBallDirection = Collision.checkPlayerAndBall(this._player, ball);
+                if (newBallDirection) console.log("ballmove   - newBallDirection", newBallDirection);
                 if (newBallDirection) {
                     ball.updateShape(undefined, newBallDirection);
                     // this._player.updateShape(RectanglePlayerShapeHit);

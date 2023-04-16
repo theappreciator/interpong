@@ -15,7 +15,6 @@ import MockGameRoomController from './controllers/__mocks__/MockGameRoomControll
 
 
 
-
 function onkeydown(ev: KeyboardEvent, player: PlayerType) {
     switch (ev.key) {
         case "ArrowLeft":
@@ -282,7 +281,7 @@ const makeIncomingBall = (ball: IBallState) => {
 
     console.log("About to enter a new ball", ball.lastPosition, ball.lastDirection);
     ballsInPlay.push({...ball});
-    const ballSprite = new TransferBall(ball.color, DEFAULTS.ball.radius, {x:1, y:1}, ball.lastPosition, ball.id, [exitSide]);
+    const ballSprite = new TransferBall(ball.color, DEFAULTS.ball.radius, ball.lastDirection, ball.lastPosition, ball.id, [exitSide]);
     board.addNewBall(ballSprite);
 }
 
@@ -713,7 +712,7 @@ let ballsInPlay: IBallState[] = [];
 
 /* END GLOBALS */
 
-const testGame = true;
+const testGame = false;
 
 if (!testGame) connectToServer();
 
@@ -743,3 +742,41 @@ if (testGame) transitionState(
         }
     }
 );
+
+// function updateOrientation(ev?: DeviceOrientationEvent)
+// {
+//     var displayStr = "Orientation : ";
+
+//     switch(window.screen.orientation.type)
+//     {
+//         case "portrait-primary":
+//             displayStr += "Portrait";
+//         break;
+
+//         case "landscape-primary":
+//             displayStr += "Landscape (right, screen turned clockwise)";
+//         break;
+
+//         case "portrait-secondary":
+//             displayStr += "Landscape (left, screen turned counterclockwise)";
+//         break;
+
+//         case "landscape-secondary":
+//             displayStr += "Portrait (upside-down portrait)";
+//         break;
+
+//     }
+
+//     console.log(displayStr);
+// }
+
+// updateOrientation();
+
+// window.screen.orientation.addEventListener("change", () => {
+//     updateOrientation();
+// })
+
+// window.addEventListener("resize", () => {
+//     console.log("avail: ", window.screen.availWidth, window.screen.availHeight);
+//     console.log("reg:   ", window.screen.width, window.screen.height);
+// })

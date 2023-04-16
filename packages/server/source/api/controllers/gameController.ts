@@ -63,6 +63,8 @@ export class GameController {
             const playerWithBall = players.find(p => p.playerNumber === ball.players[0]);
             const socketWithBall = socketsInRoom.find(s => s.id === playerWithBall?.id);
 
+            logger.info(chalk.cyan(`Adding new ball:     ${roomId}: [ ${ball.id}-(${playerWithBall?.team}) px:${ball.lastPosition.x} py:${ball.lastPosition.y} dx:${ball.lastDirection.x} dy:${ball.lastDirection.y}]`));
+
             setTimeout(() => {
                 socketWithBall?.emit(GAME_EVENTS.ON_UPDATE_BALL, ball);
             }, randomNumberWithVariance(DEFAULTS.ball.waitTimeMillisForNext, DEFAULTS.ball.waitTimeMillisForNextVariance));

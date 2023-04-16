@@ -1,6 +1,8 @@
 body {
   font-family: "Roboto", sans-serif;
   font-size: 24px;
+  padding: 0px;
+  margin: 0px;
 }
 
 h1 {
@@ -23,25 +25,41 @@ h2 {
   margin-bottom: 10px;
 }
 
-:root {
-  --width: 512px;
-  --height: 512px;
-}
-
 #main {
   position: relative;
   display: flex;
   flex-direction: column;
   margin: 0 auto;
-  width: var(--width);
-  height: var(--height);
 }
 
 canvas {
+  display: flex;
   left: 0;
   top: 0;
+  height: 100%;
   z-index: 10;
-  border: 1px solid #888;
+}
+@media screen and (orientation: portrait) and (max-width: 480px) {
+  canvas {
+    width: 100%;
+    height: 100%;
+  }
+}
+@media screen and (orientation: landscape) and (max-width: 900px) {
+  canvas {
+    height: 100vh;
+  }
+}
+@media screen and (orientation: portrait) and (min-width: 481px) {
+  canvas {
+    width: 100%;
+    height: 100%;
+  }
+}
+@media screen and (orientation: landscape) and (min-width: 901px) {
+  canvas {
+    height: 100vh;
+  }
 }
 
 #state-waiting_connect {
@@ -104,16 +122,58 @@ canvas {
   width: 80px;
 }
 
-#display {
+#state-game_ready {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: var(--width);
+}
+@media screen and (orientation: portrait) and (max-width: 480px) {
+  #state-game_ready {
+    flex-direction: column;
+  }
+}
+@media screen and (orientation: landscape) and (max-width: 900px) {
+  #state-game_ready {
+    flex-direction: row;
+  }
+}
+@media screen and (orientation: portrait) and (min-width: 481px) {
+  #state-game_ready {
+    flex-direction: column;
+  }
+}
+@media screen and (orientation: landscape) and (min-width: 901px) {
+  #state-game_ready {
+    flex-direction: row;
+  }
+}
+
+@media screen and (orientation: portrait) and (max-width: 480px) {
+  #game-details-container {
+    width: 100%;
+  }
+}
+@media screen and (orientation: landscape) and (max-width: 900px) {
+  #game-details-container {
+    width: 100%;
+    padding: 6px;
+  }
+}
+@media screen and (orientation: portrait) and (min-width: 481px) {
+  #game-details-container {
+    width: 100%;
+  }
+}
+@media screen and (orientation: landscape) and (min-width: 901px) {
+  #game-details-container {
+    width: 100%;
+    padding: 6px;
+  }
 }
 
 #game_ready-teams {
   display: flex;
+  flex-direction: row;
   justify-content: space-around;
+  gap: 6px;
 }
 
 #game_ready-teams > h3 {
@@ -122,56 +182,74 @@ canvas {
 }
 
 .team {
-  width: 100%;
   padding: 0px;
   margin-bottom: 20px;
+  width: 100%;
 }
-
 .team h3 {
   padding: 0px;
   margin: 0px;
   display: flex;
   justify-content: space-between;
 }
-
-#game_ready-teams_left {
-  padding-right: 6px;
+@media screen and (orientation: portrait) and (max-width: 480px) {
+  .team {
+    padding-left: 0px;
+  }
+  .team h3 {
+    padding: 0px 6px;
+    flex-direction: column;
+  }
+}
+@media screen and (orientation: portrait) and (min-width: 481px) {
+  .team {
+    padding-left: 0px;
+  }
+  .team h3 {
+    padding: 0px 6px;
+  }
+}
+.team-score {
+  text-align: right;
 }
 
-#game_ready-teams_right {
-  padding-left: 6px;
+@media screen and (orientation: portrait) and (max-width: 480px) {
+  .team-players-container {
+    padding: 0px 6px;
+  }
+}
+@media screen and (orientation: landscape) and (max-width: 900px) {
+  .team-players-container {
+    padding-left: 0px;
+  }
+}
+@media screen and (orientation: portrait) and (min-width: 481px) {
+  .team-players-container {
+    padding: 0px 6px;
+  }
+}
+@media screen and (orientation: landscape) and (min-width: 901px) {
+  .team-players-container {
+    padding-left: 0px;
+  }
 }
 
-#game_ready-teams_left_header {
+#game_ready-teams_left .team-header {
   background-color: #b40808;
   height: 20px;
 }
-
-#game_ready-teams_left_footer {
+#game_ready-teams_left .team-footer {
   background-color: #b40808;
   height: 4px;
 }
 
-#game_ready-teams_right_header {
+#game_ready-teams_right .team-header {
   background-color: #1638c2;
   height: 20px;
 }
-
-#game_ready-teams_right_footer {
+#game_ready-teams_right .team-footer {
   background-color: #1638c2;
   height: 4px;
-}
-
-#game_ready-players > div:first-child {
-  border-top: 1px #ccc solid;
-  margin-top: 8px;
-  padding-top: 8px;
-}
-
-#game_ready-players > div:last-child {
-  border-bottom: 1px #ccc solid;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
 }
 
 #room {
@@ -183,6 +261,16 @@ canvas {
   font-style: italic;
   font-size: 18px;
 }
+@media screen and (orientation: landscape) and (max-width: 900px) {
+  #room {
+    display: none;
+  }
+}
+@media screen and (orientation: landscape) and (min-width: 901px) {
+  #room {
+    display: none;
+  }
+}
 
 #score, #level, #combo, #health, #fps, .player, .team-player {
   display: flex;
@@ -192,6 +280,16 @@ canvas {
 #fps {
   border-top: 1px #ccc solid;
   padding-top: 10px;
+}
+@media screen and (orientation: landscape) and (max-width: 900px) {
+  #fps {
+    display: none;
+  }
+}
+@media screen and (orientation: landscape) and (min-width: 901px) {
+  #fps {
+    display: none;
+  }
 }
 
 #status {

@@ -13,10 +13,12 @@
     "build": "npm run clean && tsc -p ./tsconfig.server.json",
     "build:check": "tsc -p ./tsconfig.server.json --noEmit",
     "build:common": "cd ../common && npm run build",
-    "build:client": "cd ../client && npm run build && cp -R ./dist ../server/client",
+    "build:client": "rm -fr ./client && cd ../client && npm run build && cp -R ./dist ../server/client",
     "clean": "rm -rf distribution",
-    "clean:modules": "rm -rf node_modules && rm -rf node_modules.nosync && mkdir -p node_modules.nosync && ln -s node_modules.nosync node_modules",
-    "clean:package-lock": "rm -f package-lock.json"
+    "clean:modules": "rm -rf node_modules && rm -rf node_modules.nosync",
+    "clean:package-lock": "rm -f package-lock.json",
+    "create-no-sync": "npm run create-no-sync:node",
+    "create-no-sync:node": "if [ -d node_modules ]; then rm -fr node_modules.nosync; mv node_modules node_modules.nosync; ln -s node_modules.nosync node_modules; fi"
   },
   "author": "Jess Tucker <jessjesstheappreciator@gmail.com>",
   "license": "MIT",

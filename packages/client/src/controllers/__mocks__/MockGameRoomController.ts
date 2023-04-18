@@ -1,4 +1,4 @@
-import { IStartGame, IPlayData, IGameRoomState, IScoreData, IPlayerState, GAME_SCORE_EVENT_POINTS, GameStateStatus, ROOM_CONSTANTS, IRoomState, IBallState, getRandomMockBall } from "@interpong/common";
+import { IStartGame, IPlayData, IGameRoomState, IScoreData, IPlayerState, GAME_SCORE_EVENT_POINTS, GameStateStatus, ROOM_CONSTANTS, IRoomState, IBallState, getRandomMockBall, mockPlayer1 } from "@interpong/common";
 import { IGameRoomController } from "..";
 
 
@@ -25,7 +25,7 @@ class MockGameRoomController implements IGameRoomController<string> {
     /* Mocking methods */
 
     makeTestBall() {
-        const ball = getRandomMockBall(1);
+        const ball = getRandomMockBall(mockPlayer1);
         this._onGameBallEnterBoard(ball);
     }
 

@@ -10,8 +10,10 @@
         "build": "npm run clean && tsc -p ./tsconfig.json",
         "build:check": "tsc -p ./tsconfig.common.json --noEmit",
         "clean": "rm -rf distribution",
-        "clean:modules": "rm -rf node_modules",
-        "clean:package-lock": "rm -f package-lock.json"
+        "clean:modules": "rm -rf node_modules && rm -rf node_modules.nosync",
+        "clean:package-lock": "rm -f package-lock.json",
+        "create-no-sync": "npm run create-no-sync:node",
+        "create-no-sync:node": "if [ -d node_modules ]; then rm -fr node_modules.nosync; mv node_modules node_modules.nosync; ln -s node_modules.nosync node_modules; fi"
       },
     "types": "distribution/index.d.ts"
 }

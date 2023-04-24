@@ -34,11 +34,11 @@ export class GameController {
         const gameRoomStateService = new GameRoomStateService(roomId);
 
         const players = gameRoomStateService.getGameRoomState().players
-        const player1 = players.find(p => p.playerNumber === 1);
-        const player2 = players.find(p => p.playerNumber === 2);
-        if (!player1 || !player2 || (players.length != socketsInRoom.length)) {
-            throw new Error("Could not start game, not all sockets could be identified");
-        }
+        // const player1 = players.find(p => p.playerNumber === 1);
+        // const player2 = players.find(p => p.playerNumber === 2);
+        // if (!player1 || !player2 || (players.length != socketsInRoom.length)) {
+        //     throw new Error("Could not start game, not all sockets could be identified");
+        // }
 
         const balls = getSomeBalls(players, 1);
 
@@ -71,23 +71,6 @@ export class GameController {
         }
 
         gameRoomStateService.updateGameStateStatus(GameStateStatus.GAME_STARTED);
-    }
-
-    @OnMessage(GAME_EVENTS.UPDATE_GAME)
-    public async updateGame(
-        @SocketIO() io: Server,
-        @ConnectedSocket() socket: Socket,
-        @MessageBody() message: IPlayData
-    ) {
-        const roomId = getRoomForSocket(socket);
-
-        if (roomId) {
-            logger.info(chalk.cyan(`Sending game update: ${roomId}: [ px:${message.position.x} py:${message.position.y} dx:${message.direction.x} dy:${message.direction.y}]`));
-            socket.to(roomId).emit(GAME_EVENTS.ON_UPDATE_GAME, message);
-        }
-        else {
-            console.log("Error updateGame()");  
-        }
     }
 
     @OnMessage(GAME_EVENTS.UPDATE_BALL)

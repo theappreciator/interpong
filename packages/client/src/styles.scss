@@ -40,19 +40,8 @@ h2 {
     margin: 0 auto;
 }
 
-#canvas-container {
-    // @media screen and (orientation: portrait) and (max-width: $screen-small-portait) {
-    //     width: $game-width-small;
-    // }
-    // @media screen and (orientation: landscape) and (max-width: $screen-small-landscape) {
-    //     width: $game-width-small;
-    // }
-    // @media screen and (orientation: portrait) and (min-width: $screen-large-portrait) {
-    //     width: $game-width-large;
-    // }
-    // @media screen and (orientation: landscape) and (min-width: $screen-large-landscape) {
-    //     width: $game-width-large;
-    // }
+.needs-padding {
+    padding: 10px;
 }
 
 canvas {

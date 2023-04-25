@@ -21,11 +21,11 @@
   <body>
     <div id="main" class="main">
       <!-- <h1>INTERPONG</h1> -->
-      <div class="state" id="state-waiting_connect">
+      <div class="state needs-padding" id="state-waiting_connect">
         <h2>Waiting to connect...</h2>
       </div>
       <!-- <div id="jesstest"></div> -->
-      <div class="state hidden" id="state-game_room_selector">
+      <div class="state hidden needs-padding" id="state-game_room_selector">
         <h2>Enter a room name</h2>
         <div id="game_room_selector-room_inputs">
           <input id="game_room_selector-room_name" type="text" value="test_room"/>
@@ -37,7 +37,7 @@
           <div>None</div>
         </div>
       </div>
-      <div class="state hidden" id="state-game_room_waiting">
+      <div class="state hidden needs-padding" id="state-game_room_waiting">
         <h2 id="state-game_room_waiting-room_label"></h2>
         Waiting for other player to join room...
       </div>
@@ -69,7 +69,7 @@
           </div>
         </div>
       </div>
-      <div id="fps">FPS:<span></span></div>
+      <div class="needs-padding" id="fps">FPS:<span></span></div>
 
     </div>
     <script type="module" src="../src/index.ts"></script>

@@ -1,5 +1,5 @@
 import { GameStateStatus, GAME_SCORE_EVENTS, GAME_SCORE_EVENT_POINTS, IBallState, IGameRoomState, IGameState, IPlayerState, ROOM_CONSTANTS, TeamType } from "@interpong/common";
-import socket from "../socket";
+import { getOtherTeam, getRandomPlayerFromOtherTeam } from "../util/gameRoomUtils";
 import { getSomeBalls } from "../util/gameUtils";
 import PersistService from "./persistService";
 
@@ -86,15 +86,20 @@ class GameRoomStateService {
         }
     }
 
+    // TODO: pass in a full socket if possible
+    // TODO: pass in a ball id so we can attribute the last person that sent the ball and give them a score
     public updatePlayerScore(socketId: string, event: GAME_SCORE_EVENTS): IGameRoomState {
         const pointsForEvent = GAME_SCORE_EVENT_POINTS[event] || 0;
 
         const gameRoomState = {...this.getGameRoomState()};
         // TODO: consider a scoring strategy to get passed in
-        const otherPlayers = gameRoomState.players.filter(p => p.id !== socketId);
-        otherPlayers.forEach(p => {
-            p.score = p.score + pointsForEvent;
-        })
+        const player = gameRoomState.players.find(p => p.id === socketId);
+        if (!player) {
+            throw new Error(`Error getting player from socket ${socketId}`);
+        }
+        const randomPlayerFromOtherTeam = getRandomPlayerFromOtherTeam(gameRoomState, player.team);
+        randomPlayerFromOtherTeam.score = randomPlayerFromOtherTeam.score + pointsForEvent;
+
         return this.updateGameRoomState(gameRoomState);
     }
 
@@ -154,6 +159,7 @@ class GameRoomStateService {
         console.log("deleting", socketId);
         console.log("keys", keys);
         keys.forEach(k => {
+            // TODO: this should be in some helper logic.  "isRoom()"
             if (k.startsWith(ROOM_CONSTANTS.ROOM_IDENTIFIER.toLocaleLowerCase())) {
                 const roomId = k;
                 console.log("Working roomId", roomId);

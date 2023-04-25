@@ -196,6 +196,7 @@ export class RoomController {
         }
         catch (e) {
             console.log("There was an error!", e);
+            logger.info(chalk.red(`There was an error`, e));
         }
     }
 

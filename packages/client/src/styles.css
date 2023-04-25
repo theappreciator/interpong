@@ -32,6 +32,10 @@ h2 {
   margin: 0 auto;
 }
 
+.needs-padding {
+  padding: 10px;
+}
+
 canvas {
   display: flex;
   left: 0;

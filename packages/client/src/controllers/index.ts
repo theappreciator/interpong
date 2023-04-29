@@ -1,3 +1,4 @@
+import { IRoomState } from "@interpong/common";
 import { IGameService, INetworkServiceConsumer, IRoomService } from "../services";
 import SocketGameRoomController from "./SocketGameRoomController";
 
@@ -15,7 +16,9 @@ export interface IRoomController<T> extends IRoomService<T> {
     listUsersInGameRoom(roomName: string): Promise<string[]>;
 }
 
-export interface IGameRoomController<T> extends IRoomController<T>, IGameController<T>, INetworkServiceConsumer {};
+export interface IGameRoomController<T> extends IRoomController<T>, IGameController<T>, INetworkServiceConsumer {
+    onAdmin(listener: (roomStates: IRoomState[]) => void): void;
+};
 
 
 export {

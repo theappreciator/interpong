@@ -641,26 +641,39 @@ const joinRoom = async (roomName: string) => {
             console.log("The room is ready!", roomState.roomId);
         });
 
+        gameRoomController.onAdmin(() => {
+            console.log("Starting the admin screen!");
+        })
+
         await gameRoomController
         .joinGameRoom(roomName)
         .then((joined) => {
             if (joined) {
-                transitionState(
-                    "game_room_waiting",
-                    () => {},
-                    () => {
-                        // TODO: there is a bug here.  Need a graceful way to get the room name vs. id, and intelligently swap between them
-                        const roomLabel = document.getElementById("state-game_room_waiting-room_label");
-                        if (roomLabel) {
-                            roomLabel.innerText = `Room name: ${roomName}`;
-                        }
+                if (joined === "ADMIN_START") {
+                    transitionState(
+                        "game_room_admin",
+                        () => {},
+                        () => {}
+                    );
+                }
+                else {
+                    transitionState(
+                        "game_room_waiting",
+                        () => {},
+                        () => {
+                            // TODO: there is a bug here.  Need a graceful way to get the room name vs. id, and intelligently swap between them
+                            const roomLabel = document.getElementById("state-game_room_waiting-room_label");
+                            if (roomLabel) {
+                                roomLabel.innerText = `Room name: ${roomName}`;
+                            }
 
-                        const gameRoomLabel = document.getElementById("room");
-                        if (gameRoomLabel) {
-                            gameRoomLabel.innerText = `Room name: ${roomName}`;
+                            const gameRoomLabel = document.getElementById("room");
+                            if (gameRoomLabel) {
+                                gameRoomLabel.innerText = `Room name: ${roomName}`;
+                            }
                         }
-                    }
-                );
+                    );
+                }
             }
         })
         .catch((err) => {
@@ -694,7 +707,7 @@ const handleJoinRoom = (e: MouseEvent) => {
 
 /* SETUP GLOBALS */ 
 
-type TransitionStates = "waiting_connect" | "game_room_selector" | "game_room_waiting" | "game_ready";
+type TransitionStates = "waiting_connect" | "game_room_selector" | "game_room_waiting" | "game_ready" | "game_room_admin";
 
 let score: number;
 let level: number;

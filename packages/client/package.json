@@ -21,7 +21,6 @@
   "dependencies": {
     "@interpong/common": "^1.0.0",
     "@parcel/service-worker": "^2.8.3",
-    "@types/jest": "^29.4.0",
     "@types/node": "^18.11.18",
     "@types/node-sass": "^4.11.3",
     "@typescript-eslint/eslint-plugin": "^5.36.2",
@@ -39,9 +38,15 @@
     "sass": "^1.61.0",
     "socket.io": "^4.6.1",
     "socket.io-client": "^4.6.1",
-    "ts-jest": "^29.0.5",
     "typedi": "^0.10.0",
     "typescript": "^4.9.4",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "@babel/core": "^7.21.4",
+    "@babel/preset-env": "^7.21.4",
+    "@types/babel__core": "^7.20.0",
+    "@types/jest": "^29.5.1",
+    "babel-jest": "^29.5.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0"
   }
 }

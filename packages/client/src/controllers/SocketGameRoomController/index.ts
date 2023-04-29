@@ -21,6 +21,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
     private _onRoomReadyToStartGame: (roomState: IRoomState) => void = () => {};
     private _onPing: () => void = () => {};
     private _onPong: () => void = () => {};
+    private _onAdmin: (roomStates: IRoomState[]) => void = (roomStates) => {console.log("Default SocketGameRoomController onAdmin", roomStates)};
     private _onStartGame: (startGameData: IStartGame) => void = (startGameData) => {console.log("Default SocketGameRoomController onStartGame", startGameData)};
     private _onGameBallEnterBoard: (ball: IBallState) => void = (ball) => {console.log("Default SocketGameRoomController onGameBallEnterBoard", ball)};
     private _onGameScoreChange: (gameRoomState: IGameRoomState) => void = (gameRoomState) => {console.log("Default ScoketGameRoomController onGameScoreChange", gameRoomState)};
@@ -77,6 +78,9 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
                 });
             }
 
+            // TODO move this string manipulation into a shared helper.  
+            // - Convert from roomName to roomId
+            // - Convert from roomId to roomName
             let actualRoomName = roomName;
             if (roomName.toUpperCase().startsWith(ROOM_CONSTANTS.ROOM_IDENTIFIER)) {
                 actualRoomName = roomName.substring(ROOM_CONSTANTS.ROOM_IDENTIFIER.length);
@@ -97,8 +101,14 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
                 rj(error)
             }); 
 
+            this.socket.on("ADMIN_START", (roomStates: IRoomState[]) => {
+                this._onAdmin(roomStates);
+                console.log(roomStates);
+                rs("ADMIN_START");
+            });
+
             console.log("About to emit", ROOM_EVENTS.JOIN_ROOM);
-            this.socket.emit(ROOM_EVENTS.JOIN_ROOM, { roomName: actualRoomName });
+            this.socket.emit(ROOM_EVENTS.JOIN_ROOM, { roomName: actualRoomName }); //TODO: need an interface here
             
             const timeout = setTimeout(() => {
                 this.removeSyncRoomJoinEvents();
@@ -247,6 +257,10 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
 
     public onPong(listener: () => void): void {
         this._onPong = listener;
+    }
+
+    public onAdmin(listener: (roomStates: IRoomState[]) => void): void {
+        this._onAdmin = listener;
     }
 
     /* END EVENTS */

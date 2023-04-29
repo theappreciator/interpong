@@ -66,10 +66,26 @@ export class RoomController {
         @ConnectedSocket() socket: Socket,
         @MessageBody() message: { roomName: string } // TODO: need an interface here
     ) {
-        const roomId = getRoomIdFromName(message.roomName);
-        const socketsInRoom = await getSocketsInRoom(io, roomId);
+        // if (message.roomName === "ADMIN") {
+        //     const roomStates: IRoomState[] = [];
+        //     for (const [roomId, sockets] of io.sockets.adapter.rooms.entries()) {
+        //         // TODO: this logic to get only rooms matching ROOM| needs to be in a utility
+        //         if (roomId.toUpperCase().startsWith(ROOM_CONSTANTS.ROOM_IDENTIFIER.toUpperCase())) {
+        //             const room: IRoomState = {
+        //                 roomId: roomId,
+        //                 numberOfPlayers: sockets.size,
+        //                 maxNumberOfPlayers: ROOM_CONSTANTS.ROOM_MAX_NUMBER_OF_PLAYERS
+        //             }
+        //             roomStates.push(room);
+        //         }
+        //     }
+    
+        //     socket.emit("ADMIN_START", roomStates);
+        // }
+        // else {
+            const roomId = getRoomIdFromName(message.roomName);
 
-        logger.info(chalk.cyan("Request join room:  ", getSocketPrettyName(socket), roomId + ": " + (socketsInRoom.length || 0)));
+            const socketsInRoom = await getSocketsInRoom(io, roomId);
 
         let state = this._roomStates.get(roomId) || this.createRoom(roomId);
         

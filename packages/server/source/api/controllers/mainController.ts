@@ -22,7 +22,7 @@ export class MainController {
     @ConnectedSocket() socket: Socket,
     @SocketIO() io: Server
   ) {
-    logger.info(chalk.cyan("Socket Connected:   ", getSocketPrettyName(socket)));
+    logger.info(chalk.white("Socket Connected:   ", getSocketPrettyName(socket)));
 
     socket.on(SOCKET_EVENTS.PING, (data: any) => {
       console.log("ping");

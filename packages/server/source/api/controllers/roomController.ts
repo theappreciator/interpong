@@ -7,16 +7,16 @@ import {
     SocketIO,
 } from "socket-controllers";
 import {Service} from 'typedi';
-import { Namespace, Server, Socket } from "socket.io";
-import { DefaultEventsMap } from "socket.io/dist/typed-events";
-import { GAME_EVENTS, IPlayerState, IRoomState, ROOM_CONSTANTS, ROOM_EVENTS } from "@interpong/common";
+import { Server, Socket } from "socket.io";
+import { IRoomState, ROOM_CONSTANTS, ROOM_EVENTS } from "@interpong/common";
 import chalk from "chalk";
 import * as log4js from "log4js";
 import { getRoomsPrettyName, getSocketPrettyName } from "../../util/shared";
 import { getRoomIdFromName, getSocketsInRoom } from "../../util/roomUtils";
-import { GameController } from "./gameController";
 import GameRoomStateService from "../../services/gameRoomStateService";
-import { AtMaxPlayerState, HasMinPlayerState, NotEnoughPlayersState, RoomState } from "./RoomStates";
+import { NotEnoughPlayersState, RoomState } from "./RoomStates";
+import GameService from "../../services/gameService";
+import SocketGameService from "../../services/socketGameService";
 const logger = log4js.getLogger();
 
 
@@ -28,7 +28,6 @@ export class RoomController {
     private _roomStates: Map<string, RoomState>;
 
     constructor(
-        private gameController: GameController
     ) {
         this._roomStates = new Map<string, RoomState>();
     }
@@ -42,7 +41,7 @@ export class RoomController {
         @SocketIO() io: Server,
         @ConnectedSocket() socket: Socket
     ) {
-        logger.info(chalk.cyan("Request list rooms: ", getSocketPrettyName(socket)));
+        logger.info(chalk.white("Request list rooms: ", getSocketPrettyName(socket)));
 
         const roomStates: IRoomState[] = [];
         for (const [roomId, sockets] of io.sockets.adapter.rooms.entries()) {
@@ -87,9 +86,12 @@ export class RoomController {
 
             const socketsInRoom = await getSocketsInRoom(io, roomId);
 
-        let state = this._roomStates.get(roomId) || this.createRoom(roomId);
-        
-        state.playerJoining(roomId, io, socket);
+            logger.info(chalk.white("Request join room:  ", getSocketPrettyName(socket), roomId + ": " + (socketsInRoom.length || 0)));
+
+            let state = this._roomStates.get(roomId) || this.createRoom(roomId);
+            
+            state.playerJoining(roomId, io, socket);
+        // }
     }
 
     @OnDisconnect()
@@ -114,7 +116,7 @@ export class RoomController {
 
     private createRoom(roomId: string): NotEnoughPlayersState {
 
-        logger.info(chalk.cyan(`Creating room:      ${roomId}`));
+        logger.info(chalk.white(`Creating room:      ${roomId}`));
 
         const startingState = new NotEnoughPlayersState(this);
         this._roomStates.set(roomId, startingState);
@@ -158,7 +160,7 @@ export class RoomController {
         const socketsInRoom = io.sockets.adapter.rooms.get(roomId) || new Set<string>();
         const socketsInRoomStr = Array.from(socketsInRoom).join(", ");
 
-        logger.info(chalk.cyan("Room ready to start:", roomId + ":", "[" + socketsInRoomStr + "]"));
+        logger.info(chalk.white("Room ready to start:", roomId + ":", "[" + socketsInRoomStr + "]"));
         
         const roomState: IRoomState = {
             roomId: roomId,
@@ -171,7 +173,8 @@ export class RoomController {
                 logger.info(chalk.red (`Game start error:    ${roomId}: Clients did not all reply in 5000ms`));
             } else {
                 if (responses.filter(r => r === "ACK").length === responses.length) {
-                    this.gameController.startGame(io, roomId);
+                    const socketGameService = new SocketGameService();
+                    socketGameService.startGame(io, roomId);
                 }
                 else {
                     logger.info(chalk.red (`Game start error:    ${roomId}: Not all clients responded with ACK`));
@@ -191,9 +194,9 @@ export class RoomController {
 
             const socketsInRoom = await getSocketsInRoom(io, roomId);
 
-            const gameRoomStateService = new GameRoomStateService(roomId);
             // TODO what happens if a socket id is already in the state? (IE, a user sends a room join event more than once)
-            const playerState = gameRoomStateService.addPlayer(socket.id);
+            const gameService = new GameService(roomId);
+            const playerState = gameService.addPlayer(socket.id)
 
             const roomState: IRoomState = {
                 roomId: roomId,
@@ -203,7 +206,7 @@ export class RoomController {
 
             socket.emit(ROOM_EVENTS.JOIN_ROOM_SUCCESS, roomState);
 
-            logger.info(chalk.cyan(
+            logger.info(chalk.white(
                 "Room join success:  ",
                 getSocketPrettyName(socket),
                 `${roomId}: ${playerState.playerNumber}/${socketsInRoom.length || 0}`,

@@ -1,66 +1,83 @@
-import { DEFAULTS, randomItem, IBallState, IPlayerState, randomColorNumber, randomNumberWithVariance, TeamType, Vector } from "@interpong/common"
-import { RemoteSocket } from "socket.io";
-import { DefaultEventsMap } from "socket.io/dist/typed-events";
+import { DEFAULTS, randomItem, IBallState, IPlayerState, randomColorNumber, randomNumberWithVariance, TeamType, Vector, GAME_EVENTS, IBallUpdateState } from "@interpong/common"
 import { v4 as uuidv4 } from 'uuid';
 
 
+function getBallStartPosXForTeam(team: TeamType): number {
+    return team === "left" ? DEFAULTS.ball.offscreenRight : DEFAULTS.ball.offscreenLeft;
+}
+
+function getBallStartPosForTeam(team: TeamType): Vector {
+    const xPos = getBallStartPosXForTeam(team);
+    const yPos = Math.random() * DEFAULTS.width;
+
+    return {
+        x: xPos,
+        y: yPos
+    }
+}
+
+function getBallStartDirection(team: TeamType): Vector {
+    const xDir = (team === "left" ? -1 : 1) * randomNumberWithVariance(DEFAULTS.ball.direction.x, DEFAULTS.ball.direction.xVariance);
+    const yDir = randomNumberWithVariance(DEFAULTS.ball.direction.y, DEFAULTS.ball.direction.yVariance); 
+
+    return {
+        x: xDir, y: yDir
+    };
+}
 
 function getSomeBalls(players: IPlayerState[], numberOfBalls: number) {
     const balls: IBallState[] = [];
 
     for(let i = 1; i <= numberOfBalls; i++) {
         const playerWithBall = randomItem(players);
-        const xPos = playerWithBall.team === "left" ? DEFAULTS.ball.offscreenRight : DEFAULTS.ball.offscreenLeft;
-        const yPos = Math.random() * DEFAULTS.width;
-        const ballPosition: Vector = {x: xPos, y: yPos};
 
-        const xDir = (playerWithBall.team === "left" ? -1 : 1) * randomNumberWithVariance(DEFAULTS.ball.direction.x, DEFAULTS.ball.direction.xVariance);
-        const yDir = randomNumberWithVariance(DEFAULTS.ball.direction.y, DEFAULTS.ball.direction.yVariance); 
-        const ballDirection: Vector = {x: xDir, y: yDir};
+        if (playerWithBall) {
 
-        const ball: IBallState = {
-            id: uuidv4(),
-            color: randomColorNumber(),
-            bounces: 0,
-            players: [playerWithBall.playerNumber],
-            lastPosition: ballPosition,
-            lastDirection: ballDirection
+            const ball: IBallState = {
+                id: uuidv4(),
+                color: randomColorNumber(),
+                bounces: 0,
+                players: [playerWithBall.playerNumber],
+                lastPosition: getBallStartPosForTeam(playerWithBall.team),
+                lastDirection: getBallStartDirection(playerWithBall.team)
+            }
+
+            balls.push(ball);
         }
-
-        balls.push(ball);
     }
 
     return balls;
 }
 
-function getStartingPlayers(sockets: RemoteSocket<DefaultEventsMap, any>[]): IPlayerState[] {
-    const players: IPlayerState[] = [];
-    for (let i = 0; i < sockets.length; i++) {
-        const playerNumber = i + 1;
-        const player: IPlayerState = {
-            id: sockets[i].id,
-            playerNumber: playerNumber,
-            team: getTeam(playerNumber),
-            score: 0
-        }
-        players.push(player);
+function getTeamLogString(fromTeam: TeamType, toTeam?: TeamType): string {
+    let ballDisplay;
+    let block = '████';
+    let arrow = ' ';
+
+    if (toTeam === "left") {
+        arrow = "←";
     }
-
-    return players;
-}
-
-// TODO: obviously this needs to be updated to evenly distribute players to teams
-function getTeam(playerNumber: number): TeamType {
-    if (playerNumber % 2 == 0) {
-        return "right";
+    else if (toTeam === "right") {
+        arrow = "→";
     }
     else {
-        return "left";
+        block = '░░░░';
     }
+
+    if (fromTeam === "left") {
+        ballDisplay = `${block}${arrow}   `
+    }
+    else {
+        ballDisplay = `   ${arrow}${block}`
+    }
+
+    return `[${ballDisplay}]`
 }
 
 export {
+    getBallStartPosXForTeam,
+    getBallStartPosForTeam,
+    getBallStartDirection,
     getSomeBalls,
-    getStartingPlayers,
-    getTeam
+    getTeamLogString
 }

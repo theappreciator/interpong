@@ -10,6 +10,7 @@ import SocketPlayerAdapter from "./socketPlayerAdapter";
 
 export interface ISocketGameService {
     startGame(io: Server, roomName: string): void;
+    addPlayerToStartedGame(io: Server, socket: Socket, roomName: string): void;
     receiveBall(io: Server, fromSocket: Socket, ball: IBallUpdateState): void;
     receiveScoreEvent(io: Server, fromSocket: Socket, scoreData: IScoreData): void;
 }
@@ -35,6 +36,17 @@ class SocketGameService implements ISocketGameService {
                 this.sendBallToPlayer(io, roomId, ball, toPlayer);
             }
         );
+    }
+
+    public addPlayerToStartedGame(io: Server, socket: Socket, roomName: string) {
+        const roomId = getRoomIdFromName(roomName);
+
+        const gameService = new GameService(roomId);
+        const player = SocketPlayerAdapter.playerFromSocket(socket);
+
+        gameService.startGameForPlayer(player, (playerStartGameData: IStartGame) => {
+            socket.emit(GAME_EVENTS.START_GAME, playerStartGameData);
+        });
     }
 
     public receiveBall(io: Server, fromSocket: Socket, rawBallData: IBallUpdateState): void{

@@ -26,6 +26,10 @@ class SocketPlayerAdapter {
         return player;
     }
 
+    public static playerFromPlayerId(playerId: string): IPlayerState {
+        return GameRoomStateService.getPlayerById(playerId);
+    }
+
     public static socketFromPlayer(io: Server, player: IPlayerState): Socket {
         const socket = io.sockets.sockets.get(player.id);
         if (!socket) {

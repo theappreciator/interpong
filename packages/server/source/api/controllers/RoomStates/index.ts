@@ -1,6 +1,6 @@
 import NotEnoughPlayersState from "./notEnoughPlayersState";
 import HasMinPlayerState from "./hasMinPlayerState";
-import AtMaxPlayerState from "./notEnoughPlayersState";
+import AtMaxPlayerState from "./atMaxPlayerState";
 import { Server, Socket } from "socket.io";
 
 

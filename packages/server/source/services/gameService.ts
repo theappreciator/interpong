@@ -1,18 +1,19 @@
 import { DEFAULTS, GameStateStatus, GAME_SCORE_EVENT_POINTS, IBallState, IBallUpdateState, IGameRoomState, IPlayerState, IScoreData, IStartGame, randomIntegerBetween, randomNumberWithVariance, TeamType } from "@interpong/common";
+import { getNextPlayerNumber, getOppositeTeamType, getRandomPlayerFromOtherTeam, getScoreForOtherTeam, getTeamForNextPlayer } from "@interpong/common";
 import GameRoomStateService from "./gameRoomStateService";
 import chalk from "chalk";
 import * as log4js from "log4js";
 import { getSomeBalls, getTeamLogString } from "../util/gameUtils";
-import { getRoomIdFromName, getSocketsInRoom } from "../util/roomUtils";
 import SocketPlayerAdapter from "./socketPlayerAdapter";
 import { getLastPlayerFromBall, getTransferredBall } from "../util/ballUtil";
-import { getNextPlayerNumber, getOppositeTeamType, getRandomPlayerFromOtherTeam, getScoreForOtherTeam, getTeamForNextPlayer } from "../util/playerUtils";
 const logger = log4js.getLogger();
 
 
 export interface IGameService {
     addPlayer(playerId: string): IPlayerState;
     startGame(startGameAction: (playerStartGameData: IStartGame) => void, sendAction: (ball: IBallState, toPlayer: IPlayerState) => void): void;
+    startGameForPlayer(player: IPlayerState, startGameAction: (playerStartGameData: IStartGame) => void): void;
+    removePlayer(player: IPlayerState, removeAction: (gameRoomState?: IGameRoomState) => void): void;
     addBalls(ballCount: number, sendImmediately: boolean, sendAction: (ball: IBallState, toPlayer: IPlayerState) => void): void;
     transferBallToNextPlayer(rawBallData: IBallUpdateState, sendAction: (ball: IBallState, toPlayer: IPlayerState) => void): void;
     updateScore(fromPlayer: IPlayerState, scoreData: IScoreData, sendAction: (gameRoomState: IGameRoomState) => void): void;
@@ -44,29 +45,48 @@ class GameService implements IGameService {
         return player;
     }
 
-    startGame(startGameAction: (playerStartGameData: IStartGame) => void, sendAction: (ball: IBallState, toPlayer: IPlayerState) => void) {
-        const roomId = getRoomIdFromName(this._gameId);
-        
-        logger.info(chalk.white("Starting game:      ", roomId));
+    startGame(startGameAction: (playerStartGameData: IStartGame) => void, sendAction: (ball: IBallState, toPlayer: IPlayerState) => void) {        
+        logger.info(chalk.white("Starting game:      ", this._gameId));
 
-        const gameRoomStateService = new GameRoomStateService(roomId);
+        const gameRoomStateService = new GameRoomStateService(this._gameId);
 
         const gameRoomState = gameRoomStateService.gameRoomState;
         const players = gameRoomState.players
         for (let i = 0; i < players.length; i++) {
             const player = players[i];
-            const playerStartGameData: IStartGame = {
-                start: true,
-                player: player,
-                state: gameRoomState
-            };
-
-            startGameAction(playerStartGameData);
+            this.startGameForPlayer(player, startGameAction);
         }
 
         gameRoomStateService.updateStatus(GameStateStatus.GAME_STARTED);
 
         this.addBalls(1, true, sendAction);
+    }
+
+    startGameForPlayer(player: IPlayerState, startGameAction: (playerStartGameData: IStartGame) => void) {
+        const gameRoomStateService = new GameRoomStateService(this._gameId);
+        const gameRoomState = gameRoomStateService.gameRoomState;
+
+        const playerStartGameData: IStartGame = {
+            start: true,
+            player: player,
+            state: gameRoomState
+        };
+
+        startGameAction(playerStartGameData);
+    }
+
+    removePlayer(player: IPlayerState, removeAction: (gameRoomState?: IGameRoomState) => void): void {
+        const gameRoomStateService = new GameRoomStateService(this._gameId);
+        const gameRoomState = gameRoomStateService.deletePlayer(player);
+
+        if (gameRoomState.players.length === 0) {
+            gameRoomStateService.delete();
+
+            removeAction();
+        }
+        else {
+            removeAction(gameRoomState);
+        }        
     }
 
     addBalls(ballCount: number, sendImmediately: boolean, sendAction: (ball: IBallState, toPlayer: IPlayerState) => void) {
@@ -131,9 +151,9 @@ class GameService implements IGameService {
         scoreToPlayer.score = scoreToPlayer.score + pointsForEvent;
         const updatedGameRoomState = gameRoomStateService.addOrUpdatePlayer(scoreToPlayer);
 
-        const otherTeamScore = getScoreForOtherTeam(gameRoomStateService.players, fromPlayer.team);
+        const scoreForTeam = getScoreForOtherTeam(gameRoomStateService.players, fromPlayer.team);
 
-        logger.info(chalk.white(`Sending game score:  ${this._gameId}: [from ${fromPlayer.id} new score:${otherTeamScore}]`));
+        logger.info(chalk.white(`Sending game score:  ${this._gameId}: [to   ${scoreToPlayer.id} new score:${scoreForTeam}]`));
 
         sendAction(updatedGameRoomState);
     }

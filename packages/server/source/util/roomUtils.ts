@@ -1,16 +1,33 @@
 import { GAME_EVENTS, ROOM_CONSTANTS, ROOM_EVENTS } from "@interpong/common";
 import { DefaultEventsMap } from "socket.io/dist/typed-events";
-import { Namespace, Server, Socket } from "socket.io";
+import { Server, Socket } from "socket.io";
 
 
 
-const getRoomIdFromName = (roomName: string) => {
+const getRoomIdFromName = (roomName: string): string => {
     let roomId = roomName;
-    if (!roomName.startsWith(ROOM_CONSTANTS.ROOM_IDENTIFIER)) {
-        roomId = ROOM_CONSTANTS.ROOM_IDENTIFIER + roomName;
+    if (!isRoomId(roomName)) {
+        roomId = ROOM_CONSTANTS.ROOM_IDENTIFIER.toLowerCase() + roomName;
     }
 
     return roomId;
+}
+
+const getRoomNameFromId = (roomId: string): string => {
+    let roomName = roomId;
+    if (isRoomId(roomId)) {
+        roomName = roomName.substring(ROOM_CONSTANTS.ROOM_IDENTIFIER.toLowerCase().length);
+    }
+
+    return roomName;
+}
+
+const isRoomId = (roomId: string): boolean => {
+    if (roomId.toLowerCase().startsWith(ROOM_CONSTANTS.ROOM_IDENTIFIER.toLowerCase())) {
+        return true;
+    }
+
+    return false;
 }
 
 const getSocketsInRoom = async (io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>, roomName: string) => {
@@ -39,6 +56,8 @@ const getRoomForSocket = (socket: Socket): string => {
 
 export {
     getRoomIdFromName,
+    getRoomNameFromId,
+    isRoomId,
     getSocketsInRoom,
     getSocketIdsInRoom,
     getRoomForSocket

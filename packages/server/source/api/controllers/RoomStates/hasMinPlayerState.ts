@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { AtMaxPlayerState, RoomState } from ".";
+import { AtMaxPlayerState, NotEnoughPlayersState, RoomState } from ".";
 import { RoomController } from "../roomController";
 
 
@@ -23,8 +23,23 @@ class HasMinPlayerState implements RoomState {
         }
     }   
 
-    playerLeft(roomId: string, io: Server, socket: Socket): Promise<void> {
-        return Promise.resolve();
+    async playerLeft(roomId: string, io: Server, socket: Socket): Promise<void> {
+        this._roomController.leaveRoom(roomId, io, socket);
+
+        const isAtMax = await this._roomController.isRoomAtMax(roomId, io, socket);
+        if (isAtMax) {
+            const state = new AtMaxPlayerState(this._roomController);
+            this._roomController.setRoomStateforRoom(roomId, state);
+        }
+        else {
+            const hasEnoughToStart = await this._roomController.isRoomReadyToStart(roomId, io, socket);
+            if (!hasEnoughToStart) {
+                const state = new NotEnoughPlayersState(this._roomController);
+                this._roomController.setRoomStateforRoom(roomId, state);
+
+                // TODO: do we notify an ongoing room that we have players, just the count is below the min to start?
+            }
+        }
     }
 }
 

@@ -69,3 +69,5 @@ export {
     randomColorNumber,
     randomItem
 }
+
+export * from './playerUtils';

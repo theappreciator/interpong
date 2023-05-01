@@ -250,34 +250,32 @@ class GameRoomStateService implements IGameRoomStateService {
         return this.getGameRoomState();
     }
 
-    public static deletePlayerById(playerId: string): void {
-        const persistService: PersistService<IGameRoomState> = PersistService.Instance;
-        const keys = persistService.getKeys();
-        keys.forEach(k => {
-            // TODO: this should be in some helper logic.  "isRoom()"
-            if (isRoomId(k)) {
-                const roomId = k;
-                const originalGameRoomState = persistService.retrieve(roomId);
-                if (originalGameRoomState) {
-                    const player = originalGameRoomState.players.find(p => p.id === playerId);
-                    if (player) {
-                        const modifiedGameRoomState = {...originalGameRoomState};
-                        const modifiedPlayers = originalGameRoomState.players.filter(p => p.id !== playerId)
-                        modifiedGameRoomState.players = [...modifiedPlayers];
+    // public static deletePlayerById(playerId: string): void {
+    //     const persistService: PersistService<IGameRoomState> = PersistService.Instance;
+    //     const keys = persistService.getKeys();
+    //     keys.forEach(k => {
+    //         if (isRoomId(k)) {
+    //             const roomId = k;
+    //             const originalGameRoomState = persistService.retrieve(roomId);
+    //             if (originalGameRoomState) {
+    //                 const player = originalGameRoomState.players.find(p => p.id === playerId);
+    //                 if (player) {
+    //                     const modifiedGameRoomState = {...originalGameRoomState};
+    //                     const modifiedPlayers = originalGameRoomState.players.filter(p => p.id !== playerId)
+    //                     modifiedGameRoomState.players = [...modifiedPlayers];
                         
-                        persistService.save(roomId, modifiedGameRoomState);
-                    }
-                }
-            }
-        })
-    }
+    //                     persistService.save(roomId, modifiedGameRoomState);
+    //                 }
+    //             }
+    //         }
+    //     })
+    // }
 
     public static getPlayerById(playerId: string): IPlayerState {
         const persistService: PersistService<IGameRoomState> = PersistService.Instance;
         const keys = persistService.getKeys();
 
         for (const k of keys) {
-            // TODO: this should be in some helper logic.  "isRoom()"
             if (isRoomId(k)) {
                 const roomId = k;
                 const originalGameRoomState = persistService.retrieve(roomId);
@@ -299,7 +297,6 @@ class GameRoomStateService implements IGameRoomStateService {
         const keys = persistService.getKeys();
 
         for (const k of keys) {
-            // TODO: this should be in some helper logic.  "isRoom()"
             if (isRoomId(k)) {
                 const roomId = k;
                 const originalGameRoomState = persistService.retrieve(roomId);

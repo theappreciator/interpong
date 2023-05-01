@@ -91,9 +91,10 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
                     this.removeSyncRoomJoinEvents(timeout);
                     rj("event " + ROOM_EVENTS.JOIN_ROOM_SUCCESS + " name mismatch " + actualRoomName);
                 }
-
-                this.removeSyncRoomJoinEvents(timeout);
-                rs(roomState.roomId);
+                else {
+                    this.removeSyncRoomJoinEvents(timeout);
+                    rs(roomState.roomId);
+                }
             });
 
             this.socket.on(ROOM_EVENTS.JOIN_ROOM_ERROR, ({ error }) => {
@@ -177,7 +178,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
             });
         }
 
-        // console.log("About to emit", GAME_EVENTS.UPDATE_SCORE, scoreData);
+        console.log("About to emit score", GAME_EVENTS.UPDATE_SCORE, scoreData);
 
         this.socket.emit(GAME_EVENTS.UPDATE_SCORE, scoreData);
     }
@@ -286,9 +287,9 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
             this._onRoomReadyToStartGame(roomState);
         });
 
-        this.socket.on(GAME_EVENTS.START_GAME, (startGameData) => this._onStartGame(startGameData));
-        this.socket.on(GAME_EVENTS.ON_UPDATE_BALL, (ball) => this._onGameBallEnterBoard(ball));
-        this.socket.on(GAME_EVENTS.ON_UPDATE_SCORE, (gameRoomState) => this._onGameScoreChange(gameRoomState));
+        this.socket.on(GAME_EVENTS.START_GAME, (startGameData: IStartGame) => this._onStartGame(startGameData));
+        this.socket.on(GAME_EVENTS.ON_UPDATE_BALL, (ball: IBallState) => this._onGameBallEnterBoard(ball));
+        this.socket.on(GAME_EVENTS.ON_UPDATE_SCORE, (gameRoomState: IGameRoomState) => this._onGameScoreChange(gameRoomState));
     }
 
     private removeSyncRoomJoinEvents(timeout?: NodeJS.Timeout) {

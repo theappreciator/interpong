@@ -11,15 +11,11 @@ import { Server, Socket } from "socket.io";
 import { IGameRoomState, IRoomState, ROOM_CONSTANTS, ROOM_EVENTS } from "@interpong/common";
 import chalk from "chalk";
 import * as log4js from "log4js";
-import { getRoomsPrettyName, getSocketPrettyName } from "../../util/shared";
-import { getRoomForSocket, getRoomIdFromName, getSocketsInRoom, isRoomId } from "../../util/roomUtils";
-import GameRoomStateService from "../../services/gameRoomStateService";
+import { getSocketPrettyName } from "../../util/shared";
+import { getRoomIdFromName, getSocketsInRoom, isRoomId } from "../../util/roomUtils";
 import { NotEnoughPlayersState, RoomState } from "./RoomStates";
-import GameService from "../../services/gameService";
 import SocketGameService from "../../services/socketGameService";
-import SocketPlayerAdapter from "../../services/socketPlayerAdapter";
 import { PersistService } from "../../services";
-import { networkInterfaces } from "os";
 const logger = log4js.getLogger();
 
 
@@ -116,7 +112,8 @@ export class RoomController {
       @SocketIO() io: Server
     ) {
         try {
-            const roomId = GameRoomStateService.getRoomByPlayerById(socket.id);
+            const socketGameService = new SocketGameService();
+            const roomId = socketGameService.getRoomFromSocket(socket);
 
             logger.info(chalk.red("Socket Disconnected:", getSocketPrettyName(socket), roomId));
 
@@ -194,8 +191,6 @@ export class RoomController {
             if (err) {
                 logger.info(chalk.red (`Game start error:    ${roomId}: Clients did not all reply in 5000ms`, err));
             } else {
-                console.log("Got some responses:", responses);
-
                 if (responses.filter(r => r === "ACK").length === responses.length) {
                     const socketGameService = new SocketGameService();
                     socketGameService.startGame(io, roomId);
@@ -222,7 +217,7 @@ export class RoomController {
         socket.emit(ROOM_EVENTS.ROOM_READY, roomState, async (response: string) => {
             if (response === "ACK") {
                 const socketGameService = new SocketGameService();
-                socketGameService.addPlayerToStartedGame(io, socket, roomId);
+                socketGameService.startGameInProgressForPlayer(io, socket, roomId);
             }
             else {
                 logger.info(chalk.red (`Game join error:     ${roomId}: Not all clients responded with ACK`));
@@ -235,8 +230,8 @@ export class RoomController {
             await socket.join(roomId);
 
             // TODO what happens if a socket id is already in the state? (IE, a user sends a room join event more than once)
-            const gameService = new GameService(roomId);
-            const playerState = gameService.addPlayer(socket.id)
+            const socketGameService = new SocketGameService();
+            const playerState = socketGameService.addPlayer(roomId, socket);
 
             const socketsInRoom = await getSocketsInRoom(io, roomId);
 
@@ -256,15 +251,13 @@ export class RoomController {
             ));
         }
         catch (e) {
-            console.log("There was an error!", e);
             logger.info(chalk.red(`There was an error`, e));
         }
     }
 
     public leaveRoom(roomId: string, io: Server, socket: Socket): Promise<void> {
-        const gameService = new GameService(roomId);
-        const deletePlayer = SocketPlayerAdapter.playerFromPlayerId(socket.id);
-        gameService.removePlayer(deletePlayer, (gameRoomState?: IGameRoomState) => {
+        const socketGameService = new SocketGameService();
+        socketGameService.removePlayer(io, socket, roomId, (gameRoomState?: IGameRoomState) => {
             if (!gameRoomState) {
                 this._persist.delete(CONTROLLER_KEY + roomId);
             }

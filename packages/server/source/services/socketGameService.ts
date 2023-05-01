@@ -9,10 +9,13 @@ import SocketPlayerAdapter from "./socketPlayerAdapter";
 
 
 export interface ISocketGameService {
-    startGame(io: Server, roomName: string): void;
-    addPlayerToStartedGame(io: Server, socket: Socket, roomName: string): void;
+    addPlayer(roomId: string, socket: Socket): IPlayerState;
+    startGame(io: Server, roomId: string): void;
+    startGameInProgressForPlayer(io: Server, socket: Socket, roomId: string): void;
+    removePlayer(io: Server, socket: Socket, roomId: string, removeAction: (gameRoomState?: IGameRoomState) => void): void;
     receiveBall(io: Server, fromSocket: Socket, ball: IBallUpdateState): void;
     receiveScoreEvent(io: Server, fromSocket: Socket, scoreData: IScoreData): void;
+    getRoomFromSocket(socket: Socket): string | undefined;
 }
 
 class SocketGameService implements ISocketGameService {
@@ -23,9 +26,12 @@ class SocketGameService implements ISocketGameService {
 
     }
 
-    public startGame(io: Server, roomName: string) {
-        const roomId = getRoomIdFromName(roomName);
+    public addPlayer(roomId: string, socket: Socket): IPlayerState {
+        const gameService = new GameService(roomId);
+        return gameService.addPlayer(socket.id);
+    }
 
+    public startGame(io: Server, roomId: string) {
         const gameService = new GameService(roomId);
         gameService.startGame(
             (playerStartGameData: IStartGame) => {
@@ -38,9 +44,7 @@ class SocketGameService implements ISocketGameService {
         );
     }
 
-    public addPlayerToStartedGame(io: Server, socket: Socket, roomName: string) {
-        const roomId = getRoomIdFromName(roomName);
-
+    public startGameInProgressForPlayer(io: Server, socket: Socket, roomId: string) {
         const gameService = new GameService(roomId);
         const player = SocketPlayerAdapter.playerFromSocket(socket);
 
@@ -48,6 +52,13 @@ class SocketGameService implements ISocketGameService {
             socket.emit(GAME_EVENTS.START_GAME, playerStartGameData);
         });
     }
+
+    public removePlayer(io: Server, socket: Socket, roomId: string, removeAction: (gameRoomState?: IGameRoomState) => void): void {
+        const gameService = new GameService(roomId);
+        const deletePlayer = SocketPlayerAdapter.playerFromPlayerId(socket.id);
+        gameService.removePlayer(deletePlayer, removeAction);
+    }
+
 
     public receiveBall(io: Server, fromSocket: Socket, rawBallData: IBallUpdateState): void{
         const roomId = SocketRoomService.getGameRoomFromPlayerSocket(fromSocket);
@@ -65,6 +76,12 @@ class SocketGameService implements ISocketGameService {
         gameService.updateScore(fromPlayer, scoreData, (gameRoomState: IGameRoomState) => {
             this.sendScoreUpdate(io, roomId, gameRoomState)
         })
+    }
+
+    public getRoomFromSocket(socket: Socket): string | undefined {
+        // TODO: consider logic to 1) try and get the room from the existing connected socket, then 2) try and get the room from the state service for a disconnected socket
+        const roomId = GameRoomStateService.getRoomByPlayerById(socket.id);
+        return roomId;
     }
 
     /*******************/

@@ -13,7 +13,7 @@ class MockGameRoomController implements IGameRoomController<string> {
     private _onRoomReadyToStartGame: (roomState: IRoomState) => void = (roomState) => {console.log("Default MockGameRoomController onRoomReadyToStartGame")};
     private _onPing: () => void = () => {};
     private _onPong: () => void = () => {};
-    private _onAdmin: () => void = () => {};
+    private _onAdmin: (roomStates: IRoomState[]) => void = () => {};
     private _onStartGame: (options: IStartGame) => void = (options) => {console.log("Default MockGameRoomController onStartGame", options)};
     private _onGameBallEnterBoard: (ball: IBallState) => void = (ball) => {console.log("Default MockGameRoomController onGameBallEnterBoard", ball)};
     private _onGameScoreChange: (gameRoomState: IGameRoomState) => void = (gameRoomState) => {console.log("Default ScoketGameRoomController onGameScoreChange", gameRoomState)};
@@ -131,8 +131,8 @@ class MockGameRoomController implements IGameRoomController<string> {
     onPong(listener: () => void): void {
         this._onPong = listener;
     }
-    onAdmin(listener: () => void): void {
-        this.onAdmin = listener;
+    onAdmin(listener: (roomStates: IRoomState[]) => void): void {
+        this._onAdmin = listener;
     }
 
 }

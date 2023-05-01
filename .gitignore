@@ -3,6 +3,7 @@
 **/build
 **/distribution
 **/dist
+**/coverage
 .cache
 .cache.nosync
 .parcel-cache

@@ -4,6 +4,7 @@
 **/distribution
 **/dist
 **/coverage
+**/.DS_Store
 .cache
 .cache.nosync
 .parcel-cache

@@ -24,7 +24,7 @@ const CONTROLLER_KEY = "ROOM_CONTROLLER|";
 
 @SocketController()
 @Service()
-export class RoomController {
+class RoomController {
 
     private _persist: PersistService<RoomState>;
 
@@ -275,3 +275,5 @@ export class RoomController {
     }
 
 }
+
+export default RoomController;

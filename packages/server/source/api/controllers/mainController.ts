@@ -15,7 +15,7 @@ const logger = log4js.getLogger();
 
 @SocketController()
 @Service()
-export class MainController {
+class MainController {
   
   @OnConnect()
   public onConnection(
@@ -40,3 +40,4 @@ export class MainController {
   }
 }
 
+export default MainController;

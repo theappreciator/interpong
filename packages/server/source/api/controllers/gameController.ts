@@ -17,7 +17,7 @@ const logger = log4js.getLogger();
 
 @SocketController()
 @Service()
-export class GameController {
+class GameController {
 
     @OnMessage(GAME_EVENTS.UPDATE_BALL)
     public async updateBall(
@@ -68,3 +68,5 @@ export class GameController {
         }
     }
 }
+
+export default GameController;

@@ -1,6 +1,7 @@
 import { Container, Service } from 'typedi';
 import { SocketControllers } from "socket-controllers";
 import { Server, Socket} from "socket.io";
+import * as controllers from "./api/controllers/";
 import chalk from "chalk";
 import * as log4js from "log4js";
 const logger = log4js.getLogger();
@@ -21,7 +22,7 @@ export default (httpServer: any) => {
     {
       io: io,
       container: Container,
-      controllers: [__dirname + "/api/controllers/*"]
+      controllers: Object.values(controllers)
     }
   );
 

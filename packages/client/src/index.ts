@@ -5,7 +5,7 @@ import SimpleSpeedStrategy from './strategies/SimpleSpeedStrategy';
 import { SimpleHealthStrategy } from './strategies/SimpleHealthStrategy';
 import { Socket } from "socket.io-client";
 import { SocketService } from "./services";
-import { IGameRoomState, IRoomState, IScoreData, IStartGame, IBallState, DEFAULTS, IBallUpdateState, mockGameRoomState, TeamType, randomNumberWithVariance} from '@interpong/common';
+import { IGameRoomState, IRoomState, IScoreData, IStartGame, IBallState, DEFAULTS, IBallUpdateState, mockGameRoomState, TeamType, randomNumberWithVariance, IPlayerState, getOppositeTeamType} from '@interpong/common';
 import { IGameRoomController, SocketGameRoomController } from './controllers/';
 import { SoloMovementEvents, SpriteActions } from './sprites/events';
 import { TransferTypes } from './sprites/TransferBall';
@@ -122,7 +122,7 @@ function reset() {
 
     board.reset();
 
-    updateScore(0);
+    // updateScore(0);
     updateLevel(0);
     updateCombo(1);
 
@@ -131,12 +131,12 @@ function reset() {
     hideActions();
 }
 
-function updateScore(num: number) {
-    score = num;
-    const scoreElement = document.querySelector('#score span');
-    if (scoreElement) 
-        scoreElement.innerHTML = score.toLocaleString();
-}
+// function updateScore(num: number) {
+//     score = num;
+//     const scoreElement = document.querySelector('#score span');
+//     if (scoreElement) 
+//         scoreElement.innerHTML = score.toLocaleString();
+// }
 
 function updateLevel(num: number) {
     level = num;
@@ -183,29 +183,29 @@ function continueCombo(delta: number) {
     updateCombo(newCombo);
 }
 
-const playerCollideWithCoin = () => {
-    console.log("Collided with coin");
+// const playerCollideWithCoin = () => {
+//     console.log("Collided with coin");
 
-    updateScore( score + (combo * DEFAULTS.score.increment));
+//     updateScore( score + (combo * DEFAULTS.score.increment));
 
-    startCombo();
+//     startCombo();
 
-    updateLevel(level+1);
-}
+//     updateLevel(level+1);
+// }
 
-const playerCollideWithMonster = (continuePlaying: boolean) => {
-    console.log("Collided with monster", continuePlaying);
+// const playerCollideWithMonster = (continuePlaying: boolean) => {
+//     console.log("Collided with monster", continuePlaying);
 
-    updateHealth(board.player.health);
+//     updateHealth(board.player.health);
 
-    if (!continuePlaying) {
-        gameOver();
-    }
-}
+//     if (!continuePlaying) {
+//         gameOver();
+//     }
+// }
 
 const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], ball: BallType): SpriteActions[] => {
-    if ((thisPlayerNumber === 1 && movementEvent.includes(SoloMovementEvents.TRANSFERRED_RIGHT_WALL)) ||
-        (thisPlayerNumber === 2 && movementEvent.includes(SoloMovementEvents.TRANSFERRED_LEFT_WALL))) {
+    if ((thisPlayer.team === "left" && movementEvent.includes(SoloMovementEvents.TRANSFERRED_RIGHT_WALL)) ||
+        (thisPlayer.team === "right" && movementEvent.includes(SoloMovementEvents.TRANSFERRED_LEFT_WALL))) {
 
         console.log("Transferred", ball.center, ball.v);
 
@@ -228,18 +228,16 @@ const ballMovementEventDestroyOnExit = (movementEvent: SoloMovementEvents[], bal
 }
 
 const ballMovementEventScoreOtherPlayer = (movementEvent: SoloMovementEvents[], ball: BallType): SpriteActions[] => {
-    if ((thisPlayerNumber === 1 && movementEvent.includes(SoloMovementEvents.HIT_LEFT_WALL)) ||
-        (thisPlayerNumber === 2 && movementEvent.includes(SoloMovementEvents.HIT_RIGHT_WALL))) {
+    if ((thisPlayer.team === "left" && movementEvent.includes(SoloMovementEvents.HIT_LEFT_WALL)) ||
+        (thisPlayer.team === "right" && movementEvent.includes(SoloMovementEvents.HIT_RIGHT_WALL))) {
 
-        const scoreDiff = DEFAULTS.score.increment;
-        const newScore = score + scoreDiff;
         const scoreData: IScoreData = {
-            player: thisPlayerNumber,
+            player: thisPlayer.playerNumber,
             currentScore: score,
             event: GAME_SCORE_EVENTS.WALL_HIT
         }
+
         gameRoomController.doGameScoreChange(scoreData);
-        // updateScore(newScore);
     }
 
     return [];
@@ -263,13 +261,11 @@ const ballMovementEvents = (movementEvent: SoloMovementEvents[], ball: BallType)
 }
 
 const handleScoreChange = (gameRoomState: IGameRoomState) => {
-    const thisPlayerState = gameRoomState.players.find(p => p.playerNumber === thisPlayerNumber);
+    const thisPlayerState = gameRoomState.players.find(p => p.id === thisPlayer.id);
 
     if (!thisPlayerState) {
-        throw new Error(`Player state for player ${thisPlayerNumber} unexpectedly undefined`);
+        throw new Error(`Player state for player ${thisPlayer.playerNumber} unexpectedly undefined`);
     }
-
-    updateScore(thisPlayerState.score);
 
     updatePlayers(gameRoomState);
 
@@ -277,11 +273,12 @@ const handleScoreChange = (gameRoomState: IGameRoomState) => {
 
 // const makeIncomingBall = (position: Vector, direction: Vector) => {
 const makeIncomingBall = (ball: IBallState) => {
-    const exitSide: TransferTypes = thisPlayerNumber === 1 ? "right" : "left"; // TODO: this can be driven by team
+    const exitSide: TransferTypes = getOppositeTeamType(thisPlayer.team);
 
     console.log("About to enter a new ball", ball.lastPosition, ball.lastDirection);
     ballsInPlay.push({...ball});
     const ballSprite = new TransferBall(ball.color, DEFAULTS.ball.radius, ball.lastDirection, ball.lastPosition, ball.id, [exitSide]);
+    // const ballSprite = new BouncingBall(ball.color, DEFAULTS.ball.radius, ball.lastDirection, ball.lastPosition, ball.id);
     board.addNewBall(ballSprite);
 }
 
@@ -301,7 +298,8 @@ function initGameObjects() {
         DEFAULTS.player.height,
         {x:DEFAULTS.player.direction.x, y:DEFAULTS.player.direction.y},
         {
-            x: thisPlayerNumber === 1 ?
+            // TODO use shared util to get x, y based on Team
+            x: thisPlayer.team === "left" ?
                 DEFAULTS.player.startPos.x : 
                 DEFAULTS.width - DEFAULTS.player.startPos.x - DEFAULTS.player.width,
             y: DEFAULTS.player.startPos.y
@@ -350,16 +348,17 @@ function updatePlayers(gameRoomState: IGameRoomState) {
     for (let teamType of TeamType) {
         const teamElement = document.getElementById(`game_ready-teams_${teamType}_players`);
         if (teamElement) {
-            const players = gameRoomState.players.filter(p => p.team === teamType).sort((a, b) => a.score = b.score);
+            const players = gameRoomState.players.filter(p => p.team === teamType).sort((a, b) => a.score - b.score);
             for (let i = 0; i < players.length; i++) {
                 const player = players[i];
+                // TODO: consider moving these dynamic ids to functions somewhere
                 const playerElementId = `players-${teamType}-socket-${player.id}`
                 let div = document.getElementById(playerElementId);
                 if (!div) {
                     div = document.createElement("div");
                     div.id = playerElementId;
                     div.classList.add("team-player");
-                    div.innerText = `Player ${player.playerNumber} ${thisPlayerNumber === player.playerNumber ? '(you)' : ''}`;
+                    div.innerText = `Player ${player.playerNumber} ${thisPlayer.id === player.id ? '(you)' : ''}`;
                 }
 
                 let span = div.firstElementChild as HTMLElement;
@@ -371,8 +370,14 @@ function updatePlayers(gameRoomState: IGameRoomState) {
 
                 teamElement.prepend(div);
 
-                if (player.playerNumber === thisPlayerNumber) {
+                if (player.playerNumber === thisPlayer.playerNumber) {
                     // TODO: reconcile when local score data is different from server score data
+                }
+            }
+            const playerIds = gameRoomState.players.map(p => p.id);
+            for (let c of teamElement.children) {
+                if (!playerIds.some(pid => `players-${teamType}-socket-${pid}` === c.id)) {
+                    teamElement.removeChild(c);
                 }
             }
 
@@ -583,7 +588,7 @@ const connectToServer = async () => {
                 gameRoomController.doGetRooms();
                 // setTimeout(() => {
                 //     joinRoom("auto_join_room");
-                // }, 200);
+                // }, 500);
             }
         );
     };
@@ -612,14 +617,13 @@ const connectToServer = async () => {
 };
 
 const joinRoom = async (roomName: string) => {
-    console.log("About to join room", roomName);
     if (roomName) {
         gameRoomController.onStartGame((startGameData: IStartGame) => {
             // TODO: There is a bug where the gameboard gets shown every time this is called, creating multiple visible gameboards.
             console.log("Firing onStartGame()");
             console.log(startGameData);
-            thisPlayerNumber = startGameData.player.playerNumber;
-            console.log("starting as player", thisPlayerNumber);
+            thisPlayer = {...startGameData.player};
+            console.log(`Starting as player: ${thisPlayer.playerNumber} team: ${thisPlayer.team}`)
             transitionState(
                 "game_ready",
                 () => {},
@@ -641,26 +645,39 @@ const joinRoom = async (roomName: string) => {
             console.log("The room is ready!", roomState.roomId);
         });
 
+        gameRoomController.onAdmin(() => {
+            console.log("Starting the admin screen!");
+        })
+
         await gameRoomController
         .joinGameRoom(roomName)
         .then((joined) => {
             if (joined) {
-                transitionState(
-                    "game_room_waiting",
-                    () => {},
-                    () => {
-                        // TODO: there is a bug here.  Need a graceful way to get the room name vs. id, and intelligently swap between them
-                        const roomLabel = document.getElementById("state-game_room_waiting-room_label");
-                        if (roomLabel) {
-                            roomLabel.innerText = `Room name: ${roomName}`;
-                        }
+                if (joined === "ADMIN_START") {
+                    transitionState(
+                        "game_room_admin",
+                        () => {},
+                        () => {}
+                    );
+                }
+                else {
+                    transitionState(
+                        "game_room_waiting",
+                        () => {},
+                        () => {
+                            // TODO: there is a bug here.  Need a graceful way to get the room name vs. id, and intelligently swap between them
+                            const roomLabel = document.getElementById("state-game_room_waiting-room_label");
+                            if (roomLabel) {
+                                roomLabel.innerText = `Room name: ${roomName}`;
+                            }
 
-                        const gameRoomLabel = document.getElementById("room");
-                        if (gameRoomLabel) {
-                            gameRoomLabel.innerText = `Room name: ${roomName}`;
+                            const gameRoomLabel = document.getElementById("room");
+                            if (gameRoomLabel) {
+                                gameRoomLabel.innerText = `Room name: ${roomName}`;
+                            }
                         }
-                    }
-                );
+                    );
+                }
             }
         })
         .catch((err) => {
@@ -694,7 +711,7 @@ const handleJoinRoom = (e: MouseEvent) => {
 
 /* SETUP GLOBALS */ 
 
-type TransitionStates = "waiting_connect" | "game_room_selector" | "game_room_waiting" | "game_ready";
+type TransitionStates = "waiting_connect" | "game_room_selector" | "game_room_waiting" | "game_ready" | "game_room_admin";
 
 let score: number;
 let level: number;
@@ -707,7 +724,7 @@ let fpsInterval: NodeJS.Timer;
 
 let gameRoomController: IGameRoomController<Socket>;
 let currentState: TransitionStates = "waiting_connect";
-let thisPlayerNumber: number;
+let thisPlayer: IPlayerState;
 let ballsInPlay: IBallState[] = [];
 
 /* END GLOBALS */
@@ -720,7 +737,12 @@ if (!testGame) connectToServer();
 if (testGame) transitionState(
     "game_ready",
     async () => { 
-        thisPlayerNumber = 1;
+        thisPlayer = {
+            id: "local_test_player",
+            playerNumber: 1,
+            team: "left",
+            score: 0
+        }
 
         gameRoomController = new MockGameRoomController();
         gameRoomController.connect();

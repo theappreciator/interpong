@@ -16,6 +16,10 @@ class PersistService<T> {
         this.store.set(key.toLowerCase(), value);
     }
 
+    public delete(key: string): void {
+        this.store.delete(key);
+    }
+
     public retrieve(key: string): T | undefined {
         return this.store.get(key.toLowerCase());
     }

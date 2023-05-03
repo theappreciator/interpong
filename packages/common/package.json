@@ -5,15 +5,25 @@
     "name": "@interpong/common",
     "version": "1.0.0",
     "scripts": {
-        "test": "cd ../../ && npm run test common --",
-        "test:coverage": "cd ../../ && npm run test:coverage -- common --collectCoverageFrom=./packages/common/source/**/*.ts",
-        "build": "npm run clean && tsc -p ./tsconfig.json",
-        "build:check": "tsc -p ./tsconfig.common.json --noEmit",
-        "clean": "rm -rf distribution",
-        "clean:modules": "rm -rf node_modules && rm -rf node_modules.nosync",
-        "clean:package-lock": "rm -f package-lock.json",
-        "create-no-sync": "npm run create-no-sync:node",
-        "create-no-sync:node": "if [ -d node_modules ]; then rm -fr node_modules.nosync; mv node_modules node_modules.nosync; ln -s node_modules.nosync node_modules; fi"
-      },
+      "test": "cd ../../ && npm run test common --",
+      "test:local": "jest",
+      "test:coverage": "cd ../../ && npm run test:coverage -- common --collectCoverageFrom=./packages/common/source/**/*.ts",
+      "build": "npm run clean && tsc -p ./tsconfig.json",
+      "build:check": "tsc -p ./tsconfig.common.json --noEmit",
+      "clean": "rm -rf distribution",
+      "clean:modules": "rm -rf node_modules && rm -rf node_modules.nosync",
+      "clean:package-lock": "rm -f package-lock.json",
+      "create-no-sync": "npm run create-no-sync:node",
+      "create-no-sync:node": "if [ -d node_modules ]; then rm -fr node_modules.nosync; mv node_modules node_modules.nosync; ln -s node_modules.nosync node_modules; fi"
+    },
+    "dependencies": {
+      "@babel/core": "^7.21.4",
+      "@babel/preset-env": "^7.21.4",
+      "@types/babel__core": "^7.20.0",
+      "@types/jest": "^29.5.1",
+      "babel-jest": "^29.5.0",
+      "jest": "^29.5.0",
+      "ts-jest": "^29.1.0"
+    },
     "types": "distribution/index.d.ts"
 }

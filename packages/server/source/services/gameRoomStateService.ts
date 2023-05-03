@@ -1,11 +1,28 @@
-import { GameStateStatus, GAME_SCORE_EVENTS, GAME_SCORE_EVENT_POINTS, IBallState, IGameRoomState, IGameState, IPlayerState, ROOM_CONSTANTS, TeamType } from "@interpong/common";
-import socket from "../socket";
-import { getSomeBalls } from "../util/gameUtils";
+import { GameStateStatus, IBallState, IGameRoomState, IGameState, IPlayerState, ROOM_CONSTANTS } from "@interpong/common";
+import { isRoomId } from "../util/roomUtils";
 import PersistService from "./persistService";
 
 
 
-class GameRoomStateService {
+export interface IGameRoomStateService {
+    players: IPlayerState[];
+    player(playerId: string): IPlayerState;
+    addOrUpdatePlayers(players: IPlayerState[]): IGameRoomState;
+    addOrUpdatePlayer(player: IPlayerState): IGameRoomState;
+    deletePlayer(player: IPlayerState): void;
+    balls: IBallState[];
+    ball(ballId: string): IBallState;
+    addOrUpdateBalls(balls: IBallState[]): IGameRoomState;
+    addOrUpdateBall(ball: IBallState): IGameRoomState;
+    gameRoomState: IGameRoomState;
+    game: IGameState;
+    status: GameStateStatus;
+    updateStatus(newStatus: GameStateStatus): IGameRoomState;
+    delete(): void;
+}
+
+
+class GameRoomStateService implements IGameRoomStateService {
 
     private _roomId: string;
     private _persist: PersistService<IGameRoomState>;
@@ -29,54 +46,102 @@ class GameRoomStateService {
         }
     }
 
-    public getGameStateStatus(): GameStateStatus {
-        return this.getGameRoomState().game.status;
+    get players(): IPlayerState[] {
+        return this.getGameRoomState().players;
     }
 
-    public updateGameStateStatus(newStatus: GameStateStatus): IGameRoomState {
-        const gameRoomState = {...this.getGameRoomState()};
-        gameRoomState.game.status = newStatus;
-        return this.updateGameRoomState(gameRoomState);
-    }
-
-    public updateGameStateStatusStarting(balls: IBallState[]): IGameRoomState {
-        const gameRoomState = {...this.getGameRoomState()};
-        gameRoomState.game.status = GameStateStatus.GAME_STARTING;
-        gameRoomState.balls = [...balls];
-        return this.updateGameRoomState(gameRoomState);
-    }
-
-    public addSomeBalls(numberOfBalls: number): IBallState[] {
-        const gameRoomState = {...this.getGameRoomState()};
-        const newBalls = getSomeBalls(gameRoomState.players, numberOfBalls);
-        const existingBalls = [...gameRoomState.balls];
-        gameRoomState.balls = existingBalls.concat(newBalls);
-        this.updateGameRoomState(gameRoomState);
-
-        return newBalls;
-    }
-
-    public getGameState(): IGameState {
-        return this.getGameRoomState().game;
-    }
-    
-    public updateGameState(gameState: IGameState): IGameRoomState {
-        const gameRoomState = {...this.getGameRoomState()};
-        gameRoomState.game = {...gameState};
-        return this.updateGameRoomState(gameRoomState);
-    }    
-
-    public getPlayerState(socketId: string): IPlayerState {
-        const playerState = this.getGameRoomState()?.players.find(p => p.id === socketId);
+    public player(playerId: string): IPlayerState {
+        const playerState = this.getGameRoomState()?.players.find(p => p.id === playerId);
         if (playerState) {
             return playerState;
         }
         else {
-            throw new Error(`Player State (player ${socketId}) unexpectedly undefined`);
+            throw new Error(`Player State (player ${playerId}) unexpectedly undefined`);
         }
     }
 
-    public getBallState(ballId: string): IBallState {
+    public addOrUpdatePlayers(players: IPlayerState[]): IGameRoomState {
+        const updatedPlayers: IPlayerState[] = [];
+        for (const player of players) {
+            let addedPlayer = false;
+            for (let i = 0; i < this.players.length; i++) {
+                const refPlayer = this.players[i];
+                if (refPlayer.id === player.id) {
+                    updatedPlayers.push({...player});
+                    addedPlayer = true;
+                }
+                else {
+                    updatedPlayers.push({...refPlayer});
+                }
+            }
+
+            if (!addedPlayer) {
+                updatedPlayers.push({...player});
+            }
+        }
+
+        const updatedGameRoomState = {...this.getGameRoomState()};
+        updatedGameRoomState.players = updatedPlayers;
+
+        return this.updateGameRoomState(updatedGameRoomState);
+    }
+
+    public addOrUpdatePlayer(player: IPlayerState): IGameRoomState {
+        const updatedPlayers = [];
+        let addedPlayer = false;
+
+        for (let i = 0; i < this.players.length; i++) {
+            const refPlayer = this.players[i];
+            if (refPlayer.id === player.id) {
+                updatedPlayers.push({...player});
+                addedPlayer = true;
+            }
+            else {
+                updatedPlayers.push({...refPlayer});
+            }
+        }
+
+        if (!addedPlayer) {
+            updatedPlayers.push({...player});
+        }
+
+        const updatedGameRoomState = {...this.getGameRoomState()};
+        updatedGameRoomState.players = updatedPlayers;
+
+        return this.updateGameRoomState(updatedGameRoomState);
+    }
+
+    public deletePlayer(player: IPlayerState): IGameRoomState {
+        const updatedPlayers = [];
+        let deletedPlayer = false;
+
+        for (let i = 0; i < this.players.length; i++) {
+            const refPlayer = this.players[i];
+            if (refPlayer.id === player.id) {
+                //updatedPlayers.push({...player});
+                deletedPlayer = true;
+            }
+            else {
+                updatedPlayers.push({...refPlayer});
+            }
+        }
+
+        if (!deletedPlayer) {
+            throw new Error(`Error deleting player ${player.id}, could not be found`);
+        }
+
+        const updatedGameRoomState = {...this.getGameRoomState()};
+        updatedGameRoomState.players = updatedPlayers;
+
+        return this.updateGameRoomState(updatedGameRoomState);
+    }
+
+
+    get balls(): IBallState[] {
+        return this.getGameRoomState().balls;
+    }
+
+    public ball(ballId: string): IBallState {
         const ballState = this.getGameRoomState()?.balls.find(b => b.id === ballId);
         if (ballState) {
             return ballState;
@@ -86,53 +151,90 @@ class GameRoomStateService {
         }
     }
 
-    public updatePlayerScore(socketId: string, event: GAME_SCORE_EVENTS): IGameRoomState {
-        const pointsForEvent = GAME_SCORE_EVENT_POINTS[event] || 0;
+    public addOrUpdateBalls(balls: IBallState[]): IGameRoomState {
+        const updatedBalls: IBallState[] = [];
+        for (const ball of balls) {
+            let addedBall = false;
+            for (let i = 0; i < this.balls.length; i++) {
+                const refBall = this.balls[i];
+                if (refBall.id === ball.id) {
+                    updatedBalls.push({...ball});
+                    addedBall = true;
+                }
+                else {
+                    updatedBalls.push({...refBall});
+                }
+            }
 
+            if (!addedBall) {
+                updatedBalls.push({...ball});
+            }
+        }
+
+        const updatedGameRoomState = {...this.getGameRoomState()};
+        updatedGameRoomState.balls = updatedBalls;
+
+        const ballWithHighestBounce = updatedBalls.sort((a, b) => a.bounces - b.bounces)[0];
+
+        if (updatedGameRoomState.highestBounce < ballWithHighestBounce.bounces) {
+            updatedGameRoomState.highestBounce = ballWithHighestBounce.bounces;         
+        }
+
+        return this.updateGameRoomState(updatedGameRoomState);
+    }
+
+    public addOrUpdateBall(ball: IBallState): IGameRoomState {
+        const updatedBalls = [];
+        let addedBall = false;
+
+        for (let i = 0; i < this.balls.length; i++) {
+            const refBall = this.balls[i];
+            if (refBall.id === ball.id) {
+                updatedBalls.push({...ball});
+                addedBall = true;
+            }
+            else {
+                updatedBalls.push({...refBall});
+            }
+        }
+
+        if (!addedBall) {
+            updatedBalls.push({...ball});
+        }
+
+        const updatedGameRoomState = {...this.getGameRoomState()};
+        updatedGameRoomState.balls = updatedBalls;
+        if (updatedGameRoomState.highestBounce < ball.bounces) {
+            updatedGameRoomState.highestBounce = ball.bounces;         
+        }
+
+        return this.updateGameRoomState(updatedGameRoomState);
+    }
+
+    get gameRoomState(): IGameRoomState {
+        return this.getGameRoomState();
+    }
+
+    get game(): IGameState {
+        return this.getGameRoomState().game
+    }
+
+    get status(): GameStateStatus {
+        return this.getGameRoomState().game.status;
+    }
+
+    public updateStatus(newStatus: GameStateStatus): IGameRoomState {
         const gameRoomState = {...this.getGameRoomState()};
-        // TODO: consider a scoring strategy to get passed in
-        const otherPlayers = gameRoomState.players.filter(p => p.id !== socketId);
-        otherPlayers.forEach(p => {
-            p.score = p.score + pointsForEvent;
-        })
+        gameRoomState.game.status = newStatus;
         return this.updateGameRoomState(gameRoomState);
     }
 
-    // TODO: obviously this needs to be updated to evenly distribute players to teams
-    private getTeam(playerNumber: number): TeamType {
-        if (playerNumber % 2 == 0) {
-            return "right";
-        }
-        else {
-            return "left";
-        }
-    }
-
-    public addPlayer(socketId: string): IPlayerState {
-        const gameRoomState = {...this.getGameRoomState()};
-        const sortedPlayerNumbers = gameRoomState.players.map(p => p.playerNumber).sort((a, b) => a - b);
-        let lastN = 0;
-        for (const n of sortedPlayerNumbers) {
-            if (n !== lastN + 1) {
-                break;
-            }
-            lastN = n;
-        }
-        const playerNumber: number = lastN + 1;
-        const player: IPlayerState = {
-            id: socketId,
-            playerNumber: playerNumber,
-            team: this.getTeam(playerNumber),
-            score: 0
-        }
-        gameRoomState.players.push(player);
-        this.updateGameRoomState(gameRoomState);
-
-        return player;
+    public delete(): void {
+        this._persist.delete(this._roomId);
     }
 
     // TODO: need to solve for atomically running this method
-    public getGameRoomState(): IGameRoomState {
+    private getGameRoomState(): IGameRoomState {
         const gameRoomState = this._persist.retrieve(this._roomId);
         if (gameRoomState) {
             return gameRoomState;
@@ -143,36 +245,75 @@ class GameRoomStateService {
     }
 
     // TODO: need to solve for atomically running this method, and failing if something changed
-    public updateGameRoomState(gameRoomState: IGameRoomState): IGameRoomState {
+    private updateGameRoomState(gameRoomState: IGameRoomState): IGameRoomState {
         this._persist.save(this._roomId, gameRoomState);
         return this.getGameRoomState();
     }
 
-    public static deletePlayer(socketId: string) {
+    // public static deletePlayerById(playerId: string): void {
+    //     const persistService: PersistService<IGameRoomState> = PersistService.Instance;
+    //     const keys = persistService.getKeys();
+    //     keys.forEach(k => {
+    //         if (isRoomId(k)) {
+    //             const roomId = k;
+    //             const originalGameRoomState = persistService.retrieve(roomId);
+    //             if (originalGameRoomState) {
+    //                 const player = originalGameRoomState.players.find(p => p.id === playerId);
+    //                 if (player) {
+    //                     const modifiedGameRoomState = {...originalGameRoomState};
+    //                     const modifiedPlayers = originalGameRoomState.players.filter(p => p.id !== playerId)
+    //                     modifiedGameRoomState.players = [...modifiedPlayers];
+                        
+    //                     persistService.save(roomId, modifiedGameRoomState);
+    //                 }
+    //             }
+    //         }
+    //     })
+    // }
+
+    public static getPlayerById(playerId: string): IPlayerState {
         const persistService: PersistService<IGameRoomState> = PersistService.Instance;
         const keys = persistService.getKeys();
-        console.log("deleting", socketId);
-        console.log("keys", keys);
-        keys.forEach(k => {
-            if (k.startsWith(ROOM_CONSTANTS.ROOM_IDENTIFIER.toLocaleLowerCase())) {
+
+        for (const k of keys) {
+            if (isRoomId(k)) {
                 const roomId = k;
-                console.log("Working roomId", roomId);
                 const originalGameRoomState = persistService.retrieve(roomId);
+
                 if (originalGameRoomState) {
-                    const player = originalGameRoomState.players.find(p => p.id === socketId);
+                    const player = originalGameRoomState.players.find(p => p.id === playerId);
                     if (player) {
-                        const modifiedGameRoomState = {...originalGameRoomState};
-                        const modifiedPlayers = originalGameRoomState.players.filter(p => p.id !== socketId)
-                        modifiedGameRoomState.players = [...modifiedPlayers];
-                        if (modifiedPlayers.length === 0 ) {
-                            modifiedGameRoomState.highestBounce = 0;
-                        }
-                        persistService.save(roomId, modifiedGameRoomState);
+                        return player;
                     }
                 }
             }
-        })
+        }
+
+        throw new Error(`Could not find player with id ${playerId}`)
     }
+
+    public static getRoomByPlayerById(playerId: string): string | undefined {
+        const persistService: PersistService<IGameRoomState> = PersistService.Instance;
+        const keys = persistService.getKeys();
+
+        for (const k of keys) {
+            if (isRoomId(k)) {
+                const roomId = k;
+                const originalGameRoomState = persistService.retrieve(roomId);
+
+                if (originalGameRoomState) {
+                    const player = originalGameRoomState.players.find(p => p.id === playerId);
+                    if (player) {
+                        return roomId;
+                    }
+                }
+            }
+        }
+
+        return undefined;
+    }
+
+
 }
 
 export default GameRoomStateService;

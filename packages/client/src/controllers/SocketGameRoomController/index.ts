@@ -21,6 +21,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
     private _onRoomReadyToStartGame: (roomState: IRoomState) => void = () => {};
     private _onPing: () => void = () => {};
     private _onPong: () => void = () => {};
+    private _onAdmin: (roomStates: IRoomState[]) => void = (roomStates) => {console.log("Default SocketGameRoomController onAdmin", roomStates)};
     private _onStartGame: (startGameData: IStartGame) => void = (startGameData) => {console.log("Default SocketGameRoomController onStartGame", startGameData)};
     private _onGameBallEnterBoard: (ball: IBallState) => void = (ball) => {console.log("Default SocketGameRoomController onGameBallEnterBoard", ball)};
     private _onGameScoreChange: (gameRoomState: IGameRoomState) => void = (gameRoomState) => {console.log("Default ScoketGameRoomController onGameScoreChange", gameRoomState)};
@@ -77,6 +78,9 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
                 });
             }
 
+            // TODO move this string manipulation into a shared helper.  
+            // - Convert from roomName to roomId
+            // - Convert from roomId to roomName
             let actualRoomName = roomName;
             if (roomName.toUpperCase().startsWith(ROOM_CONSTANTS.ROOM_IDENTIFIER)) {
                 actualRoomName = roomName.substring(ROOM_CONSTANTS.ROOM_IDENTIFIER.length);
@@ -87,9 +91,10 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
                     this.removeSyncRoomJoinEvents(timeout);
                     rj("event " + ROOM_EVENTS.JOIN_ROOM_SUCCESS + " name mismatch " + actualRoomName);
                 }
-
-                this.removeSyncRoomJoinEvents(timeout);
-                rs(roomState.roomId);
+                else {
+                    this.removeSyncRoomJoinEvents(timeout);
+                    rs(roomState.roomId);
+                }
             });
 
             this.socket.on(ROOM_EVENTS.JOIN_ROOM_ERROR, ({ error }) => {
@@ -97,8 +102,14 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
                 rj(error)
             }); 
 
+            this.socket.on("ADMIN_START", (roomStates: IRoomState[]) => {
+                this._onAdmin(roomStates);
+                console.log(roomStates);
+                rs("ADMIN_START");
+            });
+
             console.log("About to emit", ROOM_EVENTS.JOIN_ROOM);
-            this.socket.emit(ROOM_EVENTS.JOIN_ROOM, { roomName: actualRoomName });
+            this.socket.emit(ROOM_EVENTS.JOIN_ROOM, { roomName: actualRoomName }); //TODO: need an interface here
             
             const timeout = setTimeout(() => {
                 this.removeSyncRoomJoinEvents();
@@ -167,7 +178,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
             });
         }
 
-        // console.log("About to emit", GAME_EVENTS.UPDATE_SCORE, scoreData);
+        console.log("About to emit score", GAME_EVENTS.UPDATE_SCORE, scoreData);
 
         this.socket.emit(GAME_EVENTS.UPDATE_SCORE, scoreData);
     }
@@ -249,6 +260,10 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
         this._onPong = listener;
     }
 
+    public onAdmin(listener: (roomStates: IRoomState[]) => void): void {
+        this._onAdmin = listener;
+    }
+
     /* END EVENTS */
 
     /* PRIVATE HELPERS */
@@ -272,9 +287,9 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
             this._onRoomReadyToStartGame(roomState);
         });
 
-        this.socket.on(GAME_EVENTS.START_GAME, (startGameData) => this._onStartGame(startGameData));
-        this.socket.on(GAME_EVENTS.ON_UPDATE_BALL, (ball) => this._onGameBallEnterBoard(ball));
-        this.socket.on(GAME_EVENTS.ON_UPDATE_SCORE, (gameRoomState) => this._onGameScoreChange(gameRoomState));
+        this.socket.on(GAME_EVENTS.START_GAME, (startGameData: IStartGame) => this._onStartGame(startGameData));
+        this.socket.on(GAME_EVENTS.ON_UPDATE_BALL, (ball: IBallState) => this._onGameBallEnterBoard(ball));
+        this.socket.on(GAME_EVENTS.ON_UPDATE_SCORE, (gameRoomState: IGameRoomState) => this._onGameScoreChange(gameRoomState));
     }
 
     private removeSyncRoomJoinEvents(timeout?: NodeJS.Timeout) {

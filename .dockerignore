@@ -3,12 +3,15 @@ fly.toml
 **.dockerignore
 **/.gitignore
 **/node_modules
+**/node_modules.nosync
 **/.git
 .vscode
 origcli
 client-old
-.parcel-cache
-.cache
+**/.parcel-cache
+**/.parcel-cache.nosync
+**/.cache
 packages/client/dist
+packages/client/distribution
 packages/server/client
 packages/server/distribution

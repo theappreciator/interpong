@@ -1,6 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { AtMaxPlayerState, NotEnoughPlayersState, RoomState } from ".";
-import { RoomController } from "../roomController";
+import { RoomController } from "..";
 
 
 

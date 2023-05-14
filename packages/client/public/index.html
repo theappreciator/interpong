@@ -21,11 +21,11 @@
   <body>
     <div id="main" class="main">
       <!-- <h1>INTERPONG</h1> -->
-      <div class="state needs-padding" id="state-waiting_connect">
+      <div class="section needs-padding visible-section" id="state-waiting_connect">
         <h2>Waiting to connect...</h2>
       </div>
       <!-- <div id="jesstest"></div> -->
-      <div class="state hidden needs-padding" id="state-game_room_selector">
+      <div class="section needs-padding" id="state-game_room_selector">
         <h2>Enter a room name</h2>
         <div id="game_room_selector-room_inputs">
           <input id="game_room_selector-room_name" type="text" value="test_room"/>
@@ -37,41 +37,43 @@
           <div>None</div>
         </div>
       </div>
-      <div class="state hidden needs-padding" id="state-game_room_waiting">
+      <div class="section needs-padding" id="state-game_room_waiting">
         <h2 id="state-game_room_waiting-room_label"></h2>
         Waiting for minimum players to join room...
       </div>
-      <div class="state hidden needs-padding" id="state-game_room_admin">
+      <div class="section needs-padding" id="state-game_room_admin">
         <h2>Admin Screen</h2>
         Rooms:
         <div id="state-game_room_admin-rooms">
           
         </div>
       </div>
-      <div class="state hidden" id="state-game_ready">
-        <div id="canvas-container">
-          <div id="canvas"></div>
-          <div id="room">Room:</div>
-        </div>
-        <div id="game-details-container">
-          <div id="game_ready-teams">
-            <div id="game_ready-teams_left" class="team">
-              <div class="team-header"></div>
-              <h3>
-                <span>Team Left</span>
-                <span id="game_ready-teams_left_score" class="team-score"></span>
-              </h3>
-              <div class="team-footer"></div>
-              <div id="game_ready-teams_left_players" class="team-players-container"></div>
-            </div>
-            <div id="game_ready-teams_right" class="team">
-              <div class="team-header"></div>
-              <h3>
-                <span>Team Right</span>
-                <span id="game_ready-teams_right_score" class="team-score"></span>
-              </h3>
-              <div class="team-footer"></div>
-              <div id="game_ready-teams_right_players" class="team-players-container"></div>
+      <div class="section" id="state-game_ready">
+        <div id="state-game_ready-game-container">
+          <div id="canvas-container">
+            <div id="canvas"></div>
+            <div id="room">Room:</div>
+          </div>
+          <div id="game-details-container">
+            <div id="game_ready-teams">
+              <div id="game_ready-teams_left" class="team">
+                <div class="team-header"></div>
+                <h3>
+                  <span>Team Left</span>
+                  <span id="game_ready-teams_left_score" class="team-score"></span>
+                </h3>
+                <div class="team-footer"></div>
+                <div id="game_ready-teams_left_players" class="team-players-container"></div>
+              </div>
+              <div id="game_ready-teams_right" class="team">
+                <div class="team-header"></div>
+                <h3>
+                  <span>Team Right</span>
+                  <span id="game_ready-teams_right_score" class="team-score"></span>
+                </h3>
+                <div class="team-footer"></div>
+                <div id="game_ready-teams_right_players" class="team-players-container"></div>
+              </div>
             </div>
           </div>
         </div>

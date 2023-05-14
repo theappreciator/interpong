@@ -66,10 +66,6 @@ canvas {
     }
 }
 
-#state-waiting_connect {
-    margin-bottom: 20px;
-}
-
 .room {
     display: flex;
     justify-content: space-between;
@@ -126,7 +122,7 @@ canvas {
     width: 80px;
 }
 
-#state-game_ready {
+#state-game_ready-game-container {
     display: flex;
     
     @media screen and (orientation: portrait) and (max-width: $screen-small-portait) {
@@ -296,7 +292,17 @@ canvas {
     visibility: hidden
 }
 
-.hidden { 
+.hidden {
     visibility:hidden;
     display:none;
+}
+
+.section {
+    visibility: none;
+    display: none;
+}
+
+.visible-section {
+    visibility: visible;
+    display: block;
 }

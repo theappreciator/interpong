@@ -7,7 +7,7 @@ class MockGameRoomController implements IGameRoomController<string> {
 
     private _onConnected: (s: string) => void = (s) => { console.log("Default MockGameRoomController onConnected") };
     private _onReConnected: (s: string) => void = (socket) => { console.log("Default MockGameRoomController onReConnected") };
-	private _onDisconnected: (message: string) => void = () => { console.log("Default MockGameRoomController onDisconnected")};
+	private _onDisconnected: (wasConnected: boolean, message: string) => void = () => { console.log("Default MockGameRoomController onDisconnected")};
     private _onRoomsUpdate: (roomStates: IRoomState[]) => void = (roomStates) => {console.log("Default MockGameRoomController onRoomUpdate", roomStates)};
     private _onDisconnectedFromRoom: (roomId: string) => void = () => {};
     private _onRoomReadyToStartGame: (roomState: IRoomState) => void = (roomState) => {console.log("Default MockGameRoomController onRoomReadyToStartGame")};
@@ -28,6 +28,10 @@ class MockGameRoomController implements IGameRoomController<string> {
     makeTestBall() {
         const ball = getRandomMockBall(mockPlayer1);
         this._onGameBallEnterBoard(ball);
+    }
+
+    startTestGame(startGameData: IStartGame) {
+        this._onStartGame(startGameData)
     }
 
     /* Mocked up interface methods */
@@ -119,7 +123,7 @@ class MockGameRoomController implements IGameRoomController<string> {
     onReConnected(listener: () => void): void {
         this._onReConnected = listener;
     }
-    onDisconnected(listener: (message: string) => void): void {
+    onDisconnected(listener: (wasConnected: boolean, message: string) => void): void {
         this._onDisconnected = listener;
     }
     doPing(): void {

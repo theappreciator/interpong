@@ -1,88 +1,23 @@
-import Player, { RectanglePlayerShapePointed } from "../sprites/RectanglePlayer";
+import Player from "../sprites/RectanglePlayer";
 import { MoveStrategy } from "./MoveStrategy";
 import BaseMoveStrategy from "./BaseMoveStrategy";
-import { Vector } from "@interpong/common";
 
 
 
 export default class UpDownMoveStrategy extends BaseMoveStrategy implements MoveStrategy {
     moveLeft(player: Player) {
-        // player.v.x = -player.speed; 
+        return false;
     }
 
     stopLeft(player: Player) {
-        // player.v.x = 0;
-    }
-
-    moveUp(player: Player) {
-        player.v.y = -player.speed;
-    }
-
-    stopUp(player: Player) {
-        player.v.y = 0;
+        return false;
     }
 
     moveRight(player: Player) {
-        // player.v.x = player.speed;
+        return false;
     }
 
     stopRight(player: Player) {
-        // player.v.x = 0;
-    }
-
-    moveDown(player: Player) {
-        player.v.y = player.speed;
-    }
-
-    stopDown(player: Player) {
-        player.v.y = 0;
-    }
-
-    stopMoving(player: Player) {
-        player.v.x = 0;
-        player.v.y = 0;
-    }
-
-    onPointerDown(downPosition: Vector, player: Player) {
-        this._isTouched = true;
-        player.updateShape(RectanglePlayerShapePointed);
-
-        if (downPosition.y === player.center.y) {
-            player.stopMoving();
-        }
-        else {
-            const isPointerAbove = downPosition.y < player.center.y;
-            if (isPointerAbove) {
-                player.moveUp();
-            }
-            else {
-                player.moveDown();
-            }
-        }
-    }
-
-    onPointerUp(upPosition: Vector, player: Player) {
-        if (this._isTouched) {
-            this._isTouched = false;
-            player.updateShape();
-            player.stopMoving();
-        };
-    }
-
-    onPointerMove(position: Vector, player: Player): void {
-        if (this._isTouched) {
-            if (position.y === player.center.y) {
-                player.stopMoving();
-            }
-            else {
-                const isPointerAbove = position.y < player.center.y;
-                if (isPointerAbove) {
-                    player.moveUp();
-                }
-                else {
-                    player.moveDown();
-                }
-            }
-        }
+        return false;
     }
 }

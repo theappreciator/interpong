@@ -15,7 +15,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
 
     private _onConnected: (socket: Socket) => void = (socket) => { this.socket = socket; console.log("Default SocketGameRoomController onConnected") };
     private _onReConnected: (socket: Socket) => void = (socket) => { this.socket = socket; console.log("Default SocketGameRoomController onReConnected") };
-	private _onDisconnected: (message: string) => void = () => {console.log("Default SocketGameRoomController onDisconnected")};
+	private _onDisconnected: (wasConnected: boolean, message: string) => void = () => {console.log("Default SocketGameRoomController onDisconnected")};
     private _onRoomsUpdate: (roomStates: IRoomState[]) => void = (roomStates) => {console.log("Default SocketGameRoomController onRoomUpdate", roomStates)};
     private _onDisconnectedFromRoom: (roomId: string) => void = () => {};
     private _onRoomReadyToStartGame: (roomState: IRoomState) => void = () => {};
@@ -35,7 +35,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
         this.url = url;
 
         this.networkService = networkService;
-        this.networkService.onDisconnected((message) => this._onDisconnected(message));
+        this.networkService.onDisconnected((wasConnected, message) => this._onDisconnected(wasConnected, message));
         this.networkService.onReConnected((socket) => this._onReConnected(socket));
         this.networkService.onPing(() => this._onPing());
         this.networkService.onPong(() => this._onPong());
@@ -202,7 +202,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
         }
     }
 
-    public onDisconnected(listener: (message: string) => void) {
+    public onDisconnected(listener: (wasConnected: boolean, message: string) => void) {
         console.log("Setting SocketGameRoomController onDisconnected()");
         this._onDisconnected = listener;
     }

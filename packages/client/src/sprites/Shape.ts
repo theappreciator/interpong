@@ -9,6 +9,7 @@ export default abstract class Shape implements Sprite {
     protected _shape: PIXI.Graphics;
     protected _color: number;
     protected _startPos: Vector;
+    protected _activated: boolean;
 
     constructor(shape: PIXI.Graphics, color: number, v: Vector, startPos: Vector) {
         this._shape = shape;
@@ -16,18 +17,16 @@ export default abstract class Shape implements Sprite {
         this._color = color;
         this._startPos = startPos;
 
-        // this.createShape(this._color);        
+        this._activated = false;
     }
 
-    // abstract updateShape(): void;
-    // updateCircle(color: number) {
-    //     this._circle.clear();
-    //     this._circle
-    //         .beginFill(color)
-    //         .drawCircle(0, 0, this._radius)
-    //         .endFill();
+    get activated(): boolean {
+        return this._activated;
+    }
 
-    // }
+    set activated(b: boolean) {
+        this._activated = b;
+    }
 
     getSpriteObj(): PIXI.Graphics {
         return this._shape;
@@ -54,32 +53,10 @@ export default abstract class Shape implements Sprite {
     abstract updateShape(...args: any[]): void;
 
     abstract isCollided(other: Sprite): boolean;
-    // isCollided(other: Sprite) {
-    //     const otherCenter = other.getCollisionCenter();
-    //     let dx = otherCenter.x - this._shape.x;
-    //     let dy = otherCenter.y - this._shape.y;
-    //     let dist = Math.sqrt(dx*dx + dy*dy);
-
-    //     const centerToCenter = this._radius + other.radius;
-
-    //     return dist < centerToCenter;
-    // }
 
     getCollisionCenter(): Vector {
         return this.center;
     }
-
-    // get shape(): PIXI.Graphics {
-    //     return this._shape;
-    // }
-
-    // get circle(): PIXI.Graphics {
-    //     return this._circle;
-    // }
-
-    // get radius(): number {
-    //     return this._radius;
-    // }
 
     get v(): Vector {
         return this._v;

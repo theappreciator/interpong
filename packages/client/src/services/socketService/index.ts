@@ -9,9 +9,10 @@ const TIMEOUT_CONNECTING = 1000;
 
 class SocketService implements INetworkService<Socket> {
 	private didConnectPreviously = false;
+	private isConnected = false;
 
 	private isReConnected: (socket: Socket) => void = () => {console.log("Default SocketService onReconnected")};
-	private isDisconnected: (message: string) => void = () => {console.log("Default SocketService onDisconnected")};
+	private isDisconnected: (wasConnected: boolean, message: string) => void = () => {console.log("Default SocketService onDisconnected")};
 	private isPing: () => void = () => {};
 	private isPong: () => void = () => {};
 
@@ -31,24 +32,32 @@ class SocketService implements INetworkService<Socket> {
 			const socket = io(url);
 
 			if (!socket) {
+				this.isConnected = false;
 				rj("Socket couldn't connect and was null")
 			};
 
 			socket.on("connect_error", (err) => {
 				console.log("Connection error: ", err);
 
+				const wasConnected = this.isConnected;
+				this.isConnected = false;
+
 				clearTimeout(timeout);
 				rj(err);
 
-				this.isDisconnected(err.message);
+				this.isDisconnected(wasConnected, err.message);
 			});
 
 			socket.on("disconnect", (reason) => {
+				const wasConnected = this.isConnected;
+				this.isConnected = false;
 				console.log("Disconnected from socket server!", reason);
-				this.isDisconnected(reason);
+				this.isDisconnected(wasConnected, reason);
 			})
 
 			socket.on("connect", () => {
+				this.isConnected = true;
+
 				if (!this.didConnectPreviously) {
 					this.didConnectPreviously = true;
 					clearTimeout(timeout);
@@ -68,30 +77,30 @@ class SocketService implements INetworkService<Socket> {
 		});
 	}
 
-	public onReConnected(listener: (socket: Socket) => void) {
+	public onReConnected = (listener: (socket: Socket) => void) => {
 		console.log("Setting SocketService onReConnected()");
 		this.isReConnected = listener;
 	}
 
-	public onDisconnected(listener: (message: string) => void) {
+	public onDisconnected = (listener: (wasConnected: boolean, message: string) => void) => {
 		console.log("Setting SocketService onDisconnected");
 		this.isDisconnected = listener;
 	}	
 
-	public doPing(socket: Socket): void {
+	public doPing = (socket: Socket): void => {
 		console.log("About to send " + SOCKET_EVENTS.PING);
 		socket.emit(SOCKET_EVENTS.PING);
 	}
 
-	public onPing(
+	public onPing = (
 		listener: () => void
-	) {
+	) => {
 		this.isPing = listener;
 	}
 
-	public onPong(
+	public onPong = (
 		listener: () => void
-	) {
+	) => {
 		this.isPong = listener;
 	}
 }

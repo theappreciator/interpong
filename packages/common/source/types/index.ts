@@ -67,7 +67,8 @@ export interface IPlayData {
 
 export interface IScoreData {
     player: number,
-    currentScore: number,
+    currentScore: number, //TODO: remove this, it doesn't matter
+    ballId: string,
     event: GAME_SCORE_EVENTS
 }
 

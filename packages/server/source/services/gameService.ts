@@ -145,7 +145,17 @@ class GameService implements IGameService {
 
         logger.info(chalk.white(`Receive score event: ${this._gameId}: [from ${fromPlayer.id} event:${scoreData.event}]`));
 
-        const scoreToPlayer: IPlayerState = {...getRandomPlayerFromOtherTeam(gameRoomStateService.players, fromPlayer.team)};
+        const ball = gameRoomStateService.ball(scoreData.ballId);
+        const ballLastPlayerNumber = ball.players.at(-2);
+        let scoreToPlayer: IPlayerState;
+        if (typeof ballLastPlayerNumber === "undefined") {
+            // This covers the beginning of the game where the ball has only existed for one player
+            scoreToPlayer = {...getRandomPlayerFromOtherTeam(gameRoomStateService.players, fromPlayer.team)};
+        }
+        else {
+            // This covers all future cases after the ball leaves the first screen
+            scoreToPlayer = {...SocketPlayerAdapter.playerFromPlayerNumber(this._gameId, ballLastPlayerNumber)};
+        }
 
         const pointsForEvent = GAME_SCORE_EVENT_POINTS[scoreData.event] || 0;
         scoreToPlayer.score = scoreToPlayer.score + pointsForEvent;

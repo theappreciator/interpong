@@ -438,6 +438,7 @@ class GamePageController implements IGamePageController {
                 player: this._player?.playerNumber,
                 // TODO: is currentScore relevant since it is calculated server side anyway?
                 currentScore: this._score,
+                ballId: ball.ballId,
                 event: GAME_SCORE_EVENTS.WALL_HIT
             }
     

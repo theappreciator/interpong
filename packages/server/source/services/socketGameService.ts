@@ -1,9 +1,8 @@
-import { DEFAULTS, GAME_EVENTS, IBallState, IBallUpdateState, IGameRoomState, IPlayData, IPlayerState, IScoreData, IStartGame } from "@interpong/common";
+import { GAME_EVENTS, IBallState, IBallUpdateState, IGameRoomState, IPlayData, IPlayerState, IScoreData, IStartGame } from "@interpong/common";
 import { Server, Socket } from "socket.io";
 import SocketRoomService from "./socketRoomService";
 import GameRoomStateService from "./gameRoomStateService";
 import GameService from "./gameService";
-import { getRoomIdFromName, getSocketsInRoom } from "../util/roomUtils";
 import SocketPlayerAdapter from "./socketPlayerAdapter";
 
 
@@ -19,9 +18,6 @@ export interface ISocketGameService {
 }
 
 class SocketGameService implements ISocketGameService {
-
-
-
     constructor() {
 
     }

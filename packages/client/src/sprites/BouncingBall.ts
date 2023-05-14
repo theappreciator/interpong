@@ -68,20 +68,24 @@ export default class BouncingBall extends Shape implements ICircle {
 
         if (this._v.x >= 0 && this._shape.x >= viewWidth - this._radius) {
             this._v.x *= -1;
+            this._shape.x += (this._v.x * 2);
             returnMovementEvent.push(SoloMovementEvents.HIT_RIGHT_WALL);
         }
 
         else if (this._v.x <= 0 && this._shape.x <= this._radius) {
             this._v.x *= -1;
+            this._shape.x += (this._v.x * 2);
             returnMovementEvent.push(SoloMovementEvents.HIT_LEFT_WALL);
         }
 
         if (this._v.y >= 0 && this._shape.y >= viewHeight - this._radius) {
             this._v.y *= -1;
+            this._shape.y += (this._v.y * 2);
             returnMovementEvent.push(SoloMovementEvents.HIT_BOTTOM_WALL);
         }
         else if (this._v.y <= 0 && this._shape.y <= this._radius) {
             this._v.y *= -1;
+            this._shape.y += (this._v.y * 2);
             returnMovementEvent.push(SoloMovementEvents.HIT_TOP_WALL);
         }
 

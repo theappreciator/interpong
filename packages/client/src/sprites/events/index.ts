@@ -6,7 +6,8 @@ export enum SoloMovementEvents {
     TRANSFERRED_LEFT_WALL,
     TRANSFERRED_RIGHT_WALL,
     TRANSFERRED_TOP_WALL,
-    TRANSFERRED_BOTTOM_WALL
+    TRANSFERRED_BOTTOM_WALL,
+    HIT_PLAYER
 }
 
 export enum SpriteActions {

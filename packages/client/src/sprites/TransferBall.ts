@@ -80,6 +80,7 @@ export default class TransferBall extends Shape implements ICircle {
             }
             else {
                 this._v.x *= -1;
+                this._shape.x += (this._v.x * 2);
             }
         }
 
@@ -93,6 +94,7 @@ export default class TransferBall extends Shape implements ICircle {
             }
             else {
                 this._v.x *= -1;
+                this._shape.x += (this._v.x * 2);
             }
         }
 
@@ -106,6 +108,7 @@ export default class TransferBall extends Shape implements ICircle {
             }
             else {
                 this._v.y *= -1;
+                this._shape.y += (this._v.y * 2);
             }
             
         }
@@ -119,6 +122,7 @@ export default class TransferBall extends Shape implements ICircle {
             }
             else {
                 this._v.y *= -1;
+                this._shape.y += (this._v.y * 2);
             }
         }
 

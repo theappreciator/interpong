@@ -1,4 +1,4 @@
-import { DEFAULTS, GameStateStatus, GAME_SCORE_EVENT_POINTS, IBallState, IBallUpdateState, IGameRoomState, IPlayerState, IScoreData, IStartGame, randomIntegerBetween, randomNumberWithVariance, TeamType } from "@interpong/common";
+import { DEFAULTS, GameStateStatus, GAME_SCORE_EVENTS, GAME_SCORE_EVENT_POINTS, IBallState, IBallUpdateState, IGameRoomState, IPlayerState, IScoreData, IStartGame, randomIntegerBetween, randomNumberWithVariance, TeamType } from "@interpong/common";
 import { getNextPlayerNumber, getOppositeTeamType, getRandomPlayerFromOtherTeam, getScoreForOtherTeam, getTeamForNextPlayer } from "@interpong/common";
 import GameRoomStateService from "./gameRoomStateService";
 import chalk from "chalk";
@@ -6,6 +6,7 @@ import * as log4js from "log4js";
 import { getSomeBalls, getTeamLogString } from "../util/gameUtils";
 import SocketPlayerAdapter from "./socketPlayerAdapter";
 import { getLastPlayerFromBall, getTransferredBall } from "../util/ballUtil";
+import ScoreService from "./scoreService";
 const logger = log4js.getLogger();
 
 
@@ -140,27 +141,54 @@ class GameService implements IGameService {
         }
     }
 
+    updateScore2(fromPlayer: IPlayerState, scoreData: IScoreData, sendAction: (gameRoomState: IGameRoomState) => void) {
+        const gameRoomStateService = new GameRoomStateService(this._gameId);
+
+        logger.info(chalk.white(`Receive score event: ${this._gameId}: [from ${fromPlayer.id} event:${scoreData.event}]`));
+
+        let scoreForTeam: number | undefined;
+        let scoreToPlayer: IPlayerState | undefined;
+        let updatedGameRoomState: IGameRoomState | undefined;
+        const pointsForEvent = GAME_SCORE_EVENT_POINTS[scoreData.event] || 0;
+        const ball = gameRoomStateService.ball(scoreData.ballId);
+
+        switch (scoreData.event) {
+            case GAME_SCORE_EVENTS.WALL_HIT:
+                const ballLastPlayerNumber = ball.players.at(-2);
+
+                if (typeof ballLastPlayerNumber === "undefined") {
+                    // This covers the beginning of the game where the ball has only existed for one player
+                    scoreToPlayer = {...getRandomPlayerFromOtherTeam(gameRoomStateService.players, fromPlayer.team)};
+                }
+                else {
+                    // This covers all future cases after the ball leaves the first screen
+                    scoreToPlayer = {...SocketPlayerAdapter.playerFromPlayerNumber(this._gameId, ballLastPlayerNumber)};
+                }
+                break;
+            case GAME_SCORE_EVENTS.PLAYER_HIT:
+                scoreToPlayer = fromPlayer;
+                break;
+            default:
+                logger.info(chalk.red(`Score event:         ${this._gameId}: No scoring available for event ${scoreData.event}`));
+                return;
+        }
+
+        scoreToPlayer.score = scoreToPlayer.score + pointsForEvent;
+        updatedGameRoomState = gameRoomStateService.addOrUpdatePlayer(scoreToPlayer);
+        scoreForTeam = getScoreForOtherTeam(gameRoomStateService.players, fromPlayer.team);
+
+        logger.info(chalk.white(`Sending game score:  ${this._gameId}: [to   ${scoreToPlayer.id} new score:${scoreForTeam}]`));
+
+        sendAction(updatedGameRoomState);
+    }
+
     updateScore(fromPlayer: IPlayerState, scoreData: IScoreData, sendAction: (gameRoomState: IGameRoomState) => void) {
         const gameRoomStateService = new GameRoomStateService(this._gameId);
 
         logger.info(chalk.white(`Receive score event: ${this._gameId}: [from ${fromPlayer.id} event:${scoreData.event}]`));
 
-        const ball = gameRoomStateService.ball(scoreData.ballId);
-        const ballLastPlayerNumber = ball.players.at(-2);
-        let scoreToPlayer: IPlayerState;
-        if (typeof ballLastPlayerNumber === "undefined") {
-            // This covers the beginning of the game where the ball has only existed for one player
-            scoreToPlayer = {...getRandomPlayerFromOtherTeam(gameRoomStateService.players, fromPlayer.team)};
-        }
-        else {
-            // This covers all future cases after the ball leaves the first screen
-            scoreToPlayer = {...SocketPlayerAdapter.playerFromPlayerNumber(this._gameId, ballLastPlayerNumber)};
-        }
-
-        const pointsForEvent = GAME_SCORE_EVENT_POINTS[scoreData.event] || 0;
-        scoreToPlayer.score = scoreToPlayer.score + pointsForEvent;
+        const scoreToPlayer = ScoreService.doScoreToPlayerForEvent(this._gameId, scoreData);
         const updatedGameRoomState = gameRoomStateService.addOrUpdatePlayer(scoreToPlayer);
-
         const scoreForTeam = getScoreForOtherTeam(gameRoomStateService.players, fromPlayer.team);
 
         logger.info(chalk.white(`Sending game score:  ${this._gameId}: [to   ${scoreToPlayer.id} new score:${scoreForTeam}]`));

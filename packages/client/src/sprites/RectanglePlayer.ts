@@ -181,7 +181,7 @@ export default class RectanglePlayer extends Shape implements IRectangle, IPlaye
         // TODO: do we need to call super.reset() to remove from the playing field?
     }
 
-    update = (viewWidth: number, viewHeight: number) => {
+    update = (viewWidth: number, viewHeight: number): SoloMovementEvents[] => {
         let x = this._shape.x + (this._v.x * this._speed);
         let y = this._shape.y + (this._v.y * this._speed);
 

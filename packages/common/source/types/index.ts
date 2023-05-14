@@ -19,11 +19,13 @@ export enum GAME_EVENTS {
 }
 
 export enum GAME_SCORE_EVENTS {
-    WALL_HIT = "WALL_HIT"
+    WALL_HIT = "WALL_HIT",
+    PLAYER_HIT = "PLAYER_HIT"
 }
 
 export enum GAME_SCORE_EVENT_POINTS {
-    WALL_HIT = 10
+    WALL_HIT = 10,
+    PLAYER_HIT = 5
 }
 
 export const GAME_CONSTANTS = {

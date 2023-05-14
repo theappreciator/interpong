@@ -147,34 +147,37 @@ export class BasicBoard {
 
         const ballsToRemove = [];
         for (let i = 0; i < this._balls.length; i++) {
+            let movementEvents: SoloMovementEvents[] = [];
+            let hadPlayerHit = false;
+            
             const ball = this._balls[i];
-            const newBallDirection = Collision.checkPlayerAndBall(this._player, ball);
-            if (newBallDirection) {
-                ball.updateShape(undefined, newBallDirection);
-                // this._player.updateShape(RectanglePlayerShapeHit);
+
+            const directionChangeAfterPlayerCollision = Collision.checkPlayerAndBall(this._player, ball);
+            if (directionChangeAfterPlayerCollision) {
+                ball.updateShape(undefined, directionChangeAfterPlayerCollision);
+                hadPlayerHit = true;
             } 
-            else {
-                // this._player.updateShape();
+
+            const ballPositionBeforeUpdate = ball.center;
+            const ballUpdateMovementEvents = ball.update(viewWidth, viewHeight) || [];
+            movementEvents = movementEvents.concat(ballUpdateMovementEvents);
+
+            const directionChangeAfterBallCollision = Collision.checkPlayerAndBall(this._player, ball);
+            if (directionChangeAfterBallCollision) {
+                ball.updateShape(ballPositionBeforeUpdate, directionChangeAfterBallCollision);
+                ball.update(viewWidth, viewHeight)
+                hadPlayerHit = true;
+            }
+            
+            if (hadPlayerHit) {
+                movementEvents.push(SoloMovementEvents.HIT_PLAYER);
             }
 
-            const ballMovementEvents = ball.update(viewWidth, viewHeight) || [];
-            if (ballMovementEvents.length > 0) {
-                const spriteActions = this._movementEvent(ballMovementEvents, ball);
-                if (spriteActions.includes(SpriteActions.DESTROY)) {
-                    ball.remove(this.app);
-                    ballsToRemove.push(i);
-                }
+            const spriteActions = this._movementEvent(movementEvents, ball);
+            if (spriteActions.includes(SpriteActions.DESTROY)) {
+                ball.remove(this.app);
+                ballsToRemove.push(i);
             }
-            else {
-                const newBallDirection = Collision.checkPlayerAndBall(this._player, ball);
-                if (newBallDirection) {
-                    ball.updateShape(undefined, newBallDirection);
-                    // this._player.updateShape(RectanglePlayerShapeHit);
-                } 
-                else {
-                    // this._player.updateShape();
-                }
-            }      
         }
 
         for (let i = (ballsToRemove.length - 1); i >= 0; i--) {

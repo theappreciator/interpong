@@ -435,7 +435,7 @@ class GamePageController implements IGamePageController {
             (this._player?.team === "right" && movementEvent.includes(SoloMovementEvents.HIT_RIGHT_WALL))) {
     
             const scoreData: IScoreData = {
-                player: this._player?.playerNumber,
+                player: this._player.playerNumber,
                 // TODO: is currentScore relevant since it is calculated server side anyway?
                 currentScore: this._score,
                 ballId: ball.ballId,
@@ -447,6 +447,23 @@ class GamePageController implements IGamePageController {
     
         return [];
     }
+
+    public ballMovementEventScoreThisPlayer = (movementEvent: SoloMovementEvents[], ball: BallType): SpriteActions[] => {
+        if (!this._player) {
+            throw new Error(`Player could not be determined`);
+        }
+
+        const scoreData: IScoreData = {
+            player: this._player.playerNumber,
+            currentScore: this._score,
+            ballId: ball.ballId,
+            event: GAME_SCORE_EVENTS.PLAYER_HIT
+        }
+
+        this._gameRoomController.doGameScoreChange(scoreData);
+
+        return [];
+    }
     
     
     
@@ -455,11 +472,13 @@ class GamePageController implements IGamePageController {
     
     
         if (movementEvent.includes(SoloMovementEvents.TRANSFERRED_RIGHT_WALL) || movementEvent.includes(SoloMovementEvents.TRANSFERRED_LEFT_WALL)) {
-            const newActions = this.ballMovementEventDestroyOnExit(movementEvent, ball)
-            actions = [...newActions];
+            actions = [...this.ballMovementEventDestroyOnExit(movementEvent, ball)];
         }
         else if (movementEvent.includes(SoloMovementEvents.HIT_LEFT_WALL) || movementEvent.includes(SoloMovementEvents.HIT_RIGHT_WALL)) {
             actions = [...(this.ballMovementEventScoreOtherPlayer(movementEvent, ball))];
+        }
+        else if (movementEvent.includes(SoloMovementEvents.HIT_PLAYER)) {
+            actions = [...(this.ballMovementEventScoreThisPlayer(movementEvent, ball))];
         }
     
         return actions;

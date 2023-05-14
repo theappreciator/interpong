@@ -3,6 +3,7 @@ import Collision from '../Collision';
 import { BallType, PlayerType } from '../sprites';
 import { SoloMovementEvents, SpriteActions } from '../sprites/events';
 import { Rectangle } from 'pixi.js';
+import { Vector } from '@interpong/common';
 
 export interface BasicBoardProps {
     width: number,
@@ -10,7 +11,12 @@ export interface BasicBoardProps {
     backgroundColor: number,
     player: PlayerType,
     onMovementEvent: (movementEvent: SoloMovementEvents[], ball: BallType) => SpriteActions[],
+    onPlayerPointerClickDown: (listener: (position: Vector) => void) => void;
+    onPlayerPointerClickUp: (listener: (position: Vector) => void) => void;
+    onPlayerPointerClickMove: (listener: (position: Vector) => void) => void;
 }
+
+export type BoardType = BasicBoard;
 
 enum Corners {
     TOP_LEFT = 1,
@@ -30,6 +36,10 @@ export class BasicBoard {
 
     private _score: number;
     private _level: number;
+
+    private _onPlayerPointerClickDown: (position: Vector) => void = () => {};
+    private _onPlayerPointerClickUp: (position: Vector) => void = () => {};
+    private _onPlayerPointerMove: (position: Vector) => void = () => {};
 
     constructor({ 
         width,
@@ -62,6 +72,16 @@ export class BasicBoard {
         this.routeBackgroundClicksToPlayer(width, height);
     }
 
+    public onPlayerPointerClickDown = (listener: (position: Vector) => void) => {
+        this._onPlayerPointerClickDown = listener;
+    }
+    public onPlayerPointerClickUp = (listener: (position: Vector) => void) => {
+        this._onPlayerPointerClickUp = listener;
+    }
+    public onPlayerPointerMove = (listener: (position: Vector) => void) => {
+        this._onPlayerPointerMove = listener;
+    }
+
     private routeBackgroundClicksToPlayer(width: number, height: number) {
         const stageBackground = new PIXI.Sprite(PIXI.Texture.WHITE);
         stageBackground.width = width;
@@ -73,28 +93,32 @@ export class BasicBoard {
                 x: event.global.x,
                 y: event.global.y
             }
-            this._player.onPointerDown(position);
+            // this._player.onPointerDown(position);
+            this._onPlayerPointerClickDown(position);
         });
         stageBackground.on("pointerup", (event: PIXI.FederatedPointerEvent) => {
             const position = {
                 x: event.global.x,
                 y: event.global.y
             }
-            this._player.onPointerUp(position);
+            // this._player.onPointerUp(position);
+            this._onPlayerPointerClickUp(position);
         });
         stageBackground.on("pointerupoutside", (event: PIXI.FederatedPointerEvent) => {
             const position = {
                 x: event.global.x,
                 y: event.global.y
             }
-            this._player.onPointerUp(position);
+            // this._player.onPointerUp(position);
+            this._onPlayerPointerClickUp(position);
         });
         stageBackground.on("globalpointermove", (event: PIXI.FederatedPointerEvent) => {
             const position = {
                 x: event.global.x,
                 y: event.global.y
             }
-            this._player.onPointerMove(position);
+            // this._player.onPointerMove(position);
+            this._onPlayerPointerMove(position);
         });
         this._app.stage.addChild(stageBackground);
     }

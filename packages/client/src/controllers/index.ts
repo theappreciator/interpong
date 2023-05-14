@@ -1,6 +1,7 @@
 import { IRoomState } from "@interpong/common";
 import { IGameService, INetworkServiceConsumer, IRoomService } from "../services";
 import SocketGameRoomController from "./SocketGameRoomController";
+import GamePageController from "./GamePageController";
 
 
 
@@ -22,5 +23,6 @@ export interface IGameRoomController<T> extends IRoomController<T>, IGameControl
 
 
 export {
-    SocketGameRoomController
+    SocketGameRoomController,
+    GamePageController
 }

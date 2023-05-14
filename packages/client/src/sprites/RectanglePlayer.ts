@@ -8,6 +8,7 @@ import Shape from './Shape';
 import { Sprite } from './Sprite';
 import { IRectangle } from '.';
 import { parseIsolatedEntityName } from 'typescript';
+import { IPlayer } from '../GameProperties/IPlayer';
 
 export class PlayerDeadError extends Error {
 
@@ -34,7 +35,7 @@ export const RectanglePlayerShapePointed: RectanglePlayerShape = {
     height: undefined 
 }
 
-export default class RectanglePlayer extends Shape implements IRectangle {
+export default class RectanglePlayer extends Shape implements IRectangle, IPlayer {
     private _height: number;
     private _width: number;
     private _speed!: number;
@@ -91,13 +92,17 @@ export default class RectanglePlayer extends Shape implements IRectangle {
         this._isInvulnerable = false;
     }
 
-    getNormalShape(): RectanglePlayerShape {
+    get position(): Vector {
+        return this.center;
+    }
+
+    getNormalShape = (): RectanglePlayerShape => {
         return this._normalShape;
     }
     
     // TODO: a way to set the normal shape
 
-    updateShape(shapeProps?: RectanglePlayerShape) {
+    updateShape = (shapeProps?: RectanglePlayerShape) => {
         const hadProps = shapeProps !== undefined;
         let hadChanges = false;
         if (!shapeProps) {
@@ -166,7 +171,7 @@ export default class RectanglePlayer extends Shape implements IRectangle {
         return this.center.y + this._height / 2;
     }
 
-    reset(app: PIXI.Application) {
+    reset = (app: PIXI.Application) => {
         this._shape.x = this._startPos.x; //app.view.width / 2;
         this._shape.y = this._startPos.y; //app.view.height / 2;
         this._v = {x: 0, y: 0};
@@ -176,7 +181,7 @@ export default class RectanglePlayer extends Shape implements IRectangle {
         // TODO: do we need to call super.reset() to remove from the playing field?
     }
 
-    update(viewWidth: number, viewHeight: number) {
+    update = (viewWidth: number, viewHeight: number) => {
         let x = this._shape.x + (this._v.x * this._speed);
         let y = this._shape.y + (this._v.y * this._speed);
 
@@ -189,70 +194,95 @@ export default class RectanglePlayer extends Shape implements IRectangle {
         return [];
     }
 
-    isCollided(other: Sprite): boolean {
+    isCollided = (other: Sprite): boolean => {
         // const otherInstance = (other instanceof)
         // if (other instanceof Ball)
 
         return false;
     }
 
-    moveLeft() {
-       this._moveStrategy.moveLeft(this);
+    moveLeft = () => {
+        if (this._moveStrategy.moveLeft(this)) {
+            this._activated = true;
+            this.updateShape(RectanglePlayerShapePointed);
+        }       
     }
 
-    stopLeft() {
-       this._moveStrategy.stopLeft(this);
+    stopLeft = () => {
+        if (this._moveStrategy.stopLeft(this)) {
+            if (this._activated) {
+                this._activated = false;
+                this.updateShape();
+            }
+        }
     }
 
-    moveUp() {
-        this._moveStrategy.moveUp(this);
+    moveUp = () => {
+        if (this._moveStrategy.moveUp(this)) {
+            this._activated = true;
+            this.updateShape(RectanglePlayerShapePointed);
+        }
     }
 
-    stopUp() {
-        this._moveStrategy.stopUp(this);
+    stopUp = () => {
+        if (this._moveStrategy.stopUp(this)) {
+            if (this._activated) {
+                this._activated = false;
+                this.updateShape();
+            }
+        }
     }
 
-    moveRight() {
-        this._moveStrategy.moveRight(this);
+    moveRight = () => {
+        if (this._moveStrategy.moveRight(this)) {
+            this._activated = true;
+            this.updateShape(RectanglePlayerShapePointed);
+        }        
     }
 
-    stopRight() {
-        this._moveStrategy.stopRight(this);
+    stopRight = () => {
+        if (this._moveStrategy.stopRight(this)) {
+            if (this._activated) {
+                this._activated = false;
+                this.updateShape();
+            }
+        }
     }
 
-    moveDown() {
-        this._moveStrategy.moveDown(this);
+    moveDown = () => {
+        if (this._moveStrategy.moveDown(this)) {
+            this._activated = true;
+            this.updateShape(RectanglePlayerShapePointed);
+        }
     }
 
-    stopDown() {
-        this._moveStrategy.stopDown(this);
+    stopDown = () => {
+        if (this._moveStrategy.stopDown(this)) {
+            if (this._activated) {
+                this._activated = false;
+                this.updateShape();
+            }
+        }
     }
 
-    stopMoving() {
-        this._moveStrategy.stopMoving(this);
+    stopMoving = () => {
+        if (this._moveStrategy.stopMoving(this)) {
+           if (this._activated) {
+                this._activated = false;
+                this.updateShape();
+            }
+        }
     }
-
-    onPointerDown(position: Vector) {
-        this._moveStrategy.onPointerDown(position, this);
-    }
-
-    onPointerUp(position: Vector) {
-        this._moveStrategy.onPointerUp(position, this);
-    }
-
-    onPointerMove(position: Vector) {
-        this._moveStrategy.onPointerMove(position, this);
-    }
-
-    slowDown() {
+    
+    slowDown = () => {
         this._speedStrategy.decrement(this);
     }
 
-    speedUp() {
+    speedUp = () => {
         this._speedStrategy.increment(this);
     }
 
-    takeDamage() {
+    takeDamage = () => {
         // There is a bug in the invulerable logic.  Multiple timers are getting triggered and causing real damage.
         if (!this._isInvulnerable) {
             this._healthStrategy.takeDamage(this);
@@ -267,11 +297,11 @@ export default class RectanglePlayer extends Shape implements IRectangle {
         return false;
     }
 
-    gainHealth() {
+    gainHealth = () => {
         this._healthStrategy.gainHealth(this);
     }
 
-    flash() {
+    flash = () => {
         const baseColor = this._color;
 
         const flashCountTotal = DEFAULTS.player.invulnerableMillis / DEFAULTS.player.flashMillis;

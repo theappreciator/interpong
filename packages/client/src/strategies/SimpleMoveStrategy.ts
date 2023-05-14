@@ -7,13 +7,13 @@ import { Vector } from "@interpong/common";
 
 
 export default class SimpleMoveStrategy extends BaseMoveStrategy implements MoveStrategy {    
-    protected onPointerDown(downPosition: Vector, player: Player) {
+    public onPointerDown(downPosition: Vector, player: Player) {
 
     }
-    protected onPointerUp(upPosition: Vector, player: Player) {
+    public onPointerUp(upPosition: Vector, player: Player) {
         
     }  
-    protected onPointerMove(position: Vector, player: Player): void {
+    public onPointerMove(position: Vector, player: Player): void {
         
     }
 }

@@ -66,10 +66,6 @@ canvas {
   }
 }
 
-#state-waiting_connect {
-  margin-bottom: 20px;
-}
-
 .room {
   display: flex;
   justify-content: space-between;
@@ -126,26 +122,26 @@ canvas {
   width: 80px;
 }
 
-#state-game_ready {
+#state-game_ready-game-container {
   display: flex;
 }
 @media screen and (orientation: portrait) and (max-width: 480px) {
-  #state-game_ready {
+  #state-game_ready-game-container {
     flex-direction: column;
   }
 }
 @media screen and (orientation: landscape) and (max-width: 900px) {
-  #state-game_ready {
+  #state-game_ready-game-container {
     flex-direction: row;
   }
 }
 @media screen and (orientation: portrait) and (min-width: 481px) {
-  #state-game_ready {
+  #state-game_ready-game-container {
     flex-direction: column;
   }
 }
 @media screen and (orientation: landscape) and (min-width: 901px) {
-  #state-game_ready {
+  #state-game_ready-game-container {
     flex-direction: row;
   }
 }
@@ -308,4 +304,14 @@ canvas {
 .hidden {
   visibility: hidden;
   display: none;
+}
+
+.section {
+  visibility: none;
+  display: none;
+}
+
+.visible-section {
+  visibility: visible;
+  display: block;
 }/*# sourceMappingURL=styles.css.map */

@@ -6,49 +6,52 @@ import { Vector } from "@interpong/common";
 
 
 abstract class BaseMoveStrategy implements MoveStrategy {
-
-    protected _isTouched = false;
     
     moveLeft(player: Player) {
-        player.v.x = -player.speed; 
+        player.v.x = -player.speed;
+        return true;
     }
 
     stopLeft(player: Player) {
         player.v.x = 0;
+        return true;
     }
 
     moveUp(player: Player) {
         player.v.y = -player.speed;
+        return true;
     }
 
     stopUp(player: Player) {
         player.v.y = 0;
+        return true;
     }
 
     moveRight(player: Player) {
         player.v.x = player.speed;
+        return true;
     }
 
     stopRight(player: Player) {
         player.v.x = 0;
+        return true;
     }
 
     moveDown(player: Player) {
         player.v.y = player.speed;
+        return true;
     }
 
     stopDown(player: Player) {
         player.v.y = 0;
+        return true;
     }
 
     stopMoving(player: Player) {
         player.v.x = 0;
         player.v.y = 0;
+        return true;
     }
-
-    abstract onPointerDown(downPosition: Vector, player: Player): void;
-    abstract onPointerUp(upPosition: Vector, player: Player): void;
-    abstract onPointerMove(position: Vector, player: Player): void;
 }
 
 export default BaseMoveStrategy;

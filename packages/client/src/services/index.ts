@@ -24,7 +24,7 @@ export interface INetworkServiceConsumer {
     connect(): void;
     onConnected(listener: () => void): void;
     onReConnected(listener: () => void): void;
-    onDisconnected(listener: (message: string) => void): void;
+    onDisconnected(listener: (wasConnected: boolean, message: string) => void): void;
     doPing(): void;
     onPing(listener: () => void): void;
     onPong(listener: () => void): void;
@@ -33,7 +33,7 @@ export interface INetworkServiceConsumer {
 export interface INetworkService<T> {
     createConnector(url: string): Promise<T>;
     onReConnected(listener: (connector: T) => void): void;
-    onDisconnected(listener: (message: string) => void): void;
+    onDisconnected(listener: (wasConnected: boolean, message: string) => void): void;
     doPing(connector: T): void;
     onPing(listener: () => void): void;
     onPong(listener: () => void): void;

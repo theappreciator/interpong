@@ -261,6 +261,9 @@ class RoomController {
             if (!gameRoomState) {
                 this._persist.delete(CONTROLLER_KEY + roomId);
             }
+            else {
+                socketGameService.broadcastGameRoomState(io, roomId, gameRoomState);
+            }
         });
 
         return Promise.resolve();

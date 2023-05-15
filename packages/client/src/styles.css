@@ -192,6 +192,10 @@ canvas {
   display: flex;
   justify-content: space-between;
 }
+.team .team-balls {
+  display: flex;
+  justify-content: space-between;
+}
 @media screen and (orientation: portrait) and (max-width: 480px) {
   .team {
     padding-left: 0px;
@@ -200,12 +204,18 @@ canvas {
     padding: 0px 6px;
     flex-direction: column;
   }
+  .team .team-balls {
+    padding: 0px 6px;
+  }
 }
 @media screen and (orientation: portrait) and (min-width: 481px) {
   .team {
     padding-left: 0px;
   }
   .team h3 {
+    padding: 0px 6px;
+  }
+  .team .team-balls {
     padding: 0px 6px;
   }
 }

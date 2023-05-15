@@ -55,10 +55,11 @@ interface IGamePageController {
     ballMovementEventScoreOtherPlayer(movementEvent: SoloMovementEvents[], ball: BallType): SpriteActions[];
     ballMovementEvents(movementEvent: SoloMovementEvents[], ball: BallType): SpriteActions[];
     doScoreChange(gameRoomState: IGameRoomState): void;
+    doGameRoomStateChange(gameRoomState: IGameRoomState): void;
     makeIncomingBall(ball: IBallState): void;
     initGameObjects(): void;
     gameLoop(delta: number): void;
-    updatePlayers(gameRoomState: IGameRoomState): void;
+    updateTeamsList(gameRoomState: IGameRoomState): void;
 
     // Player logic
     setupControls(playerType: PlayerType): void;
@@ -280,7 +281,7 @@ class GamePageController implements IGamePageController {
 
         // game
         this._gameRoomController.onGameBallEnterBoard(this._state.handleGameBallEnteredBoard);
-        this._gameRoomController.onGameScoreChange(this._state.handleGameScoreChange);
+        this._gameRoomController.onGameRoomStateChange(this._state.handleGameRoomStateChange);
         this._gameRoomController.onStartGame(this._state.handleStartGame);
 
 
@@ -328,7 +329,7 @@ class GamePageController implements IGamePageController {
     
         this.startFps();
     
-        this.updatePlayers(gameRoomState);
+        this.updateTeamsList(gameRoomState);
     
         this._board.app.ticker.add((delta) => {
             this.gameLoop(delta);
@@ -491,7 +492,17 @@ class GamePageController implements IGamePageController {
             throw new Error(`Player state for player ${this._player?.playerNumber} unexpectedly undefined`);
         }
     
-        this.updatePlayers(gameRoomState);
+        this.updateTeamsList(gameRoomState);
+    }  
+
+    public doGameRoomStateChange = (gameRoomState: IGameRoomState): void => {
+        const thisPlayerState = gameRoomState.players.find(p => p.id === this._player?.id);
+    
+        if (!thisPlayerState) {
+            throw new Error(`Player state for player ${this._player?.playerNumber} unexpectedly undefined`);
+        }
+    
+        this.updateTeamsList(gameRoomState);
     }
     
     public makeIncomingBall = (ball: IBallState): void => {
@@ -527,7 +538,7 @@ class GamePageController implements IGamePageController {
         this.gameOver();
     }
     
-    public updatePlayers = (gameRoomState: IGameRoomState): void => {
+    public updateTeamsList = (gameRoomState: IGameRoomState): void => {
         for (let teamType of TeamType) {
             const teamElement = document.getElementById(`game_ready-teams_${teamType}_players`);
             if (teamElement) {
@@ -568,6 +579,14 @@ class GamePageController implements IGamePageController {
                 const teamScoreElement = document.getElementById(`game_ready-teams_${teamType}_score`);
                 if (teamScoreElement) {
                     teamScoreElement.innerText = teamScore.toLocaleString();
+                }
+
+                const teamBalls = gameRoomState.balls
+                    .map(b => b.players[b.players.length - 1])
+                    .filter(n => players.find(p => p.playerNumber === n && p.team === teamType));
+                const teamBallsElement = document.getElementById(`game_ready-teams_${teamType}_balls`);
+                if (teamBallsElement) {
+                    teamBallsElement.innerText = teamBalls.length.toLocaleString();
                 }
             }
         }

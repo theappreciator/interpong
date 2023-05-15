@@ -24,7 +24,8 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
     private _onAdmin: (roomStates: IRoomState[]) => void = (roomStates) => {console.log("Default SocketGameRoomController onAdmin", roomStates)};
     private _onStartGame: (startGameData: IStartGame) => void = (startGameData) => {console.log("Default SocketGameRoomController onStartGame", startGameData)};
     private _onGameBallEnterBoard: (ball: IBallState) => void = (ball) => {console.log("Default SocketGameRoomController onGameBallEnterBoard", ball)};
-    private _onGameScoreChange: (gameRoomState: IGameRoomState) => void = (gameRoomState) => {console.log("Default ScoketGameRoomController onGameScoreChange", gameRoomState)};
+    // private _onGameScoreChange: (gameRoomState: IGameRoomState) => void = (gameRoomState) => {console.log("Default ScoketGameRoomController onGameScoreChange", gameRoomState)};
+    private _onGameRoomStateChange: (gameRoomState: IGameRoomState) => void = (gameRoomState) => {console.log("Default ScoketGameRoomController onGameRoomStateChange", gameRoomState)};
 
     private networkService: INetworkService<Socket>
 
@@ -243,9 +244,9 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
         this._onGameBallEnterBoard = listener;
     }
 
-    public onGameScoreChange(listener: (gameRoomState: IGameRoomState) => void): void {
-        console.log("Setting SocketGameRoomController onGameScoreChange()");
-        this._onGameScoreChange = listener;
+    public onGameRoomStateChange(listener: (gameRoomState: IGameRoomState) => void): void {
+        console.log("Setting SocketGameRoomController onGameRoomStateChange()");
+        this._onGameRoomStateChange = listener;
     }
 
     public onGameCompleted(listener: () => void): void {
@@ -289,7 +290,7 @@ class SocketGameRoomController implements IGameRoomController<Socket> {
 
         this.socket.on(GAME_EVENTS.START_GAME, (startGameData: IStartGame) => this._onStartGame(startGameData));
         this.socket.on(GAME_EVENTS.ON_UPDATE_BALL, (ball: IBallState) => this._onGameBallEnterBoard(ball));
-        this.socket.on(GAME_EVENTS.ON_UPDATE_SCORE, (gameRoomState: IGameRoomState) => this._onGameScoreChange(gameRoomState));
+        this.socket.on(GAME_EVENTS.ON_UPDATE_GAME, (gameRoomState: IGameRoomState) => this._onGameRoomStateChange(gameRoomState));
     }
 
     private removeSyncRoomJoinEvents(timeout?: NodeJS.Timeout) {

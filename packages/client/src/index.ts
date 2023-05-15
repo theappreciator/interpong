@@ -10,7 +10,7 @@ import { PlayingGameState } from "./GameStates";
 
 
 
-const testGame = true;
+const testGame = false;
 
 if (!testGame) {
     const url = process.env.SOCKET_SERVER_URL;

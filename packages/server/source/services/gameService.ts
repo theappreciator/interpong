@@ -12,11 +12,11 @@ const logger = log4js.getLogger();
 
 export interface IGameService {
     addPlayer(playerId: string): IPlayerState;
-    startGame(startGameAction: (playerStartGameData: IStartGame) => void, sendAction: (ball: IBallState, toPlayer: IPlayerState) => void): void;
+    startGame(startGameAction: (playerStartGameData: IStartGame) => void, sendAction: (ball: IBallState, toPlayer: IPlayerState, gameRoomState: IGameRoomState) => void): void;
     startGameForPlayer(player: IPlayerState, startGameAction: (playerStartGameData: IStartGame) => void): void;
     removePlayer(player: IPlayerState, removeAction: (gameRoomState?: IGameRoomState) => void): void;
-    addBalls(ballCount: number, sendImmediately: boolean, sendAction: (ball: IBallState, toPlayer: IPlayerState) => void): void;
-    transferBallToNextPlayer(rawBallData: IBallUpdateState, sendAction: (ball: IBallState, toPlayer: IPlayerState) => void): void;
+    addBalls(ballCount: number, sendImmediately: boolean, sendAction: (ball: IBallState, toPlayer: IPlayerState, gameRoomState: IGameRoomState) => void): void;
+    transferBallToNextPlayer(rawBallData: IBallUpdateState, sendAction: (ball: IBallState, toPlayer: IPlayerState, gameRoomState: IGameRoomState) => void): void;
     updateScore(fromPlayer: IPlayerState, scoreData: IScoreData, sendAction: (gameRoomState: IGameRoomState) => void): void;
 }
 
@@ -29,7 +29,7 @@ class GameService implements IGameService {
         this._gameId = gameId;
     }
 
-    addPlayer(playerId: string): IPlayerState {
+    addPlayer = (playerId: string): IPlayerState => {
         const gameRoomStateService = new GameRoomStateService(this._gameId);
 
         const playerNumbers = gameRoomStateService.players.map(p => p.playerNumber);
@@ -46,7 +46,7 @@ class GameService implements IGameService {
         return player;
     }
 
-    startGame(startGameAction: (playerStartGameData: IStartGame) => void, sendAction: (ball: IBallState, toPlayer: IPlayerState) => void) {        
+    startGame = (startGameAction: (playerStartGameData: IStartGame) => void, sendAction: (ball: IBallState, toPlayer: IPlayerState, gameRoomState: IGameRoomState) => void) => {
         logger.info(chalk.white("Starting game:      ", this._gameId));
 
         const gameRoomStateService = new GameRoomStateService(this._gameId);
@@ -58,12 +58,12 @@ class GameService implements IGameService {
             this.startGameForPlayer(player, startGameAction);
         }
 
-        gameRoomStateService.updateStatus(GameStateStatus.GAME_STARTED);
+        const updatedGameRoomState = gameRoomStateService.updateStatus(GameStateStatus.GAME_STARTED);
 
         this.addBalls(1, true, sendAction);
     }
 
-    startGameForPlayer(player: IPlayerState, startGameAction: (playerStartGameData: IStartGame) => void) {
+    startGameForPlayer = (player: IPlayerState, startGameAction: (playerStartGameData: IStartGame) => void) => {
         const gameRoomStateService = new GameRoomStateService(this._gameId);
         const gameRoomState = gameRoomStateService.gameRoomState;
 
@@ -76,7 +76,7 @@ class GameService implements IGameService {
         startGameAction(playerStartGameData);
     }
 
-    removePlayer(player: IPlayerState, removeAction: (gameRoomState?: IGameRoomState) => void): void {
+    removePlayer = (player: IPlayerState, removeAction: (gameRoomState?: IGameRoomState) => void): void => {
         const gameRoomStateService = new GameRoomStateService(this._gameId);
         const gameRoomState = gameRoomStateService.deletePlayer(player);
 
@@ -90,11 +90,11 @@ class GameService implements IGameService {
         }        
     }
 
-    addBalls(ballCount: number, sendImmediately: boolean, sendAction: (ball: IBallState, toPlayer: IPlayerState) => void) {
+    addBalls = (ballCount: number, sendImmediately: boolean, sendAction: (ball: IBallState, toPlayer: IPlayerState, gameRoomState: IGameRoomState) => void) => {
         const gameRoomStateService = new GameRoomStateService(this._gameId);
         // const newBalls = gameRoomStateService.addNewBallsToGame(ballCount);
         const newBalls = getSomeBalls(gameRoomStateService.players, ballCount);
-        gameRoomStateService.addOrUpdateBalls(newBalls);
+        const updatedGameroomState = gameRoomStateService.addOrUpdateBalls(newBalls);
 
         for (const newBall of newBalls) {
             const toPlayer = SocketPlayerAdapter.playerFromPlayerNumber(this._gameId, getLastPlayerFromBall(newBall));
@@ -103,19 +103,19 @@ class GameService implements IGameService {
             if (sendImmediately) {
                 logger.info(chalk.hex(newBall.color.toString(16))(`Sending ball update: ${this._gameId}: [${newBall.id}-(${toPlayer.id}-${getTeamLogString(toPlayer.team, toPlayer.team)}) px:${newBall.lastPosition.x} py:${newBall.lastPosition.y} dx:${newBall.lastDirection.x} dy:${newBall.lastDirection.y}]`));
 
-                sendAction(newBall, toPlayer);
+                sendAction(newBall, toPlayer, updatedGameroomState);
             }
             else {
                 setTimeout(() => {
                     logger.info(chalk.hex(newBall.color.toString(16))(`Sending ball update: ${this._gameId}: [${newBall.id}-(${toPlayer.id}-${getTeamLogString(toPlayer.team, toPlayer.team)}) px:${newBall.lastPosition.x} py:${newBall.lastPosition.y} dx:${newBall.lastDirection.x} dy:${newBall.lastDirection.y}]`));
 
-                    sendAction(newBall, toPlayer);
+                    sendAction(newBall, toPlayer, updatedGameroomState);
                 }, randomNumberWithVariance(DEFAULTS.ball.waitTimeMillisForNext, DEFAULTS.ball.waitTimeMillisForNextVariance));
             }
         }
     }
 
-    transferBallToNextPlayer(rawBallData: IBallUpdateState, sendAction: (ball: IBallState, toPlayer: IPlayerState) => void) {
+    transferBallToNextPlayer = (rawBallData: IBallUpdateState, sendAction: (ball: IBallState, toPlayer: IPlayerState, gameRoomState: IGameRoomState) => void) => {
         const gameRoomStateService = new GameRoomStateService(this._gameId);
         const originalHighestBounce = gameRoomStateService.gameRoomState.highestBounce;
         const existingBall = gameRoomStateService.ball(rawBallData.id);
@@ -129,60 +129,19 @@ class GameService implements IGameService {
 
         logger.info(chalk.hex(updatedBall.color.toString(16))(`Sending ball update: ${this._gameId}: [${updatedBall.id}-(${toPlayer.id}-${getTeamLogString(toPlayer.team, toPlayer.team)}) px:${updatedBall.lastPosition.x} py:${updatedBall.lastPosition.y} dx:${updatedBall.lastDirection.x} dy:${updatedBall.lastDirection.y}]`));
 
-        sendAction(updatedBall, toPlayer);    
+        sendAction(updatedBall, toPlayer, updatedGameRoomState);    
     
         // if the highest bounce changed, and
         // if this ball was the one that caused it
         if ((originalHighestBounce != updatedGameRoomState.highestBounce) &&
             (updatedGameRoomState.highestBounce === updatedBall.bounces)) {
-            if (updatedGameRoomState.highestBounce % DEFAULTS.game.addBallOnBounce === 0) {
+            if (updatedGameRoomState.highestBounce % 1 === 0) {
                 this.addBalls(1, false, sendAction);
             }
         }
     }
 
-    updateScore2(fromPlayer: IPlayerState, scoreData: IScoreData, sendAction: (gameRoomState: IGameRoomState) => void) {
-        const gameRoomStateService = new GameRoomStateService(this._gameId);
-
-        logger.info(chalk.white(`Receive score event: ${this._gameId}: [from ${fromPlayer.id} event:${scoreData.event}]`));
-
-        let scoreForTeam: number | undefined;
-        let scoreToPlayer: IPlayerState | undefined;
-        let updatedGameRoomState: IGameRoomState | undefined;
-        const pointsForEvent = GAME_SCORE_EVENT_POINTS[scoreData.event] || 0;
-        const ball = gameRoomStateService.ball(scoreData.ballId);
-
-        switch (scoreData.event) {
-            case GAME_SCORE_EVENTS.WALL_HIT:
-                const ballLastPlayerNumber = ball.players.at(-2);
-
-                if (typeof ballLastPlayerNumber === "undefined") {
-                    // This covers the beginning of the game where the ball has only existed for one player
-                    scoreToPlayer = {...getRandomPlayerFromOtherTeam(gameRoomStateService.players, fromPlayer.team)};
-                }
-                else {
-                    // This covers all future cases after the ball leaves the first screen
-                    scoreToPlayer = {...SocketPlayerAdapter.playerFromPlayerNumber(this._gameId, ballLastPlayerNumber)};
-                }
-                break;
-            case GAME_SCORE_EVENTS.PLAYER_HIT:
-                scoreToPlayer = fromPlayer;
-                break;
-            default:
-                logger.info(chalk.red(`Score event:         ${this._gameId}: No scoring available for event ${scoreData.event}`));
-                return;
-        }
-
-        scoreToPlayer.score = scoreToPlayer.score + pointsForEvent;
-        updatedGameRoomState = gameRoomStateService.addOrUpdatePlayer(scoreToPlayer);
-        scoreForTeam = getScoreForOtherTeam(gameRoomStateService.players, fromPlayer.team);
-
-        logger.info(chalk.white(`Sending game score:  ${this._gameId}: [to   ${scoreToPlayer.id} new score:${scoreForTeam}]`));
-
-        sendAction(updatedGameRoomState);
-    }
-
-    updateScore(fromPlayer: IPlayerState, scoreData: IScoreData, sendAction: (gameRoomState: IGameRoomState) => void) {
+    updateScore = (fromPlayer: IPlayerState, scoreData: IScoreData, sendAction: (gameRoomState: IGameRoomState) => void) => {
         const gameRoomStateService = new GameRoomStateService(this._gameId);
 
         logger.info(chalk.white(`Receive score event: ${this._gameId}: [from ${fromPlayer.id} event:${scoreData.event}]`));

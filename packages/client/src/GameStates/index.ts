@@ -24,7 +24,7 @@ interface IGameState {
     handleStartGame(startGameData: IStartGame): void;
     handleEndingGame(): void;
     handleGameBallEnteredBoard(ball: IBallState): void;
-    handleGameScoreChange(gameRoomState: IGameRoomState): void;
+    handleGameRoomStateChange(gameRoomState: IGameRoomState): void;
 }
 
 export {

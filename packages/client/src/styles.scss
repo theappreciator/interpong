@@ -180,11 +180,19 @@ canvas {
         justify-content: space-between;
     }
 
+    .team-balls {
+        display: flex;
+        justify-content: space-between;
+    }
+
     @media screen and (orientation: portrait) and (max-width: $screen-small-portait) {
         padding-left: 0px;
         h3 {
             padding: 0px 6px;
             flex-direction: column;
+        }
+        .team-balls {
+            padding: 0px 6px;
         }
     }
     @media screen and (orientation: landscape) and (max-width: $screen-small-landscape) {
@@ -193,6 +201,9 @@ canvas {
     @media screen and (orientation: portrait) and (min-width: $screen-large-portrait) {
         padding-left: 0px;
         h3 {
+            padding: 0px 6px;
+        }
+        .team-balls {
             padding: 0px 6px;
         }
     }

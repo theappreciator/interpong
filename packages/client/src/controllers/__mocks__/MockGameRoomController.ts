@@ -16,7 +16,7 @@ class MockGameRoomController implements IGameRoomController<string> {
     private _onAdmin: (roomStates: IRoomState[]) => void = () => {};
     private _onStartGame: (options: IStartGame) => void = (options) => {console.log("Default MockGameRoomController onStartGame", options)};
     private _onGameBallEnterBoard: (ball: IBallState) => void = (ball) => {console.log("Default MockGameRoomController onGameBallEnterBoard", ball)};
-    private _onGameScoreChange: (gameRoomState: IGameRoomState) => void = (gameRoomState) => {console.log("Default ScoketGameRoomController onGameScoreChange", gameRoomState)};
+    private _onGameRoomStateChange: (gameRoomState: IGameRoomState) => void = (gameRoomState) => {console.log("Default ScoketGameRoomController onGameRoomStateChange", gameRoomState)};
 
 
     constructor() {
@@ -82,8 +82,8 @@ class MockGameRoomController implements IGameRoomController<string> {
     doGameBallLeaveBoard(ball: IBallState) {
         return;
     }
-    onGameScoreChange(listener: (gameRoomState: IGameRoomState) => void): void {
-        this._onGameScoreChange = listener;
+    onGameRoomStateChange(listener: (gameRoomState: IGameRoomState) => void): void {
+        this._onGameRoomStateChange = listener;
     }
     doGameScoreChange(scoreData: IScoreData): void {
         const player1: IPlayerState = {
@@ -106,10 +106,10 @@ class MockGameRoomController implements IGameRoomController<string> {
             game: {
                 status: GameStateStatus.GAME_STARTED
             },
-            balls: [], // TODO: this needs somthing dummied in
+            balls: [], // TODO: this needs something dummied in
             highestBounce: 1
         }
-        this._onGameScoreChange(gameRoomState);
+        this._onGameRoomStateChange(gameRoomState);
     }
     onGameCompleted(listener: () => void): void {
         throw new Error("Method not implemented.");

@@ -7,8 +7,8 @@ export interface IGameService<T> {
 
     onGameBallEnterBoard(listener: (ball: IBallState) => void): void;
     doGameBallLeaveBoard(ball: IBallUpdateState): void;
-    onGameScoreChange(listener: (gameRoomState: IGameRoomState) => void): void;
-    doGameScoreChange(scoreData: IScoreData): void
+    onGameRoomStateChange(listener: (gameRoomState: IGameRoomState) => void): void;
+    doGameScoreChange(scoreData: IScoreData): void;
 
     onGameCompleted(listener: () => void): void;
 }

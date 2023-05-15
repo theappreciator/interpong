@@ -89,8 +89,8 @@ abstract class BaseGameState implements IGameState {
         this._controller.makeIncomingBall(ball);
     }
 
-    handleGameScoreChange = (gameRoomState: IGameRoomState): void => {
-        this._controller.doScoreChange(gameRoomState)
+    handleGameRoomStateChange = (gameRoomState: IGameRoomState): void => {
+        this._controller.doGameRoomStateChange(gameRoomState);
     }
 }
 
